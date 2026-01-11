@@ -63,6 +63,8 @@ public class AutoTransitionService : BackgroundService
                     continue;
                 }
 
+                var balanceService = scope.ServiceProvider.GetRequiredService<IBalanceService>();
+
                 var updated = new List<Transaction>();
                 foreach (var tx in transactions)
                 {
@@ -88,6 +90,8 @@ public class AutoTransitionService : BackgroundService
                         {
                             tx.Confirmations = 6;
                         }
+                        // Update balances when completing: source -amount, destination +amount
+                        await balanceService.CompleteTransactionAsync(tx);
                     }
 
                     tx.TransitionTo(next.Value);

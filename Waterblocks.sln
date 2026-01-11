@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FireblocksReplacement.Api", "FireblocksReplacement.Api\FireblocksReplacement.Api.csproj", "{AFA25472-B7C0-451B-B818-FA1AAC406D87}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FireblocksReplacement.IntegrationTests", "tests\backend\integration\FireblocksReplacement.IntegrationTests.csproj", "{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AFA25472-B7C0-451B-B818-FA1AAC406D87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA25472-B7C0-451B-B818-FA1AAC406D87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA25472-B7C0-451B-B818-FA1AAC406D87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA25472-B7C0-451B-B818-FA1AAC406D87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -10,6 +10,21 @@ jobs:
   build-test-and-docker:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,14 +37,18 @@ jobs:
       - name: Restore .NET
         run: dotnet restore ./FireblocksReplacement.Api/FireblocksReplacement.Api.csproj
 
-      - name: Test .NET
-        run: |
-          set -euo pipefail
-          if find tests -name "*.csproj" -print -quit | grep -q .; then
-            dotnet test tests --configuration Release
-          else
-            dotnet build ./FireblocksReplacement.Api/FireblocksReplacement.Api.csproj --configuration Release
-          fi
+      - name: Build .NET
+        run: dotnet build ./FireblocksReplacement.Api/FireblocksReplacement.Api.csproj --configuration Release --no-restore
+
+      - name: Run integration tests
+        run: dotnet test tests/backend/integration/FireblocksReplacement.IntegrationTests.csproj --configuration Release --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=detailed"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/test-results.trx"
 
       - name: Setup Node
         uses: actions/setup-node@v4

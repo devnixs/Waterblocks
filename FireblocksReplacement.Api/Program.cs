@@ -32,6 +32,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<FireblocksReplacement.Api.Services.AutoTransitionService>();
+builder.Services.AddScoped<FireblocksReplacement.Api.Services.IBalanceService, FireblocksReplacement.Api.Services.BalanceService>();
 builder.Services.AddScoped<FireblocksReplacement.Api.Infrastructure.WorkspaceContext>();
 builder.Services.AddCors(options =>
 {

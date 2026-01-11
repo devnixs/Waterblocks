@@ -17,6 +17,7 @@ public class AdminWalletDto
     public string AssetId { get; set; } = string.Empty;
     public string Balance { get; set; } = "0";
     public string LockedAmount { get; set; } = "0";
+    public string Pending { get; set; } = "0";
     public string Available { get; set; } = "0";
     public int AddressCount { get; set; }
     public string? DepositAddress { get; set; }

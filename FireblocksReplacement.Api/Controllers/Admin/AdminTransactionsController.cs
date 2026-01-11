@@ -6,6 +6,7 @@ using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Admin;
 using FireblocksReplacement.Api.Hubs;
+using FireblocksReplacement.Api.Services;
 
 namespace FireblocksReplacement.Api.Controllers.Admin;
 
@@ -17,17 +18,20 @@ public class AdminTransactionsController : ControllerBase
     private readonly ILogger<AdminTransactionsController> _logger;
     private readonly IHubContext<AdminHub> _hub;
     private readonly WorkspaceContext _workspace;
+    private readonly IBalanceService _balanceService;
 
     public AdminTransactionsController(
         FireblocksDbContext context,
         ILogger<AdminTransactionsController> logger,
         IHubContext<AdminHub> hub,
-        WorkspaceContext workspace)
+        WorkspaceContext workspace,
+        IBalanceService balanceService)
     {
         _context = context;
         _logger = logger;
         _hub = hub;
         _workspace = workspace;
+        _balanceService = balanceService;
     }
 
     [HttpGet]
@@ -207,36 +211,24 @@ public class AdminTransactionsController : ControllerBase
             if (transaction.State == TransactionState.COMPLETED)
             {
                 transaction.Confirmations = 6;
+                // Credit incoming funds to destination wallet
+                await _balanceService.CreditIncomingAsync(transaction);
             }
 
-            // Update wallet balance
-            var wallet = await _context.Wallets
-                .Include(w => w.VaultAccount)
-                .FirstOrDefaultAsync(w => w.VaultAccountId == destinationVaultId && w.AssetId == request.AssetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
-
-            if (wallet == null)
-            {
-                // Create wallet if it doesn't exist
-                wallet = new Wallet
-                {
-                    VaultAccountId = request.VaultAccountId,
-                    AssetId = request.AssetId,
-                    Balance = 0,
-                    LockedAmount = 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _context.Wallets.Add(wallet);
-            }
-
-                wallet.Balance += amount;
-            wallet.UpdatedAt = DateTime.UtcNow;
-
-            _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}, new balance: {Balance}",
-                transaction.Id, amount, request.AssetId, wallet.Balance);
+            _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}",
+                transaction.Id, amount, request.AssetId);
         }
         else
         {
+            // OUTGOING or TRANSFER transactions - validate and reserve funds
+            var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
+            if (!reserveResult.Success)
+            {
+                return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                    reserveResult.ErrorMessage!,
+                    reserveResult.ErrorCode!));
+            }
+
             // OUTGOING transactions start in specified state or SUBMITTED
             transaction.State = ResolveInitialState(request.InitialState, TransactionState.SUBMITTED);
 
@@ -339,6 +331,9 @@ public class AdminTransactionsController : ControllerBase
             transaction.Confirmations = 6;
         }
 
+        // Update balances: source -amount, destination +amount
+        await _balanceService.CompleteTransactionAsync(transaction);
+
         return await TransitionTransaction(id, TransactionState.COMPLETED);
     }
 
@@ -368,6 +363,9 @@ public class AdminTransactionsController : ControllerBase
                 $"Cannot fail transaction in terminal state {transaction.State}",
                 "INVALID_STATE_TRANSITION"));
         }
+
+        // Rollback reserved pending funds
+        await _balanceService.RollbackTransactionAsync(transaction);
 
         transaction.State = TransactionState.FAILED;
         transaction.FailureReason = request?.Reason ?? "NETWORK_ERROR";
@@ -447,6 +445,15 @@ public class AdminTransactionsController : ControllerBase
             return BadRequest(AdminResponse<TransactionStateDto>.Failure(
                 $"Invalid transition from {transaction.State} to {newState}",
                 "INVALID_STATE_TRANSITION"));
+        }
+
+        // Handle balance updates based on target state
+        if (newState == TransactionState.REJECTED ||
+            newState == TransactionState.CANCELLED ||
+            newState == TransactionState.TIMEOUT)
+        {
+            // Rollback reserved pending funds for failure states
+            await _balanceService.RollbackTransactionAsync(transaction);
         }
 
         transaction.TransitionTo(newState);

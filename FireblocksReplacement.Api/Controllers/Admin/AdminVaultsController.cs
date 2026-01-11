@@ -211,7 +211,8 @@ public class AdminVaultsController : ControllerBase
             AssetId = wallet.AssetId,
             Balance = wallet.Balance.ToString("F18"),
             LockedAmount = wallet.LockedAmount.ToString("F18"),
-            Available = (wallet.Balance - wallet.LockedAmount).ToString("F18"),
+            Pending = wallet.Pending.ToString("F18"),
+            Available = (wallet.Balance - wallet.Pending).ToString("F18"),
             AddressCount = wallet.Addresses.Count,
             DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue
         };
@@ -240,7 +241,8 @@ public class AdminVaultsController : ControllerBase
                 AssetId = w.AssetId,
                 Balance = w.Balance.ToString("F18"),
                 LockedAmount = w.LockedAmount.ToString("F18"),
-                Available = (w.Balance - w.LockedAmount).ToString("F18"),
+                Pending = w.Pending.ToString("F18"),
+                Available = (w.Balance - w.Pending).ToString("F18"),
                 AddressCount = w.Addresses.Count,
                 DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue
             }).ToList(),

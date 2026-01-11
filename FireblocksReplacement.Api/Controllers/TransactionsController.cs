@@ -4,6 +4,7 @@ using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
+using FireblocksReplacement.Api.Services;
 
 namespace FireblocksReplacement.Api.Controllers;
 
@@ -14,15 +15,18 @@ public class TransactionsController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<TransactionsController> _logger;
     private readonly WorkspaceContext _workspace;
+    private readonly IBalanceService _balanceService;
 
     public TransactionsController(
         FireblocksDbContext context,
         ILogger<TransactionsController> logger,
-        WorkspaceContext workspace)
+        WorkspaceContext workspace,
+        IBalanceService balanceService)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
+        _balanceService = balanceService;
     }
 
     [HttpPost]
@@ -79,6 +83,8 @@ public class TransactionsController : ControllerBase
             VaultAccountId = vaultAccountId,
             WorkspaceId = _workspace.WorkspaceId,
             AssetId = request.AssetId,
+            SourceType = "INTERNAL",
+            SourceVaultAccountId = vaultAccountId,
             Amount = amount,
             RequestedAmount = amount,
             DestinationAddress = destinationAddress,
@@ -93,6 +99,13 @@ public class TransactionsController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        // Validate and reserve funds for outgoing transaction
+        var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
+        if (!reserveResult.Success)
+        {
+            throw new InvalidOperationException(reserveResult.ErrorMessage);
+        }
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
