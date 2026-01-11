@@ -98,7 +98,7 @@ finally
     Log.CloseAndFlush();
 }
 
-static void SeedAssets(FireblocksDbContext db, ILogger logger)
+static void SeedAssets(FireblocksDbContext db, Microsoft.Extensions.Logging.ILogger logger)
 {
     var assetsPath = Path.Combine(AppContext.BaseDirectory, "all_fireblocks_assets.json");
     if (!File.Exists(assetsPath))

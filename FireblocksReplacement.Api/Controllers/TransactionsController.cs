@@ -20,8 +20,19 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TransactionDto>> CreateTransaction([FromBody] CreateTransactionRequestDto request)
+    public async Task<ActionResult<CreateTransactionResponseDto>> CreateTransaction([FromBody] CreateTransactionRequestDto request)
     {
+        // Validate required fields
+        if (request.Source == null)
+        {
+            throw new ArgumentException("Source is required");
+        }
+
+        if (string.IsNullOrEmpty(request.AssetId))
+        {
+            throw new ArgumentException("AssetId is required");
+        }
+
         // Validate source vault exists
         var vaultAccountId = request.Source.Id;
         var vaultAccount = await _context.VaultAccounts.FindAsync(vaultAccountId);
@@ -38,8 +49,8 @@ public class TransactionsController : ControllerBase
         }
 
         // Validate destination address
-        var destinationAddress = request.Destination.OneTimeAddress?.Address ?? string.Empty;
-        if (!ValidateAddressFormat(request.AssetId, destinationAddress))
+        var destinationAddress = request.Destination?.OneTimeAddress?.Address ?? string.Empty;
+        if (!string.IsNullOrEmpty(destinationAddress) && !ValidateAddressFormat(request.AssetId, destinationAddress))
         {
             throw new ArgumentException($"Invalid destination address format for asset {request.AssetId}");
         }
@@ -56,9 +67,16 @@ public class TransactionsController : ControllerBase
             VaultAccountId = vaultAccountId,
             AssetId = request.AssetId,
             Amount = amount,
+            RequestedAmount = amount,
             DestinationAddress = destinationAddress,
-            DestinationTag = request.Destination.OneTimeAddress?.Tag,
+            DestinationTag = request.Destination?.OneTimeAddress?.Tag,
+            DestinationType = request.Destination?.Type ?? "ONE_TIME_ADDRESS",
             State = TransactionState.SUBMITTED,
+            Note = request.Note,
+            ExternalTxId = request.ExternalTxId,
+            CustomerRefId = request.CustomerRefId,
+            Operation = request.Operation ?? "TRANSFER",
+            FeeCurrency = request.AssetId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -69,7 +87,11 @@ public class TransactionsController : ControllerBase
         _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} from vault {VaultAccountId}",
             transaction.Id, amount, request.AssetId, vaultAccountId);
 
-        return Ok(MapToDto(transaction));
+        return Ok(new CreateTransactionResponseDto
+        {
+            Id = transaction.Id,
+            Status = transaction.State.ToString()
+        });
     }
 
     [HttpGet]
@@ -77,7 +99,7 @@ public class TransactionsController : ControllerBase
         [FromQuery] string? status = null,
         [FromQuery] int limit = 100)
     {
-        var query = _context.Transactions.AsQueryable();
+        var query = _context.Transactions.Include(t => t.VaultAccount).AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
         {
@@ -96,7 +118,9 @@ public class TransactionsController : ControllerBase
     [HttpGet("{txId}")]
     public async Task<ActionResult<TransactionDto>> GetTransaction(string txId)
     {
-        var transaction = await _context.Transactions.FindAsync(txId);
+        var transaction = await _context.Transactions
+            .Include(t => t.VaultAccount)
+            .FirstOrDefaultAsync(t => t.Id == txId);
 
         if (transaction == null)
         {
@@ -106,8 +130,23 @@ public class TransactionsController : ControllerBase
         return Ok(MapToDto(transaction));
     }
 
+    [HttpGet("external_tx_id/{externalTxId}")]
+    public async Task<ActionResult<TransactionDto>> GetTransactionByExternalId(string externalTxId)
+    {
+        var transaction = await _context.Transactions
+            .Include(t => t.VaultAccount)
+            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId);
+
+        if (transaction == null)
+        {
+            throw new KeyNotFoundException($"Transaction with external ID {externalTxId} not found");
+        }
+
+        return Ok(MapToDto(transaction));
+    }
+
     [HttpPost("{txId}/cancel")]
-    public async Task<ActionResult<TransactionDto>> CancelTransaction(string txId)
+    public async Task<ActionResult<CancelTransactionResponseDto>> CancelTransaction(string txId)
     {
         var transaction = await _context.Transactions.FindAsync(txId);
 
@@ -122,15 +161,16 @@ public class TransactionsController : ControllerBase
         }
 
         transaction.TransitionTo(TransactionState.CANCELLED);
+        transaction.SubStatus = "CANCELLED_BY_USER";
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Cancelled transaction {TransactionId}", txId);
 
-        return Ok(MapToDto(transaction));
+        return Ok(new CancelTransactionResponseDto { Success = true });
     }
 
     [HttpPost("{txId}/freeze")]
-    public async Task<ActionResult<TransactionDto>> FreezeTransaction(string txId)
+    public async Task<ActionResult<FreezeTransactionResponseDto>> FreezeTransaction(string txId)
     {
         var transaction = await _context.Transactions.FindAsync(txId);
 
@@ -144,11 +184,11 @@ public class TransactionsController : ControllerBase
 
         _logger.LogInformation("Froze transaction {TransactionId}", txId);
 
-        return Ok(MapToDto(transaction));
+        return Ok(new FreezeTransactionResponseDto { Success = true });
     }
 
     [HttpPost("{txId}/unfreeze")]
-    public async Task<ActionResult<TransactionDto>> UnfreezeTransaction(string txId)
+    public async Task<ActionResult<FreezeTransactionResponseDto>> UnfreezeTransaction(string txId)
     {
         var transaction = await _context.Transactions.FindAsync(txId);
 
@@ -162,11 +202,11 @@ public class TransactionsController : ControllerBase
 
         _logger.LogInformation("Unfroze transaction {TransactionId}", txId);
 
-        return Ok(MapToDto(transaction));
+        return Ok(new FreezeTransactionResponseDto { Success = true });
     }
 
     [HttpPost("{txId}/drop")]
-    public async Task<ActionResult<object>> DropTransaction(string txId, [FromBody] CreateTransactionRequestDto? replacementRequest = null)
+    public async Task<ActionResult<DropTransactionResponseDto>> DropTransaction(string txId, [FromBody] CreateTransactionRequestDto? replacementRequest = null)
     {
         var transaction = await _context.Transactions.FindAsync(txId);
 
@@ -188,6 +228,7 @@ public class TransactionsController : ControllerBase
 
         // Mark original as replaced
         transaction.State = TransactionState.CANCELLED;
+        transaction.SubStatus = "DROPPED_BY_BLOCKCHAIN";
         transaction.FailureReason = "Replaced by higher fee transaction";
 
         // Create replacement transaction with higher fee
@@ -197,10 +238,14 @@ public class TransactionsController : ControllerBase
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
             Amount = transaction.Amount,
+            RequestedAmount = transaction.RequestedAmount,
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
+            DestinationType = transaction.DestinationType,
             State = TransactionState.SUBMITTED,
             NetworkFee = transaction.NetworkFee * 1.2m, // Increase fee by 20%
+            Operation = transaction.Operation,
+            FeeCurrency = transaction.FeeCurrency,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -213,13 +258,11 @@ public class TransactionsController : ControllerBase
         _logger.LogInformation("Dropped transaction {TransactionId} and created replacement {ReplacementId}",
             txId, replacement.Id);
 
-        var response = new
+        return Ok(new DropTransactionResponseDto
         {
-            original = MapToDto(transaction),
-            replacement = MapToDto(replacement)
-        };
-
-        return Ok(response);
+            Success = true,
+            Transactions = new List<string> { replacement.Id }
+        });
     }
 
     [HttpPost("estimate_fee")]
@@ -232,21 +275,43 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Asset {request.AssetId} not found");
         }
 
-        // Mock fee estimation
-        var baseFee = GetBaseFee(request.AssetId);
-
+        // Return fixed fee estimation values
         var response = new EstimateFeeResponseDto
         {
-            Low = new FeeEstimateDto { Fee = (baseFee * 0.8m).ToString("F8"), GasPrice = "20" },
-            Medium = new FeeEstimateDto { Fee = baseFee.ToString("F8"), GasPrice = "30" },
-            High = new FeeEstimateDto { Fee = (baseFee * 1.5m).ToString("F8"), GasPrice = "50" }
+            Low = new FeeEstimateDto
+            {
+                FeePerByte = "10",
+                GasPrice = "20000000000",
+                GasLimit = "21000",
+                NetworkFee = "0.00042",
+                BaseFee = "15000000000",
+                PriorityFee = "1000000000"
+            },
+            Medium = new FeeEstimateDto
+            {
+                FeePerByte = "20",
+                GasPrice = "30000000000",
+                GasLimit = "21000",
+                NetworkFee = "0.00063",
+                BaseFee = "15000000000",
+                PriorityFee = "2000000000"
+            },
+            High = new FeeEstimateDto
+            {
+                FeePerByte = "30",
+                GasPrice = "50000000000",
+                GasLimit = "21000",
+                NetworkFee = "0.00105",
+                BaseFee = "15000000000",
+                PriorityFee = "5000000000"
+            }
         };
 
         return Ok(response);
     }
 
     [HttpGet("validate_address/{assetId}/{address}")]
-    public async Task<ActionResult<object>> ValidateAddress(string assetId, string address)
+    public async Task<ActionResult<ValidateAddressResponseDto>> ValidateAddress(string assetId, string address)
     {
         var asset = await _context.Assets.FindAsync(assetId);
         if (asset == null)
@@ -255,11 +320,13 @@ public class TransactionsController : ControllerBase
         }
 
         bool isValid = ValidateAddressFormat(assetId, address);
+        bool requiresTag = assetId == "XRP" || assetId == "XLM";
 
-        var response = new
+        var response = new ValidateAddressResponseDto
         {
-            isValid,
-            addressType = isValid ? "PERMANENT" : (string?)null
+            IsValid = isValid,
+            IsActive = isValid,
+            RequiresTag = requiresTag
         };
 
         _logger.LogInformation("Validated address {Address} for asset {AssetId}: {IsValid}",
@@ -270,32 +337,75 @@ public class TransactionsController : ControllerBase
 
     private TransactionDto MapToDto(Transaction transaction)
     {
+        var createdAtUnix = (decimal)new DateTimeOffset(transaction.CreatedAt).ToUnixTimeMilliseconds();
+        var lastUpdatedUnix = (decimal)new DateTimeOffset(transaction.UpdatedAt).ToUnixTimeMilliseconds();
+        var amountStr = transaction.Amount.ToString("G29");
+        var networkFeeStr = transaction.NetworkFee.ToString("G29");
+        var serviceFeeStr = transaction.ServiceFee.ToString("G29");
+
         return new TransactionDto
         {
             Id = transaction.Id,
             AssetId = transaction.AssetId,
-            Source = new SourceDto
+            Source = new TransferPeerPathResponseDto
             {
-                Type = "VAULT_ACCOUNT",
-                Id = transaction.VaultAccountId
+                Type = transaction.SourceType,
+                Id = transaction.VaultAccountId,
+                Name = transaction.VaultAccount?.Name
             },
-            Destination = new DestinationDto
+            Destination = new TransferPeerPathResponseDto
             {
-                Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new OneTimeAddressDto
-                {
-                    Address = transaction.DestinationAddress,
-                    Tag = transaction.DestinationTag
-                }
+                Type = transaction.DestinationType,
+                Id = transaction.DestinationVaultAccountId
             },
-            Amount = transaction.Amount.ToString("F18"),
-            Fee = transaction.Fee.ToString("F18"),
-            NetworkFee = transaction.NetworkFee.ToString("F18"),
+            RequestedAmount = transaction.RequestedAmount.ToString("G29"),
+            Amount = amountStr,
+            NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString("G29"),
+            AmountUSD = null, // USD conversion not implemented
+            ServiceFee = serviceFeeStr,
+            NetworkFee = networkFeeStr,
+            CreatedAt = createdAtUnix,
+            LastUpdated = lastUpdatedUnix,
             Status = transaction.State.ToString(),
             TxHash = transaction.Hash,
-            CreatedAt = new DateTimeOffset(transaction.CreatedAt).ToUnixTimeMilliseconds(),
-            LastUpdated = new DateTimeOffset(transaction.UpdatedAt).ToUnixTimeMilliseconds(),
-            NumOfConfirmations = transaction.Confirmations
+            Tag = transaction.DestinationTag,
+            SubStatus = transaction.SubStatus,
+            DestinationAddress = transaction.DestinationAddress,
+            SourceAddress = transaction.SourceAddress,
+            DestinationAddressDescription = null,
+            DestinationTag = transaction.DestinationTag,
+            SignedBy = new List<string>(),
+            CreatedBy = null,
+            RejectedBy = null,
+            AddressType = "PERMANENT",
+            Note = transaction.Note,
+            ExchangeTxId = null,
+            FeeCurrency = transaction.FeeCurrency ?? transaction.AssetId,
+            Operation = transaction.Operation,
+            NetworkRecords = null,
+            AmlScreeningResult = null,
+            CustomerRefId = transaction.CustomerRefId,
+            NumOfConfirmations = transaction.Confirmations,
+            SignedMessages = null,
+            ExtraParameters = null,
+            ExternalTxId = transaction.ExternalTxId,
+            ReplacedTxHash = transaction.ReplacedByTxId != null ? transaction.Hash : null,
+            Destinations = null,
+            BlockInfo = new BlockInfoDto
+            {
+                BlockHeight = null,
+                BlockHash = null
+            },
+            AuthorizationInfo = null,
+            AmountInfo = new AmountInfoDto
+            {
+                Amount = amountStr,
+                RequestedAmount = transaction.RequestedAmount.ToString("G29"),
+                NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString("G29"),
+                AmountUSD = null
+            },
+            Index = null,
+            BlockchainIndex = null
         };
     }
 
@@ -306,18 +416,6 @@ public class TransactionsController : ControllerBase
             "BTC" => address.StartsWith("bc1") || address.StartsWith("1") || address.StartsWith("3"),
             "ETH" or "USDT" or "USDC" => address.StartsWith("0x") && address.Length == 42,
             _ => !string.IsNullOrWhiteSpace(address)
-        };
-    }
-
-    private decimal GetBaseFee(string assetId)
-    {
-        return assetId switch
-        {
-            "BTC" => 0.0001m,
-            "ETH" => 0.001m,
-            "USDT" => 0.0005m,
-            "USDC" => 0.0005m,
-            _ => 0.0001m
         };
     }
 }

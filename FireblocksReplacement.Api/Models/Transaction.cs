@@ -19,7 +19,7 @@ public class Transaction
 
     [Required]
     [MaxLength(20)]
-    public string SourceType { get; set; } = "EXTERNAL";
+    public string SourceType { get; set; } = "VAULT_ACCOUNT";
 
     [MaxLength(500)]
     public string? SourceAddress { get; set; }
@@ -29,7 +29,7 @@ public class Transaction
 
     [Required]
     [MaxLength(20)]
-    public string DestinationType { get; set; } = "EXTERNAL";
+    public string DestinationType { get; set; } = "ONE_TIME_ADDRESS";
 
     [MaxLength(50)]
     public string? DestinationVaultAccountId { get; set; }
@@ -37,6 +37,9 @@ public class Transaction
     [Required]
     [Column(TypeName = "decimal(36,18)")]
     public decimal Amount { get; set; }
+
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal RequestedAmount { get; set; }
 
     [Required]
     [MaxLength(500)]
@@ -49,6 +52,9 @@ public class Transaction
     public TransactionState State { get; set; } = TransactionState.SUBMITTED;
 
     [MaxLength(100)]
+    public string? SubStatus { get; set; }
+
+    [MaxLength(100)]
     public string? Hash { get; set; }
 
     [Column(TypeName = "decimal(36,18)")]
@@ -56,6 +62,9 @@ public class Transaction
 
     [Column(TypeName = "decimal(36,18)")]
     public decimal NetworkFee { get; set; } = 0;
+
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal ServiceFee { get; set; } = 0;
 
     public bool IsFrozen { get; set; } = false;
 
@@ -66,6 +75,21 @@ public class Transaction
     public string? ReplacedByTxId { get; set; }
 
     public int Confirmations { get; set; } = 0;
+
+    [MaxLength(1000)]
+    public string? Note { get; set; }
+
+    [MaxLength(100)]
+    public string? ExternalTxId { get; set; }
+
+    [MaxLength(100)]
+    public string? CustomerRefId { get; set; }
+
+    [MaxLength(50)]
+    public string Operation { get; set; } = "TRANSFER";
+
+    [MaxLength(20)]
+    public string? FeeCurrency { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

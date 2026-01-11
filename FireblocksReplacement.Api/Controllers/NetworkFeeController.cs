@@ -26,28 +26,35 @@ public class NetworkFeeController : ControllerBase
             throw new KeyNotFoundException($"Asset {assetId} not found");
         }
 
-        var baseFee = GetBaseFee(assetId);
-
+        // Return fixed fee estimation values
         var response = new NetworkFeeResponseDto
         {
-            AssetId = assetId,
-            Low = new FeeEstimateDto { Fee = (baseFee * 0.8m).ToString("F8"), GasPrice = "20" },
-            Medium = new FeeEstimateDto { Fee = baseFee.ToString("F8"), GasPrice = "30" },
-            High = new FeeEstimateDto { Fee = (baseFee * 1.5m).ToString("F8"), GasPrice = "50" }
+            Low = new FeeEstimateDto
+            {
+                FeePerByte = "10",
+                GasPrice = "20000000000",
+                NetworkFee = "0.00042",
+                BaseFee = "15000000000",
+                PriorityFee = "1000000000"
+            },
+            Medium = new FeeEstimateDto
+            {
+                FeePerByte = "20",
+                GasPrice = "30000000000",
+                NetworkFee = "0.00063",
+                BaseFee = "15000000000",
+                PriorityFee = "2000000000"
+            },
+            High = new FeeEstimateDto
+            {
+                FeePerByte = "30",
+                GasPrice = "50000000000",
+                NetworkFee = "0.00105",
+                BaseFee = "15000000000",
+                PriorityFee = "5000000000"
+            }
         };
 
         return Ok(response);
-    }
-
-    private decimal GetBaseFee(string assetId)
-    {
-        return assetId switch
-        {
-            "BTC" => 0.0001m,
-            "ETH" => 0.001m,
-            "USDT" => 0.0005m,
-            "USDC" => 0.0005m,
-            _ => 0.0001m
-        };
     }
 }

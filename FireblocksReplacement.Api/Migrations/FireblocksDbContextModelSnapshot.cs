@@ -103,7 +103,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "BTC",
-                            CreatedAt = new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 28, 10, 526, DateTimeKind.Utc).AddTicks(2150),
                             Decimals = 8,
                             IsActive = true,
                             Name = "Bitcoin",
@@ -114,7 +114,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "ETH",
-                            CreatedAt = new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 28, 10, 526, DateTimeKind.Utc).AddTicks(2160),
                             Decimals = 18,
                             IsActive = true,
                             Name = "Ethereum",
@@ -125,7 +125,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDT",
-                            CreatedAt = new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 28, 10, 526, DateTimeKind.Utc).AddTicks(2160),
                             Decimals = 6,
                             IsActive = true,
                             Name = "Tether",
@@ -136,7 +136,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDC",
-                            CreatedAt = new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2070),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 28, 10, 526, DateTimeKind.Utc).AddTicks(2160),
                             Decimals = 6,
                             IsActive = true,
                             Name = "USD Coin",
@@ -166,6 +166,10 @@ namespace FireblocksReplacement.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CustomerRefId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("DestinationAddress")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -184,12 +188,20 @@ namespace FireblocksReplacement.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ExternalTxId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("FailureReason")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Fee")
                         .HasColumnType("decimal(36,18)");
+
+                    b.Property<string>("FeeCurrency")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Hash")
                         .HasMaxLength(100)
@@ -201,9 +213,24 @@ namespace FireblocksReplacement.Api.Migrations
                     b.Property<decimal>("NetworkFee")
                         .HasColumnType("decimal(36,18)");
 
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("ReplacedByTxId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("RequestedAmount")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<decimal>("ServiceFee")
+                        .HasColumnType("decimal(36,18)");
 
                     b.Property<string>("SourceAddress")
                         .HasMaxLength(500)
@@ -221,6 +248,10 @@ namespace FireblocksReplacement.Api.Migrations
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("SubStatus")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
