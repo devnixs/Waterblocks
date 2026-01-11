@@ -13,6 +13,7 @@ Work summary:
 - Added SignalR hub and broadcast events for realtime admin updates.
 - Broadcasts now include payloads for transaction/vault upserts to avoid refetches.
 - Moved AdminHub definition into Program.cs to ensure it is tracked and compiled in CI.
+- Added asset metadata columns and startup seeding from all_fireblocks_assets.json.
 
 Files touched:
 - `FireblocksReplacement.Api/Controllers/VaultAccountsController.cs`
@@ -28,5 +29,9 @@ Files touched:
 - `FireblocksReplacement.Api/Migrations/20260111094500_AddTransactionSources.cs`
 - `FireblocksReplacement.Api/Migrations/20260111094500_AddTransactionSources.Designer.cs`
 - `FireblocksReplacement.Api/Migrations/FireblocksDbContextModelSnapshot.cs`
-- `FireblocksReplacement.Api/Hubs/AdminHub.cs`
 - `FireblocksReplacement.Api/Program.cs`
+- `FireblocksReplacement.Api/FireblocksReplacement.Api.csproj`
+- `FireblocksReplacement.Api/Models/Asset.cs`
+- `FireblocksReplacement.Api/Infrastructure/Db/FireblocksDbContext.cs`
+- `FireblocksReplacement.Api/Migrations/20260111102500_AddAssetMetadata.cs`
+- `FireblocksReplacement.Api/Migrations/20260111102500_AddAssetMetadata.Designer.cs`

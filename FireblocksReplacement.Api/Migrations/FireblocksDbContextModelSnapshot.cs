@@ -64,6 +64,10 @@ namespace FireblocksReplacement.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ContractAddress")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -77,6 +81,10 @@ namespace FireblocksReplacement.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NativeAsset")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
@@ -99,8 +107,9 @@ namespace FireblocksReplacement.Api.Migrations
                             Decimals = 8,
                             IsActive = true,
                             Name = "Bitcoin",
+                            NativeAsset = "BTC",
                             Symbol = "BTC",
-                            Type = "COIN"
+                            Type = "BASE_ASSET"
                         },
                         new
                         {
@@ -109,8 +118,9 @@ namespace FireblocksReplacement.Api.Migrations
                             Decimals = 18,
                             IsActive = true,
                             Name = "Ethereum",
+                            NativeAsset = "ETH",
                             Symbol = "ETH",
-                            Type = "COIN"
+                            Type = "BASE_ASSET"
                         },
                         new
                         {
@@ -119,8 +129,9 @@ namespace FireblocksReplacement.Api.Migrations
                             Decimals = 6,
                             IsActive = true,
                             Name = "Tether",
+                            NativeAsset = "ETH",
                             Symbol = "USDT",
-                            Type = "TOKEN"
+                            Type = "ERC20"
                         },
                         new
                         {
@@ -129,8 +140,9 @@ namespace FireblocksReplacement.Api.Migrations
                             Decimals = 6,
                             IsActive = true,
                             Name = "USD Coin",
+                            NativeAsset = "ETH",
                             Symbol = "USDC",
-                            Type = "TOKEN"
+                            Type = "ERC20"
                         });
                 });
 

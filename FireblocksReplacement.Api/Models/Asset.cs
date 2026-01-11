@@ -21,6 +21,12 @@ public class Asset
     [MaxLength(50)]
     public string? Type { get; set; }
 
+    [MaxLength(200)]
+    public string? ContractAddress { get; set; }
+
+    [MaxLength(50)]
+    public string? NativeAsset { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

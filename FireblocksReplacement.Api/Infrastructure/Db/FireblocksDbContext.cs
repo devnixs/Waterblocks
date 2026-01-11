@@ -67,11 +67,46 @@ public class FireblocksDbContext : DbContext
 
         // Seed some common assets
         modelBuilder.Entity<Asset>().HasData(
-            new Asset { AssetId = "BTC", Name = "Bitcoin", Symbol = "BTC", Decimals = 8, Type = "COIN", IsActive = true },
-            new Asset { AssetId = "ETH", Name = "Ethereum", Symbol = "ETH", Decimals = 18, Type = "COIN", IsActive = true },
-            new Asset { AssetId = "USDT", Name = "Tether", Symbol = "USDT", Decimals = 6, Type = "TOKEN", IsActive = true },
-            new Asset { AssetId = "USDC", Name = "USD Coin", Symbol = "USDC", Decimals = 6, Type = "TOKEN", IsActive = true }
+            new Asset
+            {
+                AssetId = "BTC",
+                Name = "Bitcoin",
+                Symbol = "BTC",
+                Decimals = 8,
+                Type = "BASE_ASSET",
+                NativeAsset = "BTC",
+                IsActive = true
+            },
+            new Asset
+            {
+                AssetId = "ETH",
+                Name = "Ethereum",
+                Symbol = "ETH",
+                Decimals = 18,
+                Type = "BASE_ASSET",
+                NativeAsset = "ETH",
+                IsActive = true
+            },
+            new Asset
+            {
+                AssetId = "USDT",
+                Name = "Tether",
+                Symbol = "USDT",
+                Decimals = 6,
+                Type = "ERC20",
+                NativeAsset = "ETH",
+                IsActive = true
+            },
+            new Asset
+            {
+                AssetId = "USDC",
+                Name = "USD Coin",
+                Symbol = "USDC",
+                Decimals = 6,
+                Type = "ERC20",
+                NativeAsset = "ETH",
+                IsActive = true
+            }
         );
     }
 }
-
