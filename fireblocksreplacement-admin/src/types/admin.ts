@@ -15,8 +15,10 @@ export interface AdminTransaction {
   sourceType: 'EXTERNAL' | 'INTERNAL';
   sourceAddress?: string;
   sourceVaultAccountId?: string;
+  sourceVaultAccountName?: string;
   destinationType: 'EXTERNAL' | 'INTERNAL';
   destinationVaultAccountId?: string;
+  destinationVaultAccountName?: string;
   amount: string;
   destinationAddress: string;
   destinationTag?: string;

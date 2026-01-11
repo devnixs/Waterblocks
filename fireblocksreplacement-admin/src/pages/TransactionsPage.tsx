@@ -29,6 +29,12 @@ export default function TransactionsPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
 
+  const formatVaultLabel = (id?: string, name?: string) => {
+    if (!id) return '—';
+    if (name) return `${name} (${id.slice(0, 8)}...)`;
+    return `${id.slice(0, 8)}...`;
+  };
+
   const displayedTransactions = useMemo(() => {
     const normalizedAsset = filterAsset.trim().toLowerCase();
     const normalizedId = filterId.trim().toLowerCase();
@@ -713,10 +719,12 @@ export default function TransactionsPage() {
               <td>{tx.assetId}</td>
               <td>{parseFloat(tx.amount).toFixed(4)}</td>
               <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {tx.vaultAccountId.substring(0, 8)}...
+                {formatVaultLabel(tx.vaultAccountId)}
               </td>
               <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {tx.destinationAddress.substring(0, 12)}...
+                {tx.destinationType === 'INTERNAL'
+                  ? formatVaultLabel(tx.destinationVaultAccountId, tx.destinationVaultAccountName)
+                  : `${tx.destinationAddress.substring(0, 12)}...`}
               </td>
               <td>{new Date(tx.createdAt).toLocaleString()}</td>
               <td>
@@ -793,15 +801,15 @@ export default function TransactionsPage() {
               {selectedTx.sourceType === 'EXTERNAL' ? (
                 <div><strong>Source Address:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.sourceAddress}</span></div>
               ) : (
-                <div><strong>Source Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.sourceVaultAccountId}</span></div>
+                <div><strong>Source Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.sourceVaultAccountId, selectedTx.sourceVaultAccountName)}</span></div>
               )}
               <div><strong>Amount:</strong> {selectedTx.amount}</div>
-              <div><strong>Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.vaultAccountId}</span></div>
+              <div><strong>Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.vaultAccountId)}</span></div>
               <div><strong>Destination Type:</strong> {selectedTx.destinationType}</div>
               {selectedTx.destinationType === 'EXTERNAL' ? (
                 <div><strong>Destination:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationAddress}</span></div>
               ) : (
-                <div><strong>Destination Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationVaultAccountId}</span></div>
+                <div><strong>Destination Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.destinationVaultAccountId, selectedTx.destinationVaultAccountName)}</span></div>
               )}
               {selectedTx.hash && <div><strong>Hash:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.hash}</span></div>}
               <div><strong>Fee:</strong> {selectedTx.fee}</div>

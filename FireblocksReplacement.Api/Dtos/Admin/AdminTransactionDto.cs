@@ -8,8 +8,10 @@ public class AdminTransactionDto
     public string SourceType { get; set; } = "EXTERNAL";
     public string? SourceAddress { get; set; }
     public string? SourceVaultAccountId { get; set; }
+    public string? SourceVaultAccountName { get; set; }
     public string DestinationType { get; set; } = "EXTERNAL";
     public string? DestinationVaultAccountId { get; set; }
+    public string? DestinationVaultAccountName { get; set; }
     public string Amount { get; set; } = "0";
     public string DestinationAddress { get; set; } = string.Empty;
     public string? DestinationTag { get; set; }

@@ -97,9 +97,10 @@ public class AutoTransitionService : BackgroundService
                 if (updated.Count > 0)
                 {
                     await db.SaveChangesAsync(stoppingToken);
+                    var vaultNameLookup = await BuildVaultNameLookupAsync(db, updated, stoppingToken);
                     foreach (var tx in updated)
                     {
-                        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(tx), stoppingToken);
+                        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(tx, vaultNameLookup), stoppingToken);
                     }
                     await _hub.Clients.All.SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
                 }
@@ -127,7 +128,7 @@ public class AutoTransitionService : BackgroundService
         };
     }
 
-    private static AdminTransactionDto MapToDto(Transaction transaction)
+    private static AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, string> vaultNameLookup)
     {
         return new AdminTransactionDto
         {
@@ -137,8 +138,10 @@ public class AutoTransitionService : BackgroundService
             SourceType = transaction.SourceType,
             SourceAddress = transaction.SourceAddress,
             SourceVaultAccountId = transaction.SourceVaultAccountId,
+            SourceVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.SourceVaultAccountId),
             DestinationType = transaction.DestinationType,
             DestinationVaultAccountId = transaction.DestinationVaultAccountId,
+            DestinationVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.DestinationVaultAccountId),
             Amount = transaction.Amount.ToString("F18"),
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
@@ -153,5 +156,37 @@ public class AutoTransitionService : BackgroundService
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt
         };
+    }
+
+    private static async Task<Dictionary<string, string>> BuildVaultNameLookupAsync(
+        FireblocksDbContext db,
+        IEnumerable<Transaction> transactions,
+        CancellationToken stoppingToken)
+    {
+        var vaultIds = transactions
+            .SelectMany(t => new[] { t.VaultAccountId, t.SourceVaultAccountId, t.DestinationVaultAccountId })
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id!)
+            .Distinct()
+            .ToList();
+
+        if (vaultIds.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        return await db.VaultAccounts
+            .Where(v => vaultIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, v => v.Name, stoppingToken);
+    }
+
+    private static string? ResolveVaultName(IReadOnlyDictionary<string, string> vaultNameLookup, string? vaultId)
+    {
+        if (string.IsNullOrWhiteSpace(vaultId))
+        {
+            return null;
+        }
+
+        return vaultNameLookup.TryGetValue(vaultId, out var name) ? name : null;
     }
 }

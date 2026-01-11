@@ -33,7 +33,8 @@ public class AdminTransactionsController : ControllerBase
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
-        var dtos = transactions.Select(MapToDto).ToList();
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transactions);
+        var dtos = transactions.Select(t => MapToDto(t, vaultNameLookup)).ToList();
         return Ok(AdminResponse<List<AdminTransactionDto>>.Success(dtos));
     }
 
@@ -49,7 +50,8 @@ public class AdminTransactionsController : ControllerBase
                 "TRANSACTION_NOT_FOUND"));
         }
 
-        return Ok(AdminResponse<AdminTransactionDto>.Success(MapToDto(transaction)));
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
+        return Ok(AdminResponse<AdminTransactionDto>.Success(MapToDto(transaction, vaultNameLookup)));
     }
 
     [HttpPost]
@@ -221,7 +223,8 @@ public class AdminTransactionsController : ControllerBase
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
-        var dto = MapToDto(transaction);
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
+        var dto = MapToDto(transaction, vaultNameLookup);
         await _hub.Clients.All.SendAsync("transactionUpserted", dto);
         await _hub.Clients.All.SendAsync("transactionsUpdated");
 
@@ -324,7 +327,8 @@ public class AdminTransactionsController : ControllerBase
         transaction.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction));
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
+        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
         await _hub.Clients.All.SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
@@ -394,7 +398,8 @@ public class AdminTransactionsController : ControllerBase
 
         transaction.TransitionTo(newState);
         await _context.SaveChangesAsync();
-        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction));
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
+        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
         await _hub.Clients.All.SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
@@ -409,7 +414,7 @@ public class AdminTransactionsController : ControllerBase
         return Ok(AdminResponse<TransactionStateDto>.Success(result));
     }
 
-    private AdminTransactionDto MapToDto(Transaction transaction)
+    private AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, string> vaultNameLookup)
     {
         return new AdminTransactionDto
         {
@@ -419,8 +424,10 @@ public class AdminTransactionsController : ControllerBase
             SourceType = transaction.SourceType,
             SourceAddress = transaction.SourceAddress,
             SourceVaultAccountId = transaction.SourceVaultAccountId,
+            SourceVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.SourceVaultAccountId),
             DestinationType = transaction.DestinationType,
             DestinationVaultAccountId = transaction.DestinationVaultAccountId,
+            DestinationVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.DestinationVaultAccountId),
             Amount = transaction.Amount.ToString("F18"),
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
@@ -435,6 +442,40 @@ public class AdminTransactionsController : ControllerBase
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt
         };
+    }
+
+    private async Task<Dictionary<string, string>> BuildVaultNameLookupAsync(IEnumerable<Transaction> transactions)
+    {
+        var vaultIds = transactions
+            .SelectMany(t => new[] { t.VaultAccountId, t.SourceVaultAccountId, t.DestinationVaultAccountId })
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id!)
+            .Distinct()
+            .ToList();
+
+        if (vaultIds.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        return await _context.VaultAccounts
+            .Where(v => vaultIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, v => v.Name);
+    }
+
+    private Task<Dictionary<string, string>> BuildVaultNameLookupAsync(Transaction transaction)
+    {
+        return BuildVaultNameLookupAsync(new[] { transaction });
+    }
+
+    private static string? ResolveVaultName(IReadOnlyDictionary<string, string> vaultNameLookup, string? vaultId)
+    {
+        if (string.IsNullOrWhiteSpace(vaultId))
+        {
+            return null;
+        }
+
+        return vaultNameLookup.TryGetValue(vaultId, out var name) ? name : null;
     }
 
     private static string NormalizeEndpointType(string? type)
