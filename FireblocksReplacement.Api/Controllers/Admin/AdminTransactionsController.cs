@@ -1,0 +1,344 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using FireblocksReplacement.Api.Infrastructure.Db;
+using FireblocksReplacement.Api.Models;
+using FireblocksReplacement.Api.Dtos.Admin;
+
+namespace FireblocksReplacement.Api.Controllers.Admin;
+
+[ApiController]
+[Route("admin/transactions")]
+public class AdminTransactionsController : ControllerBase
+{
+    private readonly FireblocksDbContext _context;
+    private readonly ILogger<AdminTransactionsController> _logger;
+
+    public AdminTransactionsController(FireblocksDbContext context, ILogger<AdminTransactionsController> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<AdminResponse<List<AdminTransactionDto>>>> GetTransactions()
+    {
+        var transactions = await _context.Transactions
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        var dtos = transactions.Select(MapToDto).ToList();
+        return Ok(AdminResponse<List<AdminTransactionDto>>.Success(dtos));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> GetTransaction(string id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<AdminTransactionDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        return Ok(AdminResponse<AdminTransactionDto>.Success(MapToDto(transaction)));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> CreateTransaction(
+        [FromBody] CreateAdminTransactionRequestDto request)
+    {
+        // Validate vault exists
+        var vault = await _context.VaultAccounts.FindAsync(request.VaultAccountId);
+        if (vault == null)
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                $"Vault account {request.VaultAccountId} not found",
+                "VAULT_NOT_FOUND"));
+        }
+
+        // Validate asset exists
+        var asset = await _context.Assets.FindAsync(request.AssetId);
+        if (asset == null)
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                $"Asset {request.AssetId} not found",
+                "ASSET_NOT_FOUND"));
+        }
+
+        if (!decimal.TryParse(request.Amount, out var amount) || amount <= 0)
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                "Invalid amount",
+                "INVALID_AMOUNT"));
+        }
+
+        var transaction = new Transaction
+        {
+            Id = Guid.NewGuid().ToString(),
+            VaultAccountId = request.VaultAccountId,
+            AssetId = request.AssetId,
+            Amount = amount,
+            DestinationAddress = request.DestinationAddress ?? "",
+            DestinationTag = request.DestinationTag,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Handle INCOMING vs OUTGOING
+        if (request.Type.ToUpper() == "INCOMING")
+        {
+            // Incoming transactions are automatically completed and update balance
+            transaction.State = TransactionState.COMPLETED;
+            transaction.Hash = $"0x{Guid.NewGuid():N}";
+            transaction.Confirmations = 6;
+
+            // Update wallet balance
+            var wallet = await _context.Wallets
+                .FirstOrDefaultAsync(w => w.VaultAccountId == request.VaultAccountId && w.AssetId == request.AssetId);
+
+            if (wallet == null)
+            {
+                // Create wallet if it doesn't exist
+                wallet = new Wallet
+                {
+                    VaultAccountId = request.VaultAccountId,
+                    AssetId = request.AssetId,
+                    Balance = 0,
+                    LockedAmount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Wallets.Add(wallet);
+            }
+
+            wallet.Balance += amount;
+            wallet.UpdatedAt = DateTime.UtcNow;
+
+            _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}, new balance: {Balance}",
+                transaction.Id, amount, request.AssetId, wallet.Balance);
+        }
+        else
+        {
+            // OUTGOING transactions start in specified state or SUBMITTED
+            if (!string.IsNullOrEmpty(request.InitialState) &&
+                Enum.TryParse<TransactionState>(request.InitialState, out var initialState))
+            {
+                transaction.State = initialState;
+            }
+            else
+            {
+                transaction.State = TransactionState.SUBMITTED;
+            }
+
+            _logger.LogInformation("Created OUTGOING transaction {TxId} in state {State}",
+                transaction.Id, transaction.State);
+        }
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        return Ok(AdminResponse<AdminTransactionDto>.Success(MapToDto(transaction)));
+    }
+
+    // Positive State Transitions
+    [HttpPost("{id}/approve")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> ApproveTransaction(string id)
+    {
+        return await TransitionTransaction(id, TransactionState.PENDING_AUTHORIZATION);
+    }
+
+    [HttpPost("{id}/sign")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> SignTransaction(string id)
+    {
+        return await TransitionTransaction(id, TransactionState.QUEUED);
+    }
+
+    [HttpPost("{id}/broadcast")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> BroadcastTransaction(string id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<TransactionStateDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        // Generate a mock transaction hash when broadcasting
+        if (string.IsNullOrEmpty(transaction.Hash))
+        {
+            transaction.Hash = $"0x{Guid.NewGuid():N}";
+        }
+
+        return await TransitionTransaction(id, TransactionState.BROADCASTING);
+    }
+
+    [HttpPost("{id}/confirm")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> ConfirmTransaction(string id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<TransactionStateDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        // Increment confirmations
+        transaction.Confirmations++;
+
+        return await TransitionTransaction(id, TransactionState.CONFIRMING);
+    }
+
+    [HttpPost("{id}/complete")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> CompleteTransaction(string id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<TransactionStateDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        // Set final confirmations
+        if (transaction.Confirmations == 0)
+        {
+            transaction.Confirmations = 6;
+        }
+
+        return await TransitionTransaction(id, TransactionState.COMPLETED);
+    }
+
+    // Failure Simulation Endpoints
+    [HttpPost("{id}/fail")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> FailTransaction(
+        string id,
+        [FromBody] FailTransactionRequestDto? request = null)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<TransactionStateDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        if (transaction.State.IsTerminal())
+        {
+            return BadRequest(AdminResponse<TransactionStateDto>.Failure(
+                $"Cannot fail transaction in terminal state {transaction.State}",
+                "INVALID_STATE_TRANSITION"));
+        }
+
+        transaction.State = TransactionState.FAILED;
+        transaction.FailureReason = request?.Reason ?? "NETWORK_ERROR";
+        transaction.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
+            id, transaction.FailureReason);
+
+        var result = new TransactionStateDto
+        {
+            Id = transaction.Id,
+            State = transaction.State.ToString()
+        };
+
+        return Ok(AdminResponse<TransactionStateDto>.Success(result));
+    }
+
+    [HttpPost("{id}/reject")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> RejectTransaction(string id)
+    {
+        return await TransitionTransaction(id, TransactionState.REJECTED);
+    }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> CancelTransaction(string id)
+    {
+        return await TransitionTransaction(id, TransactionState.CANCELLED);
+    }
+
+    [HttpPost("{id}/timeout")]
+    public async Task<ActionResult<AdminResponse<TransactionStateDto>>> TimeoutTransaction(string id)
+    {
+        return await TransitionTransaction(id, TransactionState.TIMEOUT);
+    }
+
+    private async Task<ActionResult<AdminResponse<TransactionStateDto>>> TransitionTransaction(
+        string id,
+        TransactionState newState)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return NotFound(AdminResponse<TransactionStateDto>.Failure(
+                $"Transaction {id} not found",
+                "TRANSACTION_NOT_FOUND"));
+        }
+
+        // Check if already in the target state (idempotent)
+        if (transaction.State == newState)
+        {
+            _logger.LogInformation("Transaction {TxId} already in state {State}",
+                id, newState);
+
+            var existingResult = new TransactionStateDto
+            {
+                Id = transaction.Id,
+                State = transaction.State.ToString()
+            };
+
+            return Ok(AdminResponse<TransactionStateDto>.Success(existingResult));
+        }
+
+        // Validate transition
+        if (!transaction.State.CanTransitionTo(newState))
+        {
+            return BadRequest(AdminResponse<TransactionStateDto>.Failure(
+                $"Invalid transition from {transaction.State} to {newState}",
+                "INVALID_STATE_TRANSITION"));
+        }
+
+        transaction.TransitionTo(newState);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
+            id, transaction.State, newState);
+
+        var result = new TransactionStateDto
+        {
+            Id = transaction.Id,
+            State = transaction.State.ToString()
+        };
+
+        return Ok(AdminResponse<TransactionStateDto>.Success(result));
+    }
+
+    private AdminTransactionDto MapToDto(Transaction transaction)
+    {
+        return new AdminTransactionDto
+        {
+            Id = transaction.Id,
+            VaultAccountId = transaction.VaultAccountId,
+            AssetId = transaction.AssetId,
+            Amount = transaction.Amount.ToString("F18"),
+            DestinationAddress = transaction.DestinationAddress,
+            DestinationTag = transaction.DestinationTag,
+            State = transaction.State.ToString(),
+            Hash = transaction.Hash,
+            Fee = transaction.Fee.ToString("F18"),
+            NetworkFee = transaction.NetworkFee.ToString("F18"),
+            IsFrozen = transaction.IsFrozen,
+            FailureReason = transaction.FailureReason,
+            ReplacedByTxId = transaction.ReplacedByTxId,
+            Confirmations = transaction.Confirmations,
+            CreatedAt = transaction.CreatedAt,
+            UpdatedAt = transaction.UpdatedAt
+        };
+    }
+}

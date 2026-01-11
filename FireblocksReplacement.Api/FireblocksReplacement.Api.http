@@ -1,0 +1,6 @@
+@FireblocksReplacement.Api_HostAddress = http://localhost:5124
+
+GET {{FireblocksReplacement.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
