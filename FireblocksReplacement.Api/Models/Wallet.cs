@@ -22,6 +22,21 @@ public class Wallet
     [Column(TypeName = "decimal(36,18)")]
     public decimal LockedAmount { get; set; } = 0;
 
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal Pending { get; set; } = 0;
+
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal Frozen { get; set; } = 0;
+
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal Staked { get; set; } = 0;
+
+    [MaxLength(100)]
+    public string? BlockHeight { get; set; }
+
+    [MaxLength(100)]
+    public string? BlockHash { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

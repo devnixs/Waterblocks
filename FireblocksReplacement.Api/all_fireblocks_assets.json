@@ -1,0 +1,6502 @@
+[
+  {
+    "id": "$BAR_$CHZ",
+    "name": "FC Barcelona ($CHZ)",
+    "type": "ERC20",
+    "contractAddress": "0xECc000EBd318bee2a052EB174A71fAF2C3c9e898",
+    "nativeAsset": "CHZ_$CHZ",
+    "decimals": 0
+  },
+  {
+    "id": "$DG",
+    "name": "Decentral.games",
+    "type": "ERC20",
+    "contractAddress": "0xEE06A81a695750E71a662B51066F2c74CF4478a0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "$WIF_SOL",
+    "name": "dogwifhat",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm"
+  },
+  {
+    "id": "1INCH",
+    "name": "1INCH Token",
+    "type": "ERC20",
+    "contractAddress": "0x111111111117dC0aa78b770fA6A738034120C302",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "1INCH_BSC",
+    "name": "1INCH Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x111111111117dC0aa78b770fA6A738034120C302",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "2GT",
+    "name": "2GT_token",
+    "type": "ERC20",
+    "contractAddress": "0xC96c1609A1a45CcC667B2b7FA6508e29617f7b69",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "7UT",
+    "name": "7EVEN Utility Token",
+    "type": "ERC20",
+    "contractAddress": "0xde50da7f5966eFe1869349ff2242D7AD932Eb785",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AAVE",
+    "name": "Aave Token",
+    "type": "ERC20",
+    "contractAddress": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AAVE_BSC",
+    "name": "Binance-Peg Aave Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xfb6115445Bff7b52FeB98650C87f44907E58f802",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "AAVE_E_AVAX",
+    "name": "Aave Token (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x63a72806098Bd3D9520cC43356dD78afe5D386D9",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "AAVE_POLYGON",
+    "name": "Aave (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0xD6DF932A45C0f255f85145f286eA0b292B21C90B",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  { "id": "ABA_USD", "name": "USD (ABA)", "type": "FIAT", "contractAddress": "", "nativeAsset": "ABA_USD", "decimals": 2 },
+  { "id": "ABSTRACT_ETH", "name": "ETH", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ABSTRACT_ETH", "decimals": 18 },
+  {
+    "id": "ABYSS",
+    "name": "The Abyss",
+    "type": "ERC20",
+    "contractAddress": "0x0E8d6b471e332F140e7d9dbB99E5E3822F728DA6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ACH",
+    "name": "Alchemy Pay",
+    "type": "ERC20",
+    "contractAddress": "0xEd04915c23f00A313a544955524EB7DBD823143d",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "ADA", "name": "ADA (Cardano)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ADA", "decimals": 6 },
+  {
+    "id": "ADA_BSC",
+    "name": "Binance-Peg Cardano (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "ADA_TEST", "name": "ADA Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ADA_TEST", "decimals": 6 },
+  {
+    "id": "ADAI",
+    "name": "Aave interest bearing DAI",
+    "type": "ERC20",
+    "contractAddress": "0x028171bCA77440897B824Ca71D1c56caC55b68A3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ADX",
+    "name": "AdEx Network",
+    "type": "ERC20",
+    "contractAddress": "0xADE00C28244d5CE17D72E40330B1c318cD12B7c3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AERO_BASECHAIN_ETH_33ZG",
+    "name": "Aerodrome",
+    "type": "ERC20",
+    "contractAddress": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AETH",
+    "name": "Aave Interest bearing ETH",
+    "type": "ERC20",
+    "contractAddress": "0x3a3A65aAb0dd2A17E3F1947bA16138cd37d08c04",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "AEVO", "name": "Aevo", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AEVO", "decimals": 18 },
+  {
+    "id": "AGI",
+    "name": "SingularityNET",
+    "type": "ERC20",
+    "contractAddress": "0x8eB24319393716668D768dCEC29356ae9CfFe285",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "AGIX",
+    "name": "SingularityNET Token",
+    "type": "ERC20",
+    "contractAddress": "0x5B7533812759B45C2B44C19e320ba2cD2681b542",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "AGLD",
+    "name": "Adventure Gold",
+    "type": "ERC20",
+    "contractAddress": "0x32353A6C91143bfd6C7d363B546e62a9A2489A20",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "AGNG_TEST", "name": "Agung (Testnet)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AGNG_TEST", "decimals": 18 },
+  {
+    "id": "AI16Z_SOL",
+    "name": "ai16z (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC"
+  },
+  {
+    "id": "AITECH_BSC_13CG",
+    "name": "AITECH",
+    "type": "BEP20",
+    "contractAddress": "0x2D060Ef4d6BF7f9e5edDe373Ab735513c0e4F944",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "AKASH", "name": "Akash", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AKASH", "decimals": 6 },
+  {
+    "id": "AKRO",
+    "name": "Akropolis",
+    "type": "ERC20",
+    "contractAddress": "0x8Ab7404063Ec4DBcfd4598215992DC3F8EC853d7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALCX",
+    "name": "Alchemix",
+    "type": "ERC20",
+    "contractAddress": "0xdBdb4d16EdA451D0503b854CF79D55697F90c8DF",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALD",
+    "name": "Aladdin Token",
+    "type": "ERC20",
+    "contractAddress": "0xb26C4B3Ca601136Daf98593feAeff9E0CA702a8D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALEPH",
+    "name": "aleph.im v2",
+    "type": "ERC20",
+    "contractAddress": "0x27702a26126e0B3702af63Ee09aC4d1A084EF628",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALEPH_ZERO_EVM",
+    "name": "Aleph Zero EVM",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ALEPH_ZERO_EVM",
+    "decimals": 18
+  },
+  {
+    "id": "ALEPH_ZERO_EVM_TEST",
+    "name": "Aleph Zero EVM Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ALEPH_ZERO_EVM_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "ALG",
+    "name": "Algory",
+    "type": "ERC20",
+    "contractAddress": "0x16B0a1a87ae8aF5C792faBC429C4FE248834842B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "ALGO", "name": "Algorand", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ALGO", "decimals": 6 },
+  { "id": "ALGO_TEST", "name": "Algorand Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ALGO_TEST", "decimals": 6 },
+  {
+    "id": "ALGO_USDC_2V6G",
+    "name": "USDC Test on Algorand",
+    "type": "ALGO_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ALGO_TEST",
+    "decimals": 6,
+    "issuerAddress": "10458941"
+  },
+  {
+    "id": "ALGO_USDC_UV4I",
+    "name": "USDC on Algorand",
+    "type": "ALGO_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ALGO",
+    "decimals": 6,
+    "issuerAddress": "31566704"
+  },
+  {
+    "id": "ALGO_USDT_I3ZH",
+    "name": "USDT on Algorand",
+    "type": "ALGO_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ALGO",
+    "decimals": 6,
+    "issuerAddress": "312769"
+  },
+  {
+    "id": "ALI",
+    "name": "Artificial Liquid Intelligence Token",
+    "type": "ERC20",
+    "contractAddress": "0x6B0b3a982b4634aC68dD83a4DBF02311cE324181",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALICE",
+    "name": "ALICE",
+    "type": "ERC20",
+    "contractAddress": "0xAC51066d7bEC65Dc4589368da368b212745d63E8",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "ALPACA_BSC",
+    "name": "AlpacaToken (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "ALPHA",
+    "name": "AlphaToken",
+    "type": "ERC20",
+    "contractAddress": "0xa1faa113cbE53436Df28FF0aEe54275c13B40975",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ALU_BSC",
+    "name": "Altura",
+    "type": "BEP20",
+    "contractAddress": "0x8263CD1601FE73C066bf49cc09841f35348e3be0",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "ALUSD",
+    "name": "Alchemix USD",
+    "type": "ERC20",
+    "contractAddress": "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AMB",
+    "name": "Ambrosus",
+    "type": "ERC20",
+    "contractAddress": "0x4DC3643DbC642b72C158E7F3d2ff232df61cb6CE",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AMOY_POLYGON_TEST",
+    "name": "Matic Gas Token (Polygon Test Amoy)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "AMOY_POLYGON_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "AMP",
+    "name": "Amp",
+    "type": "ERC20",
+    "contractAddress": "0xfF20817765cB7f73d4bde2e66e067E58D11095C2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AMPL",
+    "name": "Ampleforth",
+    "type": "ERC20",
+    "contractAddress": "0xD46bA6D942050d489DBd938a2C909A5d5039A161",
+    "nativeAsset": "ETH",
+    "decimals": 9
+  },
+  {
+    "id": "ANC",
+    "name": "Wrapped ANC Token",
+    "type": "ERC20",
+    "contractAddress": "0x0F3ADC247E91c3c50bC08721355A41037E89Bc20",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ANKR",
+    "name": "Ankr Network",
+    "type": "ERC20",
+    "contractAddress": "0x8290333ceF9e6D528dD5618Fb97a76f268f3EDD4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ANT",
+    "name": "Aragon",
+    "type": "ERC20",
+    "contractAddress": "0xa117000000f279D81A1D3cc75430fAA017FA5A2e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AOA",
+    "name": "Aurora.io (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0x9ab165D795019b6d8B3e971DdA91071421305e5a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "APE_ETH",
+    "name": "ApeCoin",
+    "type": "ERC20",
+    "contractAddress": "0x4d224452801ACEd8B2F0aebE155379bb5D594381",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "APECHAIN", "name": "Ape Coin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "APECHAIN", "decimals": 18 },
+  {
+    "id": "APECHAIN_TEST",
+    "name": "Ape Coin Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "APECHAIN_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "API3",
+    "name": "API3",
+    "type": "ERC20",
+    "contractAddress": "0x0b38210ea11411557c13457D4dA7dC6ea731B88a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "APR_BSC",
+    "name": "aPriori",
+    "type": "BEP20",
+    "contractAddress": "0x299AD4299Da5b2b93Fba4c96967B040C7F611099",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "APR_ETH",
+    "name": "aPriori",
+    "type": "ERC20",
+    "contractAddress": "0x5A9610919f5e81183823A2be4Bd1BeB2B4da2a20",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ARB_ARB_FRK9",
+    "name": "Arbitrum",
+    "type": "ERC20",
+    "contractAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "ARB_ETH_P9WI",
+    "name": "Arbitrum",
+    "type": "ERC20",
+    "contractAddress": "0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "ARC_TEST", "name": "usdc", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ARC_TEST", "decimals": 18 },
+  {
+    "id": "ARKM_ETH_O1ZA",
+    "name": "Arkham",
+    "type": "ERC20",
+    "contractAddress": "0x6E2a43be0B1d33b726f0CA3b8de60b3482b8b050",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ARPA",
+    "name": "ARPA Token",
+    "type": "ERC20",
+    "contractAddress": "0xBA50933C268F567BDC86E1aC131BE072C6B0b71a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ASH",
+    "name": "Burn",
+    "type": "ERC20",
+    "contractAddress": "0x64D91f12Ece7362F91A6f8E7940Cd55F05060b92",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ASM",
+    "name": "ASSEMBLE",
+    "type": "ERC20",
+    "contractAddress": "0x2565ae0385659badCada1031DB704442E1b69982",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AST",
+    "name": "AirSwap",
+    "type": "ERC20",
+    "contractAddress": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+    "nativeAsset": "ETH",
+    "decimals": 4
+  },
+  {
+    "id": "ASTER_B71VABWJ_SXBO",
+    "name": "Aster",
+    "type": "BEP20",
+    "contractAddress": "0x000Ae314E2A2172a039B26378814C252734f556A",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "ASTR_ASTR", "name": "Astar", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ASTR_ASTR", "decimals": 18 },
+  {
+    "id": "ASTR_TEST",
+    "name": "Shibuya (Astar Test)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ASTR_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "ATA",
+    "name": "Automata",
+    "type": "ERC20",
+    "contractAddress": "0xA2120b9e674d3fC3875f415A7DF52e382F141225",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ATOM",
+    "name": "Cosmos Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x0Eb3a705fc54725037CC9e008bDede697f62F335",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "ATOM_COS", "name": "Cosmos Hub", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ATOM_COS", "decimals": 6 },
+  {
+    "id": "ATOM_COS_TEST",
+    "name": "Cosmos Hub Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ATOM_COS_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "ATOM_PROVIDER_TEST",
+    "name": "Cosmos provider Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ATOM_PROVIDER_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "AUCTION",
+    "name": "Bounce Token",
+    "type": "ERC20",
+    "contractAddress": "0xA9B1Eb5908CfC3cdf91F9B8B3a74108598009096",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AUDIO",
+    "name": "Audius",
+    "type": "ERC20",
+    "contractAddress": "0x18aAA7115705e8be94bfFEBDE57Af9BFc265B998",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "AURORA_DEV", "name": "Aurora.dev", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AURORA_DEV", "decimals": 18 },
+  {
+    "id": "AUSDC_ETH",
+    "name": "Aave interest bearing USDC (V2)",
+    "type": "ERC20",
+    "contractAddress": "0xBcca60bB61934080951369a648Fb03DF4F96263C",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  { "id": "AVAX", "name": "Avalanche (C-Chain)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AVAX", "decimals": 18 },
+  {
+    "id": "AVAX_BSC",
+    "name": "Avalanche (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x1CE0c2827e2eF14D5C4f29a091d735A204794041",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "AVAXTEST", "name": "Avalanche Fuji", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AVAXTEST", "decimals": 18 },
+  {
+    "id": "AWBTC",
+    "name": "Aave interest bearing WBTC",
+    "type": "ERC20",
+    "contractAddress": "0x9ff58f4fFB29fA2266Ab25e75e2A8b3503311656",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "AWETH",
+    "name": "Aave interest bearing WETH",
+    "type": "ERC20",
+    "contractAddress": "0x030bA81f1c18d280636F32af80b9AAd02Cf0854e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "AXL", "name": "Axelar", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AXL", "decimals": 6 },
+  { "id": "AXL_TEST", "name": "Axelar Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "AXL_TEST", "decimals": 6 },
+  {
+    "id": "AXS",
+    "name": "Axie Infinity Shard",
+    "type": "ERC20",
+    "contractAddress": "0xBB0E17EF65F82Ab018d8EDd776e8DD940327B28b",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AXS_BSC",
+    "name": "Axie Infinity Shard (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x715D400F88C167884bbCc41C5FeA407ed4D2f8A0",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "AXS_L",
+    "name": "Axie Infinity Shard (Old)",
+    "type": "ERC20",
+    "contractAddress": "0xF5D669627376EBd411E34b98F19C868c8ABA5ADA",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "AXS_RON",
+    "name": "Axie Infinity Shard (Ronin)",
+    "type": "ERC20",
+    "contractAddress": "0x97a9107C1793BC407d6F527b77e7fff4D812bece",
+    "nativeAsset": "RON",
+    "decimals": 18
+  },
+  {
+    "id": "B2M_ERC20",
+    "name": "Bit2Me Token",
+    "type": "ERC20",
+    "contractAddress": "0xd7c302fc3ac829C7E896a32c4Bd126f3e8Bd0a1f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BABYLON", "name": "Babylon", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BABYLON", "decimals": 6 },
+  {
+    "id": "BABYLON_TEST",
+    "name": "Babylon Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BABYLON_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "BADGER",
+    "name": "Badger",
+    "type": "ERC20",
+    "contractAddress": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BAKE",
+    "name": "BAKE",
+    "type": "BEP20",
+    "contractAddress": "0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BAL",
+    "name": "Balancer",
+    "type": "ERC20",
+    "contractAddress": "0xba100000625a3754423978a60c9317c58a424e3D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BAND",
+    "name": "BandToken",
+    "type": "ERC20",
+    "contractAddress": "0xBA11D00c5f74255f56a5E366F4F77f5A186d7f55",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BASECHAIN_ETH",
+    "name": "Ethereum (Base)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BASECHAIN_ETH_TEST5",
+    "name": "Base Sepolia",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BASECHAIN_ETH_TEST5",
+    "decimals": 18
+  },
+  {
+    "id": "BAT",
+    "name": "Basic Attn.",
+    "type": "ERC20",
+    "contractAddress": "0x0D8775F648430679A709E98d2b0Cb6250d2887EF",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BBTC",
+    "name": "Binance Wrapped BTC",
+    "type": "ERC20",
+    "contractAddress": "0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "BCH", "name": "Bitcoin Cash", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BCH", "decimals": 8 },
+  {
+    "id": "BCH_BSC",
+    "name": "Binance-Peg Bitcoin Cash Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "BCH_TEST", "name": "Bitcoin Cash Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BCH_TEST", "decimals": 8 },
+  {
+    "id": "BCPT",
+    "name": "BlackMason",
+    "type": "ERC20",
+    "contractAddress": "0x1c4481750daa5Ff521A2a7490d9981eD46465Dbd",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BDOT",
+    "name": "Binance Wrapped DOT",
+    "type": "ERC20",
+    "contractAddress": "0x7884F51dC1410387371ce61747CB6264E1dAeE0B",
+    "nativeAsset": "ETH",
+    "decimals": 10
+  },
+  {
+    "id": "BEL",
+    "name": "Bella",
+    "type": "ERC20",
+    "contractAddress": "0xA91ac63D040dEB1b7A5E4d4134aD23eb0ba07e14",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BERACHAIN", "name": "Berachain", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BERACHAIN", "decimals": 18 },
+  {
+    "id": "BERACHAIN_ARTIO_TEST",
+    "name": "Berachain Artio Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BERACHAIN_ARTIO_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BERACHAIN_TEST",
+    "name": "Berachain Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BERACHAIN_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BETA",
+    "name": "Beta Token",
+    "type": "ERC20",
+    "contractAddress": "0xBe1a001FE942f96Eea22bA08783140B9Dcc09D28",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BETH_BSC",
+    "name": "Binance Beacon ETH (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x250632378E573c6Be1AC2f97Fcdf00515d0Aa91B",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BICO",
+    "name": "Biconomy Token",
+    "type": "ERC20",
+    "contractAddress": "0xF17e65822b568B3903685a7c9F496CF7656Cc6C2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BIT",
+    "name": "BitDAO",
+    "type": "ERC20",
+    "contractAddress": "0x1A4b46696b2bB4794Eb3D4c26f1c55F9170fa4C5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BIX",
+    "name": "Bibox Token",
+    "type": "ERC20",
+    "contractAddress": "0xb3104b4B9Da82025E8b9F8Fb28b3553ce2f67069",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BKX",
+    "name": "BANKEX",
+    "type": "ERC20",
+    "contractAddress": "0x45245bc59219eeaAF6cD3f382e078A461FF9De7B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BLAST", "name": "Blast Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BLAST", "decimals": 18 },
+  { "id": "BLINC_CAD", "name": "Blinc CAD", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_CAD", "decimals": 2 },
+  { "id": "BLINC_CHF", "name": "Blinc CHF", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_CHF", "decimals": 2 },
+  { "id": "BLINC_EUR", "name": "Blinc EUR", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_EUR", "decimals": 2 },
+  { "id": "BLINC_GBP", "name": "Blinc GBP", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_GBP", "decimals": 2 },
+  { "id": "BLINC_JPY", "name": "Blinc JPY", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_JPY", "decimals": 2 },
+  { "id": "BLINC_SGD", "name": "Blinc SGD", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_SGD", "decimals": 2 },
+  {
+    "id": "BLINC_TEST_CAD",
+    "name": "Blinc CAD Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_CAD",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_CHF",
+    "name": "Blinc CHF Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_CHF",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_EUR",
+    "name": "Blinc EUR Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_EUR",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_GBP",
+    "name": "Blinc GBP Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_GBP",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_JPY",
+    "name": "Blinc JPY Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_JPY",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_SGD",
+    "name": "Blinc SGD Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_SGD",
+    "decimals": 2
+  },
+  {
+    "id": "BLINC_TEST_USD",
+    "name": "Blinc USD Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "BLINC_TEST_USD",
+    "decimals": 2
+  },
+  { "id": "BLINC_USD", "name": "Blinc USD", "type": "FIAT", "contractAddress": "", "nativeAsset": "BLINC_USD", "decimals": 2 },
+  {
+    "id": "BLUR_ETH_JPSA",
+    "name": "Blur",
+    "type": "ERC20",
+    "contractAddress": "0x5283D291DBCF85356A21bA090E6db59121208b44",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BLZ",
+    "name": "Bluzelle",
+    "type": "ERC20",
+    "contractAddress": "0x5732046A883704404F284Ce41FfADd5b007FD668",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BNB_BSC", "name": "BNB Smart Chain", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BNB_BSC", "decimals": 18 },
+  {
+    "id": "BNB_ERC20",
+    "name": "BNB (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BNB_TEST",
+    "name": "BNB Smart Chain Testnet",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BNB_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BNT",
+    "name": "Bancor",
+    "type": "ERC20",
+    "contractAddress": "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BOB_CHAIN", "name": "Bob", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BOB_CHAIN", "decimals": 18 },
+  {
+    "id": "BOB_CHAIN_TEST",
+    "name": "Bob Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BOB_CHAIN_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BOND",
+    "name": "BarnBridge Governance Token",
+    "type": "ERC20",
+    "contractAddress": "0x0391D2021f89DC339F60Fff84546EA23E337750f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BONE",
+    "name": "BONE SHIBASWAP",
+    "type": "ERC20",
+    "contractAddress": "0x9813037ee2218799597d83D4a5B6F3b6778218d9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BONK_SOL",
+    "name": "Bonk_Solana_",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 5,
+    "issuerAddress": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+  },
+  {
+    "id": "BOO_FANTOM",
+    "name": "SpookyToken (Fantom)",
+    "type": "ERC20",
+    "contractAddress": "0x841FAD6EAe12c286d1Fd18d1d525DFfA75C7EFFE",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 18
+  },
+  {
+    "id": "BOSON",
+    "name": "Boson Token",
+    "type": "ERC20",
+    "contractAddress": "0xC477D038d5420C6A9e0b031712f61c5120090de9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BOT",
+    "name": "Bounce Token",
+    "type": "ERC20",
+    "contractAddress": "0x5bEaBAEBB3146685Dd74176f68a0721F91297D37",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "BOTANIX_ETH", "name": "Botanix", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BOTANIX_ETH", "decimals": 18 },
+  {
+    "id": "BOTANIX_ETH_TEST",
+    "name": "Botanix Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "BOTANIX_ETH_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BOXX",
+    "name": "BOXX Token",
+    "type": "ERC20",
+    "contractAddress": "0x780116D91E5592E58a3b3c76A351571b39abCEc6",
+    "nativeAsset": "ETH",
+    "decimals": 15
+  },
+  {
+    "id": "BPRO_RBTC",
+    "name": "BitPro (RSK)",
+    "type": "ERC20",
+    "contractAddress": "0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8",
+    "nativeAsset": "RBTC",
+    "decimals": 18
+  },
+  {
+    "id": "BRD",
+    "name": "Bread",
+    "type": "ERC20",
+    "contractAddress": "0x558EC3152e2eb2174905cd19AeA4e34A23DE9aD6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BRZ",
+    "name": "BRZ Token (ETH)",
+    "type": "ERC20",
+    "contractAddress": "0x420412E765BFa6d85aaaC94b4f7b708C89be2e2B",
+    "nativeAsset": "ETH",
+    "decimals": 4
+  },
+  { "id": "BSV", "name": "Bitcoin SV", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BSV", "decimals": 8 },
+  { "id": "BSV_TEST", "name": "Bitcoin SV Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BSV_TEST", "decimals": 8 },
+  { "id": "BTC", "name": "Bitcoin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BTC", "decimals": 8 },
+  {
+    "id": "BTC_FTM",
+    "name": "Bitcoin (Fantom)",
+    "type": "ERC20",
+    "contractAddress": "0x321162Cd933E2Be498Cd2267a90534A804051b11",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 8
+  },
+  { "id": "BTC_TEST", "name": "Bitcoin Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BTC_TEST", "decimals": 8 },
+  {
+    "id": "BTCB_BSC",
+    "name": "Binance-Peg BTCB Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BTRST",
+    "name": "BTRST token",
+    "type": "ERC20",
+    "contractAddress": "0x799ebfABE77a6E34311eeEe9825190B9ECe32824",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BTT_BSC",
+    "name": "BitTorrent (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x8595F9dA7b868b1822194fAEd312235E43007b49",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BUIDL_ETH_X3N7",
+    "name": "BlackRock USD Institutional Digital Liquidity Fund",
+    "type": "ERC20",
+    "contractAddress": "0x7712c34205737192402172409a8F7ccef8aA2AEc",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "BURGER_BSC",
+    "name": "Burger Swap (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xAe9269f27437f0fcBC232d39Ec814844a51d6b8f",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BUSD",
+    "name": "Binance USD",
+    "type": "ERC20",
+    "contractAddress": "0x4Fabb145d64652a948d72533023f6E7A623C7C53",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BUSD_BSC",
+    "name": "Binance-Peg BUSD (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "BUSD_BSC_TEST",
+    "name": "Binance USD (BSC Test)",
+    "type": "BEP20",
+    "contractAddress": "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
+    "nativeAsset": "BNB_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "BXX",
+    "name": "Baanx",
+    "type": "ERC20",
+    "contractAddress": "0x54F9b4B4485543A815c51c412a9E20436A06491d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "BZZ",
+    "name": "BZZ",
+    "type": "ERC20",
+    "contractAddress": "0x19062190B1925b5b6689D7073fDfC8c2976EF8Cb",
+    "nativeAsset": "ETH",
+    "decimals": 16
+  },
+  {
+    "id": "C20",
+    "name": "Crypto20",
+    "type": "ERC20",
+    "contractAddress": "0x26E75307Fc0C021472fEb8F727839531F112f317",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CAKE_BSC",
+    "name": "PancakeSwap Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "CAMINO", "name": "Camino", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CAMINO", "decimals": 18 },
+  {
+    "id": "CAMINO_COLUMBUS_TEST",
+    "name": "Camino Columbus Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "CAMINO_COLUMBUS_TEST",
+    "decimals": 18
+  },
+  { "id": "CANTO", "name": "Canto", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CANTO", "decimals": 18 },
+  { "id": "CANTO_TEST", "name": "Canto Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CANTO_TEST", "decimals": 18 },
+  { "id": "CANVAS_TEST", "name": "Canvas Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CANVAS_TEST", "decimals": 18 },
+  {
+    "id": "CAPS",
+    "name": "Capsule Coin",
+    "type": "ERC20",
+    "contractAddress": "0x03Be5C903c727Ee2C8C4e9bc0AcC860Cca4715e2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CAT_B71VABWJ_BY1A",
+    "name": "Simons Cat",
+    "type": "BEP20",
+    "contractAddress": "0x6894CDe390a3f51155ea41Ed24a33A4827d3063D",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "CATI_TON",
+    "name": "Catizen (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 9,
+    "issuerAddress": "EQD-cvR0Nz6XAyRBvbhz-abTrRC6sI5tvHvvpeQraV9UAAD7"
+  },
+  {
+    "id": "CAVE_SOL",
+    "name": "Crypto Cavemen (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "4SZjjNABoqhbd4hnapbvoEPEqT8mnNkfbEoAwALf1V8t"
+  },
+  {
+    "id": "CBBTC_B6QT1TZK_9XC8",
+    "name": "Coinbase Wrapped BTC",
+    "type": "ERC20",
+    "contractAddress": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CBBTC_B609K9QB_0N6V",
+    "name": "Coinbase Wrapped BTC",
+    "type": "ERC20",
+    "contractAddress": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CBK",
+    "name": "Cobak Token",
+    "type": "ERC20",
+    "contractAddress": "0xD85a6Ae55a7f33B0ee113C234d2EE308EdeAF7fD",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CDAI",
+    "name": "cDAI",
+    "type": "COMPOUND",
+    "contractAddress": "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CEL",
+    "name": "Celsius",
+    "type": "ERC20",
+    "contractAddress": "0xaaAEBE6Fe48E54f431b0C390CfaF0b017d09D42d",
+    "nativeAsset": "ETH",
+    "decimals": 4
+  },
+  { "id": "CELESTIA", "name": "Celestia", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CELESTIA", "decimals": 6 },
+  {
+    "id": "CELESTIA_TEST",
+    "name": "Celestia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "CELESTIA_TEST",
+    "decimals": 6
+  },
+  { "id": "CELO", "name": "Celo", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CELO", "decimals": 18 },
+  { "id": "CELO_ALF", "name": "Celo Alfajores", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CELO_ALF", "decimals": 18 },
+  { "id": "CELO_BAK", "name": "Celo Baklava", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CELO_BAK", "decimals": 18 },
+  {
+    "id": "CELO_TEST",
+    "name": "Celo Sepolia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "CELO_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "CELR",
+    "name": "CelerToken",
+    "type": "ERC20",
+    "contractAddress": "0x4F9254C83EB525f9FCf346490bbb3ed28a81C667",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CERE_ERC20",
+    "name": "CERE Network",
+    "type": "ERC20",
+    "contractAddress": "0x2dA719DB753dFA10a62E140f436E1d67F2ddB0d6",
+    "nativeAsset": "ETH",
+    "decimals": 10
+  },
+  {
+    "id": "CETH",
+    "name": "cEther",
+    "type": "COMPOUND",
+    "contractAddress": "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CEUR_CELO",
+    "name": "Celo Euro",
+    "type": "ERC20",
+    "contractAddress": "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+    "nativeAsset": "CELO",
+    "decimals": 18
+  },
+  { "id": "CFG", "name": "Centrifuge", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CFG", "decimals": 18 },
+  {
+    "id": "CHAIN",
+    "name": "Chain Games",
+    "type": "ERC20",
+    "contractAddress": "0xC4C2614E694cF534D407Ee49F8E44D125E4681c4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CHESS_BSC",
+    "name": "Tranchess (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x20de22029ab63cf9A7Cf5fEB2b737Ca1eE4c82A6",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "CHICKS_SOL",
+    "name": "SolChicks",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "cxxShYRVcepDudXhe7U62QHvw8uBJoKFifmzggGKVC2"
+  },
+  {
+    "id": "CHR",
+    "name": "Chromia",
+    "type": "ERC20",
+    "contractAddress": "0x8A2279d4A90B6fe1C4B30fa660cC9f926797bAA2",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "CHR_BSC",
+    "name": "Chroma (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xf9CeC8d50f6c8ad3Fb6dcCEC577e05aA32B224FE",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 6
+  },
+  {
+    "id": "CHZ",
+    "name": "Chiliz (ETH)",
+    "type": "ERC20",
+    "contractAddress": "0x3506424F91fD33084466F402d5D97f05F8e3b4AF",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "CHZ_$CHZ", "name": "Chiliz ($CHZ)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CHZ_$CHZ", "decimals": 18 },
+  { "id": "CHZ_CHZ2", "name": "Chiliz", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CHZ_CHZ2", "decimals": 18 },
+  {
+    "id": "CHZ_CHZ2_TEST",
+    "name": "Chiliz Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "CHZ_CHZ2_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "CLV",
+    "name": "Clover",
+    "type": "ERC20",
+    "contractAddress": "0x80C62FE4487E1351b47Ba49809EBD60ED085bf52",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CND",
+    "name": "Cindicator",
+    "type": "ERC20",
+    "contractAddress": "0xd4c435F5B09F855C3317c8524Cb1F586E42795fa",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "CODEX", "name": "Codex", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CODEX", "decimals": 18 },
+  { "id": "CODEX_TEST", "name": "Codex Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CODEX_TEST", "decimals": 18 },
+  {
+    "id": "COMP",
+    "name": "Compound Token",
+    "type": "ERC20",
+    "contractAddress": "0xc00e94Cb662C3520282E6f5717214004A7f26888",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "COMP_BSC",
+    "name": "Binance-Peg Compound Coin (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x52CE071Bd9b1C4B00A0b92D298c512478CaD67e8",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "CORE_COREDAO", "name": "Core DAO", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CORE_COREDAO", "decimals": 18 },
+  {
+    "id": "CORE_COREDAO_TEST",
+    "name": "Core DAO Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "CORE_COREDAO_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "COS_TEST_USD",
+    "name": "Cross River USD Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "COS_TEST_USD",
+    "decimals": 2
+  },
+  { "id": "COS_USD", "name": "Cross River USD", "type": "FIAT", "contractAddress": "", "nativeAsset": "COS_USD", "decimals": 2 },
+  {
+    "id": "COTI",
+    "name": "COTI Token",
+    "type": "ERC20",
+    "contractAddress": "0xDDB3422497E61e13543BeA06989C0789117555c5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CPOOL",
+    "name": "Clearpool",
+    "type": "ERC20",
+    "contractAddress": "0x66761Fa41377003622aEE3c7675Fc7b5c1C2FaC5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CQT",
+    "name": "Covalent Query Token",
+    "type": "ERC20",
+    "contractAddress": "0xD417144312DbF50465b1C641d016962017Ef6240",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CRE",
+    "name": "CarryToken",
+    "type": "ERC20",
+    "contractAddress": "0x115eC79F1de567eC68B7AE7eDA501b406626478e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CREAM",
+    "name": "Cream",
+    "type": "ERC20",
+    "contractAddress": "0x2ba592F78dB6436527729929AAf6c908497cB200",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CRO",
+    "name": "Crypto.com",
+    "type": "ERC20",
+    "contractAddress": "0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "CRONOS", "name": "Cronos", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CRONOS", "decimals": 18 },
+  { "id": "CRONOS_TEST", "name": "Cronos Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "CRONOS_TEST", "decimals": 18 },
+  {
+    "id": "CRP_SOL",
+    "name": "CropperFinance (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "DubwWZNWiNGMMeeQHPnMATNj77YZPZSAz2WVR5WjLJqz"
+  },
+  {
+    "id": "CRPT_OLD",
+    "name": "Crypterium (Old)",
+    "type": "ERC20",
+    "contractAddress": "0x80A7E048F37A50500351C204Cb407766fA3baE7f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CRU",
+    "name": "CRUST",
+    "type": "ERC20",
+    "contractAddress": "0x32a7C02e79c4ea1008dD6564b35F131428673c41",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CRV",
+    "name": "Curve DAO Token",
+    "type": "ERC20",
+    "contractAddress": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CTC",
+    "name": "Gluwa Creditcoin Vesting Token",
+    "type": "ERC20",
+    "contractAddress": "0xa3EE21C306A700E682AbCdfe9BaA6A08F3820419",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CTI",
+    "name": "ClinTex",
+    "type": "ERC20",
+    "contractAddress": "0x8c18D6a985Ef69744b9d57248a45c0861874f244",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CTSI",
+    "name": "Cartesi Token",
+    "type": "ERC20",
+    "contractAddress": "0x491604c0FDF08347Dd1fa4Ee062a822A5DD06B5D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CTX",
+    "name": "Cryptex",
+    "type": "ERC20",
+    "contractAddress": "0x321C2fE4446C7c963dc41Dd58879AF648838f98D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CUDOS",
+    "name": "CudosToken",
+    "type": "ERC20",
+    "contractAddress": "0x817bbDbC3e8A1204f3691d14bB44992841e3dB35",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CUSD_CELO",
+    "name": "Celo Dollar",
+    "type": "ERC20",
+    "contractAddress": "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+    "nativeAsset": "CELO",
+    "decimals": 18
+  },
+  {
+    "id": "CUSDC",
+    "name": "Compound USD Coin",
+    "type": "COMPOUND",
+    "contractAddress": "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CUSDT_ERC20",
+    "name": "cTether",
+    "type": "COMPOUND",
+    "contractAddress": "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CVC",
+    "name": "Civic",
+    "type": "ERC20",
+    "contractAddress": "0x41e5560054824eA6B0732E656E3Ad64E20e94E45",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "CVX",
+    "name": "CVX",
+    "type": "ERC20",
+    "contractAddress": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CVXCRV",
+    "name": "cvxCRV",
+    "type": "ERC20",
+    "contractAddress": "0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "CXT_B6QT1TZK_3BEN",
+    "name": "Covalent X Token",
+    "type": "ERC20",
+    "contractAddress": "0x7ABc8A5768E6bE61A6c693a6e4EAcb5B60602C4D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DACS",
+    "name": "DACSEE",
+    "type": "ERC20",
+    "contractAddress": "0xA31108E5BAB5494560Db34c95492658AF239357C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DAI",
+    "name": "Dai",
+    "type": "ERC20",
+    "contractAddress": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DAI_BSC",
+    "name": "Dai BSC Token",
+    "type": "BEP20",
+    "contractAddress": "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "DAI_E",
+    "name": "Dai Stablecoin (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "DAI_FANTOM",
+    "name": "Dai Stablecoin (Fantom)",
+    "type": "ERC20",
+    "contractAddress": "0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 18
+  },
+  {
+    "id": "DAI_POLYGON",
+    "name": "(PoS) Dai Stablecoin (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "DAO",
+    "name": "DAO Maker",
+    "type": "ERC20",
+    "contractAddress": "0x0f51bb10119727a7e5eA3538074fb341F56B09Ad",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "DASH", "name": "Dash", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DASH", "decimals": 8 },
+  { "id": "DASH_TEST", "name": "Dash Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DASH_TEST", "decimals": 8 },
+  {
+    "id": "DATA",
+    "name": "Streamr Data",
+    "type": "ERC20",
+    "contractAddress": "0x0Cf0Ee63788A0849fE5297F3407f701E122cC023",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DATA_ERC20",
+    "name": "Streamr",
+    "type": "ERC20",
+    "contractAddress": "0x8f693ca8D21b157107184d29D398A8D082b38b76",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "DCFG_TEST", "name": "Centrifuge Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DCFG_TEST", "decimals": 18 },
+  {
+    "id": "DEEPBOOK_SUI",
+    "name": "DeepBook Token",
+    "type": "SUI_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SUI",
+    "decimals": 6,
+    "issuerAddress": "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP"
+  },
+  {
+    "id": "DEGO",
+    "name": "dego.finance",
+    "type": "ERC20",
+    "contractAddress": "0x88EF27e69108B2633F8E1C184CC37940A075cC02",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DENT",
+    "name": "DENT",
+    "type": "ERC20",
+    "contractAddress": "0x3597bfD533a99c9aa083587B074434E61Eb0A258",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "DEP",
+    "name": "DEAPCOIN",
+    "type": "ERC20",
+    "contractAddress": "0x1A3496C18d558bd9C6C8f609E1B129f67AB08163",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DETO",
+    "name": "Delta Exchange Token",
+    "type": "ERC20",
+    "contractAddress": "0xaB93dF617F51E1E415b5b4f8111f122d6b48e55C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DEXT",
+    "name": "DEXTools",
+    "type": "ERC20",
+    "contractAddress": "0xfB7B4564402E5500dB5bB6d63Ae671302777C75a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DF",
+    "name": "dForce",
+    "type": "ERC20",
+    "contractAddress": "0x431ad2ff6a9C365805eBaD47Ee021148d6f7DBe0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DFYN",
+    "name": "DFYN Token",
+    "type": "ERC20",
+    "contractAddress": "0x9695e0114e12C0d3A3636fAb5A18e6b737529023",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DFYN_POLYGON",
+    "name": "DFYN Token (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0xC168E40227E4ebD8C1caE80F7a55a4F0e6D66C97",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "DGTX",
+    "name": "Digitex",
+    "type": "ERC20",
+    "contractAddress": "0x1C83501478f1320977047008496DACBD60Bb15ef",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DIA",
+    "name": "DIAToken",
+    "type": "ERC20",
+    "contractAddress": "0x84cA8bc7997272c7CfB4D0Cd3D55cd942B3c9419",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DMC_SUI",
+    "name": "DeLorean",
+    "type": "SUI_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SUI",
+    "decimals": 9,
+    "issuerAddress": "0x4c981f3ff786cdb9e514da897ab8a953647dae2ace9679e8358eec1e3e8871ac::dmc::DMC"
+  },
+  {
+    "id": "DN_BASECHAIN_ETH_AAC9",
+    "name": "DeepNode",
+    "type": "ERC20",
+    "contractAddress": "0x9B6a1d4fa5d90E5f2D34130053978D14Cd301d58",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DN_ETH_GFOA",
+    "name": "DeepNode",
+    "type": "ERC20",
+    "contractAddress": "0x9B6a1d4fa5d90E5f2D34130053978D14Cd301d58",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DNB_TBD_TEST",
+    "name": "DNB Ether Test 1",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "DNB_TBD_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "DNT",
+    "name": "district0x",
+    "type": "ERC20",
+    "contractAddress": "0x0AbdAce70D3790235af448C88547603b945604ea",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DOCK",
+    "name": "Dock",
+    "type": "ERC20",
+    "contractAddress": "0xE5Dada80Aa6477e85d09747f2842f7993D0Df71C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DODO",
+    "name": "DODO bird",
+    "type": "ERC20",
+    "contractAddress": "0x43Dfc4159D86F3A37A5A4B3D4580b888ad7d4DDd",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DODO_BSC",
+    "name": "DODO bird (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x67ee3Cb086F8a16f34beE3ca72FAD36F7Db929e2",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "DOGE", "name": "Doge Coin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DOGE", "decimals": 8 },
+  {
+    "id": "DOGE_BSC",
+    "name": "Binance-Peg Dogecoin (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xbA2aE424d960c26247Dd6c32edC70B295c744C43",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 8
+  },
+  { "id": "DOGE_TEST", "name": "Doge Coin Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DOGE_TEST", "decimals": 8 },
+  {
+    "id": "DOGS_TON",
+    "name": "Dogs (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 9,
+    "issuerAddress": "EQCvxJy4eG8hyHBFsZ7eePxrRsUQSFE_jpptRAYBmcG_DOGS"
+  },
+  { "id": "DOT", "name": "Polkadot", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DOT", "decimals": 10 },
+  {
+    "id": "DOT_BSC",
+    "name": "Binance-Peg Polkadot (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "DPI",
+    "name": "DefiPulse Index",
+    "type": "ERC20",
+    "contractAddress": "0x1494CA1F11D487c2bBe4543E90080AeBa4BA3C2b",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DRIFT_SOL",
+    "name": "Drift (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "DriFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7"
+  },
+  { "id": "DSETH_DEV", "name": "dSETH (Dev)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DSETH_DEV", "decimals": 18 },
+  {
+    "id": "DUSK",
+    "name": "Dusk Network",
+    "type": "ERC20",
+    "contractAddress": "0x940a2dB1B7008B6C776d4faaCa729d6d4A4AA551",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "DV4TNT_TEST", "name": "DYDX Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DV4TNT_TEST", "decimals": 18 },
+  {
+    "id": "DVI",
+    "name": "Dvision",
+    "type": "ERC20",
+    "contractAddress": "0x10633216E7E8281e33c86F02Bf8e565a635D9770",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "DYDX",
+    "name": "dYdX",
+    "type": "ERC20",
+    "contractAddress": "0x92D6C1e31e14520e676a687F0a93788B716BEff5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "DYDX_DYDX", "name": "DYDX", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "DYDX_DYDX", "decimals": 18 },
+  {
+    "id": "EDEN",
+    "name": "Eden",
+    "type": "ERC20",
+    "contractAddress": "0x1559FA1b8F28238FD5D76D9f434ad86FD20D1559",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "EDR",
+    "name": "Endor",
+    "type": "ERC20",
+    "contractAddress": "0xc528c28FEC0A90C083328BC45f587eE215760A0F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "EFI",
+    "name": "Efinity Token",
+    "type": "ERC20",
+    "contractAddress": "0x656C00e1BcD96f256F224AD9112FF426Ef053733",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "EIGEN_ETH_QTNF",
+    "name": "Eigen",
+    "type": "ERC20",
+    "contractAddress": "0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ELF",
+    "name": "aelf",
+    "type": "ERC20",
+    "contractAddress": "0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ELON_ETH",
+    "name": "Dogelon",
+    "type": "ERC20",
+    "contractAddress": "0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ENA_ETH_3DVC",
+    "name": "ENA",
+    "type": "ERC20",
+    "contractAddress": "0x57e114B691Db790C35207b2e685D4A43181e6061",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ENG",
+    "name": "Enigma",
+    "type": "ERC20",
+    "contractAddress": "0xf0Ee6b27b759C9893Ce4f094b49ad28fd15A23e4",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "ENJ",
+    "name": "Enjin Coin",
+    "type": "ERC20",
+    "contractAddress": "0xF629cBd94d3791C9250152BD8dfBDF380E2a3B9c",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ENS2",
+    "name": "Ethereum Name Service",
+    "type": "ERC20",
+    "contractAddress": "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "EOS", "name": "EOS", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "EOS", "decimals": 4 },
+  { "id": "EOS_TEST", "name": "EOS Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "EOS_TEST", "decimals": 4 },
+  {
+    "id": "EPK",
+    "name": "EpiK Protocol",
+    "type": "ERC20",
+    "contractAddress": "0xDaF88906aC1DE12bA2b1D2f7bfC94E9638Ac40c4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ERD",
+    "name": "Elrond",
+    "type": "ERC20",
+    "contractAddress": "0xF9986D445ceD31882377b5D6a5F58EaEa72288c3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ERN",
+    "name": "EthernityChain Token",
+    "type": "ERC20",
+    "contractAddress": "0xBBc2AE13b23d715c30720F079fcd9B4a74093505",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "ETC", "name": "Ethereum Classic", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ETC", "decimals": 18 },
+  {
+    "id": "ETC_TEST",
+    "name": "Ethereum Classic Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETC_TEST",
+    "decimals": 18
+  },
+  { "id": "ETH", "name": "Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ETH", "decimals": 18 },
+  {
+    "id": "ETH_BSC",
+    "name": "Binance-Peg Ethereum (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_FTM",
+    "name": "Multichain Bridged WETH",
+    "type": "ERC20",
+    "contractAddress": "0x74b23882a30290451A17c44f4F05243b6b58C76d",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_NAHMII",
+    "name": "Ethereum (Nahmii)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_NAHMII",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_SOL",
+    "name": "Ether (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 8,
+    "issuerAddress": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"
+  },
+  { "id": "ETH_SONEIUM", "name": "Soneium", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ETH_SONEIUM", "decimals": 18 },
+  {
+    "id": "ETH_TEST_HOODI",
+    "name": "Ethereum Hoodi Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_TEST_HOODI",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_TEST5",
+    "name": "Ethereum Test (Sepolia)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_TEST5",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_TEST6",
+    "name": "Ethereum Test (Holesky)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_TEST6",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_ZKEVM",
+    "name": "Ethereum (zkEVM)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_ZKEVM",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_ZKEVM_TEST",
+    "name": "Ethereum (zkEVM Test)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_ZKEVM_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_ZKSYNC_ERA",
+    "name": "Ethereum (zkSync Era)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_ZKSYNC_ERA",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_ZKSYNC_ERA_SEPOLIA",
+    "name": "Ethereum (zkSync Era Sepolia)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_ZKSYNC_ERA_SEPOLIA",
+    "decimals": 18
+  },
+  {
+    "id": "ETH_ZKSYNC_ERA_TEST",
+    "name": "Ethereum (zkSync Era Test)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH_ZKSYNC_ERA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "ETH-AETH",
+    "name": "Ethereum (Arbitrum)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "ETH-AETH_RIN",
+    "name": "Arbitrum Rinkeby",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH-AETH_RIN",
+    "decimals": 18
+  },
+  {
+    "id": "ETH-AETH_SEPOLIA",
+    "name": "Arbitrum Sepolia",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH-AETH_SEPOLIA",
+    "decimals": 18
+  },
+  { "id": "ETH-OPT", "name": "Optimistic Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ETH-OPT", "decimals": 18 },
+  {
+    "id": "ETH-OPT_KOV",
+    "name": "Optimistic Ethereum (Kovan)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH-OPT_KOV",
+    "decimals": 18
+  },
+  {
+    "id": "ETH-OPT_SEPOLIA",
+    "name": "Optimistic Ethereum (Sepolia)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ETH-OPT_SEPOLIA",
+    "decimals": 18
+  },
+  {
+    "id": "ETHFI_ETH_FQ4T",
+    "name": "ether_fi governance token",
+    "type": "ERC20",
+    "contractAddress": "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "ETHW", "name": "EthereumPoW", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ETHW", "decimals": 18 },
+  {
+    "id": "EUL_ETH_PT7D",
+    "name": "Euler",
+    "type": "ERC20",
+    "contractAddress": "0xd9Fcd98c322942075A5C3860693e9f4f03AAE07b",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "EURAU_B6QT1TZK_VAJP",
+    "name": "AllUnity EUR",
+    "type": "ERC20",
+    "contractAddress": "0x4933A85b5b5466Fbaf179F72D3DE273c287EC2c2",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "EURC_XLM",
+    "name": "EURC (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2"
+  },
+  {
+    "id": "EUROC_ETH_F5NG",
+    "name": "EURC",
+    "type": "ERC20",
+    "contractAddress": "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "EUROP_B6BBJ86Z_K2EX",
+    "name": "EUR_P",
+    "type": "ERC20",
+    "contractAddress": "0x888883b5F5D21fb10Dfeb70e8f9722B9FB0E5E51",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 6
+  },
+  {
+    "id": "EUROP_B6QT1TZK_QL5G",
+    "name": "EUR_P",
+    "type": "ERC20",
+    "contractAddress": "0x888883b5F5D21fb10Dfeb70e8f9722B9FB0E5E51",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "EURS",
+    "name": "STASIS EURS Token",
+    "type": "ERC20",
+    "contractAddress": "0xdB25f211AB05b1c97D595516F45794528a807ad8",
+    "nativeAsset": "ETH",
+    "decimals": 2
+  },
+  {
+    "id": "EURT_ERC20",
+    "name": "Tether EUR (ERC20)",
+    "type": "ERC20",
+    "contractAddress": "0xC581b735A1688071A1746c968e0798D642EDE491",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "EXRD",
+    "name": "E-RADIX",
+    "type": "ERC20",
+    "contractAddress": "0x6468e79A80C0eaB0F9A2B574c8d5bC374Af59414",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FANT_SOL",
+    "name": "Phantasia (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "FANTafPFBAt93BNJVpdu25pGPmca3RfwdsDsRrT3LX1r"
+  },
+  {
+    "id": "FASTEX_BAHAMUT",
+    "name": "Fastex Bahamut",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "FASTEX_BAHAMUT",
+    "decimals": 18
+  },
+  {
+    "id": "FB_ATHENA_TEST",
+    "name": "FB Private Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "FB_ATHENA_TEST",
+    "decimals": 8
+  },
+  {
+    "id": "FDUSD_SUI",
+    "name": "First Digital USD",
+    "type": "SUI_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SUI",
+    "decimals": 6,
+    "issuerAddress": "0xf16e6b723f242ec745dfd7634ad072c42d5c1d9ac9d62a39c381303eaa57693a::fdusd::FDUSD"
+  },
+  {
+    "id": "FEI",
+    "name": "Fei USD",
+    "type": "ERC20",
+    "contractAddress": "0x956F47F50A910163D8BF957Cf5846D573E7f87CA",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FET",
+    "name": "Fetch",
+    "type": "ERC20",
+    "contractAddress": "0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FIL_BSC",
+    "name": "Binance-Peg Filecoin (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x0D8Ce2A99Bb6e3B7Db580eD848240e4a0F9aE153",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "FILECOIN_FEVM",
+    "name": "Filecoin",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "FILECOIN_FEVM",
+    "decimals": 18
+  },
+  {
+    "id": "FILECOIN_FEVM_TEST",
+    "name": "Filecoin EVM Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "FILECOIN_FEVM_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "FIS",
+    "name": "StaFi",
+    "type": "ERC20",
+    "contractAddress": "0xef3A930e1FfFFAcd2fc13434aC81bD278B0ecC8d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FISH_POLYGON",
+    "name": "Polycat Finance (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x3a3Df212b7AA91Aa0402B9035b098891d276572B",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "FLOKI",
+    "name": "FLOKI old",
+    "type": "ERC20",
+    "contractAddress": "0x43f11c02439e2736800433b4594994Bd43Cd066D",
+    "nativeAsset": "ETH",
+    "decimals": 9
+  },
+  {
+    "id": "FLOKI_BSC",
+    "name": "FLOKI old (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x2B3F34e9D4b127797CE6244Ea341a83733ddd6E4",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 9
+  },
+  { "id": "FLOW_CHAIN", "name": "Flow", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "FLOW_CHAIN", "decimals": 18 },
+  {
+    "id": "FLOW_CHAIN_TEST",
+    "name": "Flow Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "FLOW_CHAIN_TEST",
+    "decimals": 18
+  },
+  { "id": "FLR", "name": "Flare", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "FLR", "decimals": 18 },
+  {
+    "id": "FLX",
+    "name": "Flex Ungovernance Token",
+    "type": "ERC20",
+    "contractAddress": "0x6243d8CEA23066d098a15582d81a598b4e8391F4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FORTH",
+    "name": "Ampleforth Governance",
+    "type": "ERC20",
+    "contractAddress": "0x77FbA179C79De5B7653F68b5039Af940AdA60ce0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FOX",
+    "name": "FOX",
+    "type": "ERC20",
+    "contractAddress": "0xc770EEfAd204B5180dF6a14Ee197D99d808ee52d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FRAX",
+    "name": "Frax",
+    "type": "ERC20",
+    "contractAddress": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FRAX_AVAX",
+    "name": "Frax (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xD24C2Ad096400B6FBcd2ad8B24E7acBc21A1da64",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "FRONT",
+    "name": "Frontier Token",
+    "type": "ERC20",
+    "contractAddress": "0xf8C3527CC04340b208C854E985240c02F7B7793f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FRXUSD_B6QT1TZK_HVDS",
+    "name": "Frax USD",
+    "type": "ERC20",
+    "contractAddress": "0xCAcd6fd266aF91b8AeD52aCCc382b4e165586E29",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FTHL_B69Q58V3_T2KE",
+    "name": "FiretokenHolesky",
+    "type": "ERC20",
+    "contractAddress": "0x311927EE56FFa3442B78489272e6e3c2F43991f5",
+    "nativeAsset": "ETH_TEST6",
+    "decimals": 6
+  },
+  {
+    "id": "FTM",
+    "name": "Fantom Token (ERC20)",
+    "type": "ERC20",
+    "contractAddress": "0x4E15361FD6b4BB609Fa63C81A2be19d873717870",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FTM_BSC",
+    "name": "Fantom (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xAD29AbB318791D579433D831ed122aFeAf29dcfe",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "FTM_FANTOM", "name": "Fantom", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "FTM_FANTOM", "decimals": 18 },
+  {
+    "id": "FTSEP_B75VRLGX_8YAF",
+    "name": "FiretokenSepolia",
+    "type": "ERC20",
+    "contractAddress": "0x88dC63A2b61cC92c02a0171EAd46a6D813784BB2",
+    "nativeAsset": "ETH_TEST5",
+    "decimals": 18
+  },
+  {
+    "id": "FTT",
+    "name": "FTX Token",
+    "type": "ERC20",
+    "contractAddress": "0x50D1c9771902476076eCFc8B2A83Ad6b9355a4c9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FUN",
+    "name": "FunFair",
+    "type": "ERC20",
+    "contractAddress": "0x419D0d8BdD9aF5e606Ae2232ed285Aff190E711b",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "FWB",
+    "name": "Friends With Benefits Pro",
+    "type": "ERC20",
+    "contractAddress": "0x35bD01FC9d6D5D81CA9E055Db88Dc49aa2c699A8",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FXS",
+    "name": "Frax Share",
+    "type": "ERC20",
+    "contractAddress": "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "FXS_AVAX",
+    "name": "Frax Share (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x214DB107654fF987AD859F34125307783fC8e387",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "GALA",
+    "name": "Gala V1",
+    "type": "ERC20",
+    "contractAddress": "0x15D4c048F83bd7e37d49eA4C83a07267Ec4203dA",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "GALA2",
+    "name": "Gala V2",
+    "type": "ERC20",
+    "contractAddress": "0xd1d2Eb1B1e90B638588728b4130137D262C87cae",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "GET",
+    "name": "GET Protocol",
+    "type": "ERC20",
+    "contractAddress": "0x8a854288a5976036A725879164Ca3e91d30c6A1B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GHST",
+    "name": "Aavegotchi GHST Token",
+    "type": "ERC20",
+    "contractAddress": "0x3F382DbD960E3a9bbCeaE22651E88158d2791550",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GLM",
+    "name": "Golem Network Token",
+    "type": "ERC20",
+    "contractAddress": "0x7DD9c5Cba05E151C895FDe1CF355C9A1D5DA6429",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "GLMR_GLMR", "name": "Moonbeam", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "GLMR_GLMR", "decimals": 18 },
+  {
+    "id": "GMT_SOL",
+    "name": "GMT _Solana_",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx"
+  },
+  {
+    "id": "GNO",
+    "name": "Gnosis",
+    "type": "ERC20",
+    "contractAddress": "0x6810e776880C02933D47DB1b9fc05908e5386b96",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GNT",
+    "name": "Golem",
+    "type": "ERC20",
+    "contractAddress": "0xa74476443119A942dE498590Fe1f2454d7D4aC0d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GRT",
+    "name": "Graph Token",
+    "type": "ERC20",
+    "contractAddress": "0xc944E90C64B2c07662A292be6244BDf05Cda44a7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GRT_ARB_1S8R",
+    "name": "Graph Token",
+    "type": "ERC20",
+    "contractAddress": "0x9623063377AD1B27544C965cCd7342f7EA7e88C7",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "GTC",
+    "name": "Game.com",
+    "type": "ERC20",
+    "contractAddress": "0xB70835D7822eBB9426B56543E391846C107bd32C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "GTC_ETH",
+    "name": "Gitcoin",
+    "type": "ERC20",
+    "contractAddress": "0xDe30da39c46104798bB5aA3fe8B9e0e1F348163F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "GUN_GUNZILLA", "name": "GUNZ", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "GUN_GUNZILLA", "decimals": 18 },
+  { "id": "GUN_TEST", "name": "GUN_TEST", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "GUN_TEST", "decimals": 18 },
+  {
+    "id": "GUSD",
+    "name": "Gemini USD",
+    "type": "ERC20",
+    "contractAddress": "0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd",
+    "nativeAsset": "ETH",
+    "decimals": 2
+  },
+  { "id": "GUSDT_STABLE", "name": "gasUSDT", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "GUSDT_STABLE", "decimals": 18 },
+  { "id": "GUSDT_TEST", "name": "gasUSDT Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "GUSDT_TEST", "decimals": 18 },
+  {
+    "id": "GYEN",
+    "name": "GMO JPY",
+    "type": "ERC20",
+    "contractAddress": "0xC08512927D12348F6620a698105e1BAac6EcD911",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  { "id": "HBAR", "name": "Hedera Hashgraph", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "HBAR", "decimals": 8 },
+  {
+    "id": "HBAR_TEST",
+    "name": "Hedera Hashgraph Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "HBAR_TEST",
+    "decimals": 8
+  },
+  {
+    "id": "HBB_SPL",
+    "name": "Hubble Protocol Token (SPL)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "HBB111SCo9jkCejsZfz8Ec8nH7T6THF8KEKSnvwT6XK6"
+  },
+  { "id": "HEDERA_EVM", "name": "Hedera", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "HEDERA_EVM", "decimals": 18 },
+  {
+    "id": "HEDERA_EVM_TEST",
+    "name": "Hedera EVM Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "HEDERA_EVM_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "HEGIC",
+    "name": "Hegic",
+    "type": "ERC20",
+    "contractAddress": "0x584bC13c7D411c00c01A62e8019472dE68768430",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "HEX",
+    "name": "HEX",
+    "type": "ERC20",
+    "contractAddress": "0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "HI_BSC",
+    "name": "hi Dollar (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x77087aB5Df23cFB52449A188e80e9096201c2097",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "HMSTR_TON",
+    "name": "Hamster Kombat (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 9,
+    "issuerAddress": "EQAJ8uWd7EBqsmpSWaRdf_I-8R8-XHwh3gsNKhy-UrdrPcUo"
+  },
+  {
+    "id": "HMT",
+    "name": "Human Token",
+    "type": "ERC20",
+    "contractAddress": "0xd1ba9BAC957322D6e8c07a160a3A8dA11A0d2867",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "HNT_SOL",
+    "name": "Helium Network Token (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 8,
+    "issuerAddress": "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux"
+  },
+  {
+    "id": "HOT1",
+    "name": "Holo",
+    "type": "ERC20",
+    "contractAddress": "0x6c6EE5e31d828De241282B9606C8e98Ea48526E2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "HT",
+    "name": "Huobi Token",
+    "type": "ERC20",
+    "contractAddress": "0x6f259637dcD74C767781E37Bc6133cd6A68aa161",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "HUMANITY", "name": "Humanity", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "HUMANITY", "decimals": 18 },
+  {
+    "id": "HUMANITY_TEST",
+    "name": "Humanity Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "HUMANITY_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "HUSD",
+    "name": "Huobi USD",
+    "type": "ERC20",
+    "contractAddress": "0xdF574c24545E5FfEcb9a659c229253D4111d87e1",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "HYPE_ETH", "name": "HyperEVM", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "HYPE_ETH", "decimals": 18 },
+  {
+    "id": "HYPE_ETH_TEST",
+    "name": "Hyperliquid Testnet",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "HYPE_ETH_TEST",
+    "decimals": 18
+  },
+  { "id": "IBAN_CHF", "name": "CHF (IBAN)", "type": "FIAT", "contractAddress": "", "nativeAsset": "IBAN_CHF", "decimals": 2 },
+  { "id": "IBAN_EUR", "name": "EUR (IBAN)", "type": "FIAT", "contractAddress": "", "nativeAsset": "IBAN_EUR", "decimals": 2 },
+  { "id": "IBAN_SGD", "name": "SGD (IBAN)", "type": "FIAT", "contractAddress": "", "nativeAsset": "IBAN_SGD", "decimals": 2 },
+  { "id": "IBAN_USD", "name": "USD (IBAN)", "type": "FIAT", "contractAddress": "", "nativeAsset": "IBAN_USD", "decimals": 2 },
+  {
+    "id": "IDEX",
+    "name": "IDEX Token",
+    "type": "ERC20",
+    "contractAddress": "0xB705268213D593B8FD88d3FDEFF93AFF5CbDcfAE",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "IDK",
+    "name": "IDKToken",
+    "type": "ERC20",
+    "contractAddress": "0x61fd1c62551850D0c04C76FcE614cBCeD0094498",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "IDRT",
+    "name": "Rupiah",
+    "type": "ERC20",
+    "contractAddress": "0x998FFE1E43fAcffb941dc337dD0468d52bA5b48A",
+    "nativeAsset": "ETH",
+    "decimals": 2
+  },
+  {
+    "id": "IDRTBEP_BSC_TEST",
+    "name": "Rupiah Token (BSC TEST)",
+    "type": "BEP20",
+    "contractAddress": "0x9f059eDcf1C111e9C5987f884abBfEc0F80acFbB",
+    "nativeAsset": "BNB_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "ILV",
+    "name": "Illuvium",
+    "type": "ERC20",
+    "contractAddress": "0x767FE9EDC9E0dF98E07454847909b5E959D7ca0E",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "IMT",
+    "name": "Moneytoken",
+    "type": "ERC20",
+    "contractAddress": "0x13119E34E140097a507B07a5564bDe1bC375D9e6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "IMX_ERC20",
+    "name": "Immutable X",
+    "type": "ERC20",
+    "contractAddress": "0xF57e7e7C23978C3cAEC3C3548E3D615c346e79fF",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "IMX_ZKEVM", "name": "Immutable zkEVM", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "IMX_ZKEVM", "decimals": 18 },
+  {
+    "id": "IMX_ZKEVM_TEST",
+    "name": "Immutable zkEVM Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "IMX_ZKEVM_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "INB",
+    "name": "Insight Chain",
+    "type": "ERC20",
+    "contractAddress": "0x17Aa18A4B64A55aBEd7FA543F2Ba4E91f2dcE482",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "INDEX",
+    "name": "Index",
+    "type": "ERC20",
+    "contractAddress": "0x0954906da0Bf32d5479e25f46056d22f08464cab",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "INITIA", "name": "Initia", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "INITIA", "decimals": 6 },
+  { "id": "INITIA_TEST", "name": "Initia Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "INITIA_TEST", "decimals": 6 },
+  {
+    "id": "INJ",
+    "name": "Injective Token (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "INJ_BSC_IKMK",
+    "name": "Injective Protocol",
+    "type": "BEP20",
+    "contractAddress": "0xa2B726B1145A4773F68593CF171187d8EBe4d495",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "INJ_INJ", "name": "Injective", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "INJ_INJ", "decimals": 18 },
+  { "id": "INJ_TEST", "name": "Injective Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "INJ_TEST", "decimals": 18 },
+  { "id": "INK_ETH", "name": "Ink", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "INK_ETH", "decimals": 18 },
+  {
+    "id": "INK_ETH_TEST",
+    "name": "Ink Sepolia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "INK_ETH_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "INST",
+    "name": "Fluid",
+    "type": "ERC20",
+    "contractAddress": "0x6f40d4A6237C257fff2dB00FA0510DeEECd303eb",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "INTERNALTRANSFER_CHF",
+    "name": "CHF (Internal Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_CHF",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_CHF_TEST",
+    "name": "CHF (Internal Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_CHF_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_EUR",
+    "name": "EUR (Internal Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_EUR",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_EUR_TEST",
+    "name": "EUR (Internal Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_EUR_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_SGD",
+    "name": "SGD (Internal Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_SGD",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_SGD_TEST",
+    "name": "SGD (Internal Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_SGD_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_USCX",
+    "name": "USCX (Internal Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_USCX",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_USD",
+    "name": "USD (Internal Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_USD",
+    "decimals": 2
+  },
+  {
+    "id": "INTERNALTRANSFER_USD_TEST",
+    "name": "USD (Internal Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "INTERNALTRANSFER_USD_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "INXT",
+    "name": "Internxt",
+    "type": "ERC20",
+    "contractAddress": "0xa8006C4ca56F24d6836727D106349320dB7fEF82",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "IOST",
+    "name": "IOST",
+    "type": "ERC20",
+    "contractAddress": "0xFA1a856Cfa3409CFa145Fa4e20Eb270dF3EB21ab",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "IOTA_BSC",
+    "name": "MIOTAC (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xd944f1D1e9d5f9Bb90b62f9D45e447D989580782",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 6
+  },
+  { "id": "IOTA_EVM", "name": "IOTA EVM", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "IOTA_EVM", "decimals": 18 },
+  {
+    "id": "IOTX",
+    "name": "IoTeX",
+    "type": "ERC20",
+    "contractAddress": "0x6fB3e0A217407EFFf7Ca062D46c26E5d60a14d69",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "IOTX_IOTEX", "name": "IoTex", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "IOTX_IOTEX", "decimals": 18 },
+  {
+    "id": "JITO_SOL",
+    "name": "Jito Staked SOL (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+  },
+  {
+    "id": "JOE_AVAX",
+    "name": "JoeToken (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "JTO_SOL",
+    "name": "JITO (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL"
+  },
+  {
+    "id": "JUP",
+    "name": "Jupiter",
+    "type": "ERC20",
+    "contractAddress": "0x4B1E80cAC91e2216EEb63e29B957eB91Ae9C2Be8",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "JUP_SOL",
+    "name": "Jupiter (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN"
+  },
+  { "id": "KATANA_ETH", "name": "ETH", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "KATANA_ETH", "decimals": 18 },
+  {
+    "id": "KAVA",
+    "name": "Kava",
+    "type": "ERC20",
+    "contractAddress": "0x08d1E0A7fBd4eDBF56D81Da21D1b0c9c95Fb507F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "KAVA_KAVA", "name": "KAVA", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "KAVA_KAVA", "decimals": 18 },
+  {
+    "id": "KCS",
+    "name": "KuCoin Token",
+    "type": "ERC20",
+    "contractAddress": "0xf34960d9d60be18cC1D5Afc1A6F012A723a28811",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "KEEP",
+    "name": "Keep Token",
+    "type": "ERC20",
+    "contractAddress": "0x85Eee30c52B0b379b046Fb0F85F4f3Dc3009aFEC",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KEY",
+    "name": "SelfKey",
+    "type": "ERC20",
+    "contractAddress": "0x4CC19356f2D37338b9802aa8E8fc58B0373296E7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KHYPE_B64VHHFG_BOVQ",
+    "name": "Kinetiq Staked HYPE",
+    "type": "ERC20",
+    "contractAddress": "0xfD739d4e423301CE9385c1fb8850539D657C296D",
+    "nativeAsset": "HYPE_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KIN",
+    "name": "Kin",
+    "type": "ERC20",
+    "contractAddress": "0x818Fc6C2Ec5986bc6E2CBf00939d90556aB12ce5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "KLAY_KAIA", "name": "Kaia", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "KLAY_KAIA", "decimals": 18 },
+  {
+    "id": "KLAY_KAIA_TEST",
+    "name": "Kaia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "KLAY_KAIA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "KNC",
+    "name": "Kyber Network Crystal v2",
+    "type": "ERC20",
+    "contractAddress": "0xdeFA4e8a7bcBA345F687a2f1456F5Edd9CE97202",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KNC_OLD",
+    "name": "Kyber Network (Old)",
+    "type": "ERC20",
+    "contractAddress": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KNTQ_B64VHHFG_UW78",
+    "name": "Kinetiq Governance Token",
+    "type": "ERC20",
+    "contractAddress": "0x000000000000780555bD0BCA3791f89f9542c2d6",
+    "nativeAsset": "HYPE_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "KP3R",
+    "name": "Keep3rV1",
+    "type": "ERC20",
+    "contractAddress": "0x1cEB5cB57C4D4E2b2433641b95Dd330A33185A44",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "KSM", "name": "Kusama", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "KSM", "decimals": 12 },
+  {
+    "id": "KSM_BSC",
+    "name": "Kusama (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x2aa69E8D25C045B659787BC1f03ce47a388DB6E8",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "LAC", "name": "LaCoin (LAC)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LAC", "decimals": 18 },
+  {
+    "id": "LAZIO",
+    "name": "FC Lazio Fan Token",
+    "type": "BEP20",
+    "contractAddress": "0x77d547256A2cD95F32F67aE0313E450Ac200648d",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 8
+  },
+  {
+    "id": "LDO",
+    "name": "Lido DAO Token",
+    "type": "ERC20",
+    "contractAddress": "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LEND",
+    "name": "ETHLend",
+    "type": "ERC20",
+    "contractAddress": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LEO",
+    "name": "Bitfinex LEO Token",
+    "type": "ERC20",
+    "contractAddress": "0x2AF5D2aD76741191D15Dfe7bF6aC92d4Bd912Ca3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LINA",
+    "name": "Linear Token",
+    "type": "ERC20",
+    "contractAddress": "0x3E9BC21C9b189C09dF3eF1B824798658d5011937",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "LINEA", "name": "Ethereum (Linea)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LINEA", "decimals": 18 },
+  {
+    "id": "LINEA_SEPOLIA_TEST",
+    "name": "Linea Sepolia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "LINEA_SEPOLIA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "LINEA_TEST",
+    "name": "Ethereum (Linea Test)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "LINEA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "LINK",
+    "name": "Chainlink",
+    "type": "ERC20",
+    "contractAddress": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LINK_BSC",
+    "name": "Binance-Peg ChainLink (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "LINK_E_AVAX",
+    "name": "Chainlink Token (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x5947BB275c521040051D82396192181b413227A3",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "LINK_FTM",
+    "name": "ChainLink (FTM)",
+    "type": "ERC20",
+    "contractAddress": "0xb3654dc3D10Ea7645f8319668E8F54d2574FBdC8",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 18
+  },
+  {
+    "id": "LINK_POLYGON",
+    "name": "ChainLink Token (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  { "id": "LISK", "name": "Lisk", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LISK", "decimals": 18 },
+  {
+    "id": "LIT",
+    "name": "Litentry",
+    "type": "ERC20",
+    "contractAddress": "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LOOKS",
+    "name": "LooksRare Token",
+    "type": "ERC20",
+    "contractAddress": "0xf4d2888d29D722226FafA5d9B24F9164c092421E",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LOOM",
+    "name": "Loom Token",
+    "type": "ERC20",
+    "contractAddress": "0x42476F744292107e34519F9c357927074Ea3F75D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LOOM_OLD",
+    "name": "Loom Token(Old)",
+    "type": "ERC20",
+    "contractAddress": "0xA4e8C3Ec456107eA67d3075bF9e3DF3A75823DB0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LPT",
+    "name": "Livepeer Token",
+    "type": "ERC20",
+    "contractAddress": "0x58b6A8A3302369DAEc383334672404Ee733aB239",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LQTY",
+    "name": "LQTY",
+    "type": "ERC20",
+    "contractAddress": "0x6DEA81C8171D0bA574754EF6F8b412F2Ed88c54D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "LRC",
+    "name": "Loopring",
+    "type": "ERC20",
+    "contractAddress": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "LTC", "name": "Litecoin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LTC", "decimals": 8 },
+  {
+    "id": "LTC_BSC",
+    "name": "Binance-Peg Litecoin (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x4338665CBB7B2485A8855A139b75D5e34AB0DB94",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "LTC_TEST", "name": "Litecoin Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LTC_TEST", "decimals": 8 },
+  {
+    "id": "LTO",
+    "name": "LTO Network Token",
+    "type": "ERC20",
+    "contractAddress": "0x3DB6Ba6ab6F95efed1a6E794caD492fAAabF294D",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "LU2426951195_XLM_TEST",
+    "name": "LU2426951195 (Stellar Test)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GD4MGD3UZ5QY6NLH2FMXKOUCHH4NA3NRT3H6KUU5UMDWE52PIPETFBY2"
+  },
+  {
+    "id": "LUMIA_LUMIA",
+    "name": "Lumia Mainnet",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "LUMIA_LUMIA",
+    "decimals": 18
+  },
+  { "id": "LUNA2", "name": "Terra Luna 2.0", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "LUNA2", "decimals": 6 },
+  {
+    "id": "LUNA2_TEST",
+    "name": "Terra Luna 2.0 Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "LUNA2_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "LUSD",
+    "name": "LUSD Stablecoin",
+    "type": "ERC20",
+    "contractAddress": "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MANA",
+    "name": "Decentraland",
+    "type": "ERC20",
+    "contractAddress": "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "MANTA", "name": "Manta Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MANTA", "decimals": 18 },
+  { "id": "MANTLE", "name": "Mantle", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MANTLE", "decimals": 18 },
+  {
+    "id": "MANTLE_TEST",
+    "name": "Mantle Sepolia",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "MANTLE_TEST",
+    "decimals": 18
+  },
+  { "id": "MANTRA", "name": "Mantra", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MANTRA", "decimals": 6 },
+  { "id": "MANTRA_TEST", "name": "Mantra Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MANTRA_TEST", "decimals": 6 },
+  {
+    "id": "MASK",
+    "name": "Mask Network",
+    "type": "ERC20",
+    "contractAddress": "0x69af81e73A73B40adF4f3d4223Cd9b1ECE623074",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MATIC",
+    "name": "Matic Token (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MATIC_BSC",
+    "name": "Matic Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xCC42724C6683B7E57334c4E856f4c9965ED682bD",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "MATIC_POLYGON",
+    "name": "Matic Gas Token (Polygon)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "MC_ETH",
+    "name": "Merit Circle",
+    "type": "ERC20",
+    "contractAddress": "0x949D48EcA67b17269629c7194F4b727d4Ef9E5d6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MCB",
+    "name": "MCDEX Token",
+    "type": "ERC20",
+    "contractAddress": "0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ME_B6KKMHK5_SVCC",
+    "name": "Magic Eden",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u"
+  },
+  {
+    "id": "MEGA_ETH_TEST",
+    "name": "MEGA Testnet Ether",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "MEGA_ETH_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "MELANIA_B6KKMHK5_RMZH",
+    "name": "Melania Meme",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "FUAfBo2jgks6gB4Z4LfZkqSZgzNucisEHqnNebaRxM1P"
+  },
+  {
+    "id": "MEME",
+    "name": "MEME",
+    "type": "ERC20",
+    "contractAddress": "0xD5525D397898e5502075Ea5E830d8914f6F0affe",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "METIS_EVM", "name": "Metis", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "METIS_EVM", "decimals": 18 },
+  {
+    "id": "MGO",
+    "name": "MobileGo",
+    "type": "ERC20",
+    "contractAddress": "0x40395044Ac3c0C57051906dA938B54BD6557F212",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "MIM",
+    "name": "Magic Internet Money",
+    "type": "ERC20",
+    "contractAddress": "0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MIMATIC_POLYGON",
+    "name": "miMATIC (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "MIR",
+    "name": "Wrapped MIR Token",
+    "type": "ERC20",
+    "contractAddress": "0x09a3EcAFa817268f77BE1283176B946C4ff2E608",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "MIRASMANDA", "name": "Mirasmanda", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MIRASMANDA", "decimals": 18 },
+  {
+    "id": "MITX",
+    "name": "Morpheus Labs",
+    "type": "ERC20",
+    "contractAddress": "0x4a527d8fc13C5203AB24BA0944F4Cb14658D1Db6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MKR",
+    "name": "Maker",
+    "type": "ERC20",
+    "contractAddress": "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MKR_BSC",
+    "name": "Binance-Peg Maker (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x5f0Da599BB2ccCfcf6Fdfd7D81743B6020864350",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "MLN",
+    "name": "Melon",
+    "type": "ERC20",
+    "contractAddress": "0xec67005c4E498Ec7f55E092bd1d35cbC47C91892",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MLT_ERC20",
+    "name": "MILC Platform",
+    "type": "ERC20",
+    "contractAddress": "0x9506d37f70eB4C3d79C398d326C871aBBf10521d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MNDE_SOL",
+    "name": "Marinade (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey"
+  },
+  {
+    "id": "MNGO_SOL",
+    "name": "Mango",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac"
+  },
+  {
+    "id": "MNT_ETH_QS8O",
+    "name": "Mantle",
+    "type": "ERC20",
+    "contractAddress": "0x3c3a81e81dc49A522A592e7622A7E711c06bf354",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "MONAD", "name": "Monad", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MONAD", "decimals": 18 },
+  { "id": "MONAD_TEST", "name": "Monad Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MONAD_TEST", "decimals": 18 },
+  { "id": "MORPH", "name": "Morph", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MORPH", "decimals": 18 },
+  { "id": "MORPH_TEST", "name": "Morph Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MORPH_TEST", "decimals": 18 },
+  {
+    "id": "MORPHO_B6QT1TZK_59OP",
+    "name": "Morpho Token",
+    "type": "ERC20",
+    "contractAddress": "0x58D97B57BB95320F9a05dC918Aef65434969c2B2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "MOVR_MOVR", "name": "Moonriver", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "MOVR_MOVR", "decimals": 18 },
+  {
+    "id": "MPL",
+    "name": "Maple Token",
+    "type": "ERC20",
+    "contractAddress": "0x33349B282065b0284d756F0577FB39c158F935e6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MSOL_SOL",
+    "name": "Marinade staked SOL (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"
+  },
+  {
+    "id": "MTA",
+    "name": "Meta",
+    "type": "ERC20",
+    "contractAddress": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MTA_POLYGON",
+    "name": "Meta Polygon",
+    "type": "ERC20",
+    "contractAddress": "0xF501dd45a1198C2E1b5aEF5314A68B9006D842E0",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "MTL",
+    "name": "Metal",
+    "type": "ERC20",
+    "contractAddress": "0xF433089366899D83a9f26A773D59ec7eCF30355e",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "MXM",
+    "name": "Maximine Coin",
+    "type": "ERC20",
+    "contractAddress": "0x8E766F57F7d16Ca50B4A0b90b88f6468A09b0439",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "MYST",
+    "name": "Mysterium",
+    "type": "ERC20",
+    "contractAddress": "0xa645264C5603E96c3b0B078cdab68733794B0A71",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "NAOS",
+    "name": "NAOSToken",
+    "type": "ERC20",
+    "contractAddress": "0x4a615bB7166210CCe20E6642a6f8Fb5d4D044496",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "NEAR", "name": "NEAR Protocol", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "NEAR", "decimals": 24 },
+  {
+    "id": "NEAR_BSC",
+    "name": "Binance-Peg NEAR Protocol",
+    "type": "BEP20",
+    "contractAddress": "0x1Fa4a73a3F0133f0025378af00236f3aBDEE5D63",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "NEAR_TEST",
+    "name": "NEAR Protocol Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "NEAR_TEST",
+    "decimals": 24
+  },
+  {
+    "id": "NEC",
+    "name": "Ethfinex Nectar Token",
+    "type": "ERC20",
+    "contractAddress": "0xCc80C051057B774cD75067Dc48f8987C4Eb97A5e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "NERO", "name": "Nero", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "NERO", "decimals": 18 },
+  { "id": "NERO_TEST", "name": "Nero Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "NERO_TEST", "decimals": 18 },
+  {
+    "id": "NEXO",
+    "name": "Nexo",
+    "type": "ERC20",
+    "contractAddress": "0xB62132e35a6c13ee1EE0f84dC5d40bad8d815206",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NFT",
+    "name": "NFT Protocol",
+    "type": "ERC20",
+    "contractAddress": "0xcB8d1260F9c92A3A545d409466280fFdD7AF7042",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NKN",
+    "name": "NKN",
+    "type": "ERC20",
+    "contractAddress": "0x5Cf04716BA20127F1E2297AdDCf4B5035000c9eb",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NMR",
+    "name": "Numeraire",
+    "type": "ERC20",
+    "contractAddress": "0x1776e1F26f98b1A5dF9cD347953a26dd3Cb46671",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NOIA",
+    "name": "NOIA Token",
+    "type": "ERC20",
+    "contractAddress": "0xa8c8CfB141A3bB59FEA1E2ea6B79b5ECBCD7b6ca",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NOTCOIN_TON",
+    "name": "Notcoin (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 9,
+    "issuerAddress": "EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT"
+  },
+  { "id": "NTRN", "name": "Neutron", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "NTRN", "decimals": 6 },
+  { "id": "NTRN_TEST", "name": "Neutron Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "NTRN_TEST", "decimals": 6 },
+  {
+    "id": "NU",
+    "name": "NuCypher",
+    "type": "ERC20",
+    "contractAddress": "0x4fE83213D56308330EC302a8BD641f1d0113A4Cc",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "NXDB",
+    "name": "Nicoswap coin (DigitalBits)",
+    "type": "XDB_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDB",
+    "decimals": 7,
+    "issuerAddress": "GBG4NNAO36LKRDOUE3J3TPZYXGF2J34CW4FRFE5SLL65ED54E7LFBMKK"
+  },
+  { "id": "OAS", "name": "Oasys", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "OAS", "decimals": 18 },
+  { "id": "OAS_TEST", "name": "Oasys Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "OAS_TEST", "decimals": 18 },
+  {
+    "id": "OCEAN",
+    "name": "Ocean Token",
+    "type": "ERC20",
+    "contractAddress": "0x967da4048cD07aB37855c090aAF366e4ce1b9F48",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OCN",
+    "name": "Odyssey",
+    "type": "ERC20",
+    "contractAddress": "0x4092678e4E78230F46A1534C0fbc8fA39780892B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OGN",
+    "name": "OriginToken",
+    "type": "ERC20",
+    "contractAddress": "0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OHM",
+    "name": "Olympus",
+    "type": "ERC20",
+    "contractAddress": "0x383518188C0C6d7730D91b2c03a03C837814a899",
+    "nativeAsset": "ETH",
+    "decimals": 9
+  },
+  {
+    "id": "OKB",
+    "name": "OKB",
+    "type": "ERC20",
+    "contractAddress": "0x75231F58b43240C9718Dd58B4967c5114342a86c",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OLY",
+    "name": "Olyseum",
+    "type": "ERC20",
+    "contractAddress": "0x6595b8fD9C920C81500dCa94e53Cdc712513Fb1f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OM",
+    "name": "MANTRA DAO",
+    "type": "ERC20",
+    "contractAddress": "0x3593D125a4f7849a1B059E64F4517A86Dd60c95d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OMG",
+    "name": "OmiseGO",
+    "type": "ERC20",
+    "contractAddress": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "OMNI_EVM", "name": "Omni", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "OMNI_EVM", "decimals": 18 },
+  {
+    "id": "OMNI_EVM_TEST",
+    "name": "Omni Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "OMNI_EVM_TEST",
+    "decimals": 18
+  },
+  { "id": "OMNI_TEST", "name": "Omni Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BTC_TEST", "decimals": 8 },
+  {
+    "id": "ONDO_ETH_TGXH",
+    "name": "Ondo",
+    "type": "ERC20",
+    "contractAddress": "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ONE_BSC",
+    "name": "Harmony ONE (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x03fF0ff224f904be3118461335064bB48Df47938",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "ONT_BSC",
+    "name": "Binance-Peg Ontology Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xFd7B3A77848f1C2D67E05E54d78d174a0C850335",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "OP_OPT_M0I6",
+    "name": "Optimism",
+    "type": "ERC20",
+    "contractAddress": "0x4200000000000000000000000000000000000042",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 18
+  },
+  {
+    "id": "OPUL",
+    "name": "OpulousToken",
+    "type": "ERC20",
+    "contractAddress": "0x80D55c03180349Fff4a229102F62328220A96444",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ORBS",
+    "name": "Orbs",
+    "type": "ERC20",
+    "contractAddress": "0xff56Cc6b1E6dEd347aA0B7676C85AB0B3D08B0FA",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ORCA_SOL",
+    "name": "Orca",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE"
+  },
+  {
+    "id": "ORN",
+    "name": "Orion Protocol",
+    "type": "ERC20",
+    "contractAddress": "0x0258F474786DdFd37ABCE6df6BBb1Dd5dfC4434a",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  { "id": "OSMO", "name": "Osmosis", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "OSMO", "decimals": 6 },
+  { "id": "OSMO_TEST", "name": "Osmosis Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "OSMO_TEST", "decimals": 6 },
+  {
+    "id": "OUSD",
+    "name": "Origin Dollar",
+    "type": "ERC20",
+    "contractAddress": "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "OXT",
+    "name": "Orchid",
+    "type": "ERC20",
+    "contractAddress": "0x4575f41308EC1483f3d399aa9a2826d74Da13Deb",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PAID",
+    "name": "PAID Network",
+    "type": "ERC20",
+    "contractAddress": "0x1614F18Fc94f47967A3Fbe5FfcD46d4e7Da3D787",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PAX",
+    "name": "PAX Dollar",
+    "type": "ERC20",
+    "contractAddress": "0x8E870D67F660D95d5be530380D0eC0bd388289E1",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PAXG",
+    "name": "Paxos Gold",
+    "type": "ERC20",
+    "contractAddress": "0x45804880De22913dAFE09f4980848ECE6EcbAf78",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PBX_ETH",
+    "name": "Paribus",
+    "type": "ERC20",
+    "contractAddress": "0xD528cf2E081f72908e086F8800977df826B5a483",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "PCUST", "name": "Philanthropic Credit", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BTC", "decimals": 0 },
+  { "id": "PEAQ", "name": "Peaq", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "PEAQ", "decimals": 18 },
+  {
+    "id": "PEERACCOUNTTRANSFER_CHF",
+    "name": "CHF (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_CHF",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_CHF_TEST",
+    "name": "CHF (Peer Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_CHF_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_EUR",
+    "name": "EUR (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_EUR",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_EUR_TEST",
+    "name": "EUR (Peer Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_EUR_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_SGD",
+    "name": "SGD (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_SGD",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_SGD_TEST",
+    "name": "SGD (Peer Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_SGD_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_TFND",
+    "name": "TFND (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_TFND",
+    "decimals": 6
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_TFND_TEST",
+    "name": "TFND (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_TFND_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_USD",
+    "name": "USD (Peer Transfer)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_USD",
+    "decimals": 2
+  },
+  {
+    "id": "PEERACCOUNTTRANSFER_USD_TEST",
+    "name": "USD (Peer Transfer test)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "PEERACCOUNTTRANSFER_USD_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "PENDLE",
+    "name": "Pendle",
+    "type": "ERC20",
+    "contractAddress": "0x808507121B80c02388fAd14726482e061B8da827",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PENDLE_ARB_HH3T",
+    "name": "Pendle",
+    "type": "ERC20",
+    "contractAddress": "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "PEPE_ETH_W7Z5",
+    "name": "Pepe",
+    "type": "ERC20",
+    "contractAddress": "0x6982508145454Ce325dDbE47a25d4ec3d2311933",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PERP",
+    "name": "Perpetual",
+    "type": "ERC20",
+    "contractAddress": "0xbC396689893D065F41bc2C6EcbeE5e0085233447",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "PLASMA", "name": "Plasma", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "PLASMA", "decimals": 18 },
+  { "id": "PLASMA_TEST", "name": "Plasma Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "PLASMA_TEST", "decimals": 18 },
+  {
+    "id": "PLU",
+    "name": "Pluton",
+    "type": "ERC20",
+    "contractAddress": "0xD8912C10681D8B21Fd3742244f44658dBA12264E",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "PLUME_PLUME", "name": "Plume", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "PLUME_PLUME", "decimals": 18 },
+  {
+    "id": "PMA",
+    "name": "PumaPay",
+    "type": "ERC20",
+    "contractAddress": "0x846C66cf71C43f80403B51fE3906B3599D63336f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PNK",
+    "name": "Pinakion",
+    "type": "ERC20",
+    "contractAddress": "0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "POKT", "name": "Pocket", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "POKT", "decimals": 6 },
+  {
+    "id": "POL_ETH_9RYQ",
+    "name": "Polygon Ecosystem Token",
+    "type": "ERC20",
+    "contractAddress": "0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "POLS",
+    "name": "PolkastarterToken",
+    "type": "ERC20",
+    "contractAddress": "0x83e6f1E41cdd28eAcEB20Cb649155049Fac3D5Aa",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "POLY",
+    "name": "Polymath",
+    "type": "ERC20",
+    "contractAddress": "0x9992eC3cF6A55b00978cdDF2b27BC6882d88D1eC",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "POND",
+    "name": "Marlin POND",
+    "type": "ERC20",
+    "contractAddress": "0x57B946008913B82E4dF85f501cbAeD910e58D26C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "POWR",
+    "name": "Power Ledger",
+    "type": "ERC20",
+    "contractAddress": "0x595832F8FC6BF59c85C527fEC3740A1b7a361269",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "PPT",
+    "name": "Populous",
+    "type": "ERC20",
+    "contractAddress": "0xd4fa1460F537bb9085d22C7bcCB5DD450Ef28e3a",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "PRO",
+    "name": "Propy",
+    "type": "ERC20",
+    "contractAddress": "0x226bb599a12C826476e3A771454697EA52E9E220",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "PROM",
+    "name": "Token Prometeus Network",
+    "type": "ERC20",
+    "contractAddress": "0xfc82bb4ba86045Af6F327323a46E80412b91b27d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "PROVENANCE", "name": "Provenance", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "PROVENANCE", "decimals": 9 },
+  {
+    "id": "PROVENANCE_TEST",
+    "name": "Provenance Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "PROVENANCE_TEST",
+    "decimals": 9
+  },
+  {
+    "id": "PUMP_B6KKMHK5_V7UT",
+    "name": "Pump",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn"
+  },
+  {
+    "id": "PUNDIX",
+    "name": "Pundi X Token",
+    "type": "ERC20",
+    "contractAddress": "0x0FD10b9899882a6f2fcb5c371E17e70FdEe00C38",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PUSH",
+    "name": "Ethereum Push Notification Service",
+    "type": "ERC20",
+    "contractAddress": "0xf418588522d5dd018b425E472991E52EBBeEEEEE",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PXP",
+    "name": "PointPay Crypto Banking Token V2",
+    "type": "ERC20",
+    "contractAddress": "0x95aA5d2DbD3c16ee3fdea82D5C6EC3E38CE3314f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PYR",
+    "name": "PYR Token",
+    "type": "ERC20",
+    "contractAddress": "0x430EF9263E76DAE63c84292C3409D61c598E9682",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "PYTH_SOL",
+    "name": "Pyth Network (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3"
+  },
+  {
+    "id": "PYUSD_B6RD4QY4_ZO0B",
+    "name": "PYUSD",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDQE7IXJ4HUHV6RQHIUPRJSEZE4DRS5WY577O2FY6YQ5LVWZ7JZTU2V5"
+  },
+  {
+    "id": "PYUSD_B7B22QF3_QP8F",
+    "name": "PYUSD",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBT2KJDKUZYZTQPCSR57VZT5NJHI4H7FOB5LT5FPRWSR7I5B4FS3UU7G"
+  },
+  {
+    "id": "PYUSD_ETH",
+    "name": "PayPal USD",
+    "type": "ERC20",
+    "contractAddress": "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "PYUSD_SOL",
+    "name": "PayPal USD (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo"
+  },
+  {
+    "id": "QBIT",
+    "name": "Qubitica",
+    "type": "ERC20",
+    "contractAddress": "0x1602af2C782cC03F9241992E243290Fccf73Bb13",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "QCAD",
+    "name": "QCAD",
+    "type": "ERC20",
+    "contractAddress": "0x4A16BAf414b8e637Ed12019faD5Dd705735DB2e0",
+    "nativeAsset": "ETH",
+    "decimals": 2
+  },
+  {
+    "id": "QDX_BSC",
+    "name": "Quidax Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x9e3a9F1612028eeE48F85cA85f8Bed2f37d76848",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "QI_AVAX",
+    "name": "BENQI (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "QKC",
+    "name": "QuarkChain",
+    "type": "ERC20",
+    "contractAddress": "0xEA26c4aC16D4a5A106820BC8AEE85fd0b7b2b664",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "QNT",
+    "name": "Quant",
+    "type": "ERC20",
+    "contractAddress": "0x4a220E6096B25EADb88358cb44068A3248254675",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "QSP",
+    "name": "Quantstamp",
+    "type": "ERC20",
+    "contractAddress": "0x99ea4dB9EE77ACD40B119BD1dC4E33e1C070b80d",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "QUICK",
+    "name": "Quickswap (Old)",
+    "type": "ERC20",
+    "contractAddress": "0x6c28AeF8977c9B773996d0e8376d2EE379446F2f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "QUICK_POLYGON",
+    "name": "Quickswap (Old Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "RAD",
+    "name": "Radicle",
+    "type": "ERC20",
+    "contractAddress": "0x31c8EAcBFFdD875c74b94b077895Bd78CF1E64A3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RARE",
+    "name": "SuperRare",
+    "type": "ERC20",
+    "contractAddress": "0xba5BDe662c17e2aDFF1075610382B9B691296350",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RARI",
+    "name": "Rarible",
+    "type": "ERC20",
+    "contractAddress": "0xFca59Cd816aB1eaD66534D82bc21E7515cE441CF",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RAY",
+    "name": "Raydium",
+    "type": "ERC20",
+    "contractAddress": "0x5245C0249e5EEB2A0838266800471Fd32Adb1089",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "RAY_SOL",
+    "name": "Raydium (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R"
+  },
+  {
+    "id": "RBLX",
+    "name": "Rublix",
+    "type": "ERC20",
+    "contractAddress": "0xFc2C4D8f95002C14eD0a7aA65102Cac9e5953b5E",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RBN",
+    "name": "Ribbon",
+    "type": "ERC20",
+    "contractAddress": "0x6123B0049F904d730dB3C36a31167D9d4121fA6B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "RBTC", "name": "RSK Smart Bitcoin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "RBTC", "decimals": 18 },
+  {
+    "id": "RBTC_TEST",
+    "name": "RSK Smart Bitcoin (Test)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "RBTC_TEST",
+    "decimals": 18
+  },
+  { "id": "REDBELLY", "name": "Redbelly", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "REDBELLY", "decimals": 18 },
+  {
+    "id": "REDBELLY_TEST",
+    "name": "Redbelly Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "REDBELLY_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "REEF",
+    "name": "Reef.finance",
+    "type": "ERC20",
+    "contractAddress": "0xFE3E6a25e6b192A42a44ecDDCd13796471735ACf",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "REN",
+    "name": "Republic",
+    "type": "ERC20",
+    "contractAddress": "0x408e41876cCCDC0F92210600ef50372656052a38",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RENBTC",
+    "name": "renBTC",
+    "type": "ERC20",
+    "contractAddress": "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "RENDER_SOL",
+    "name": "Render Token (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 8,
+    "issuerAddress": "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof"
+  },
+  {
+    "id": "REP",
+    "name": "Augur",
+    "type": "ERC20",
+    "contractAddress": "0x1985365e9f78359a9B6AD760e32412f4a445E862",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "REPV2",
+    "name": "Reputation",
+    "type": "ERC20",
+    "contractAddress": "0x221657776846890989a759BA2973e427DfF5C9bB",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "REQ",
+    "name": "Request",
+    "type": "ERC20",
+    "contractAddress": "0x8f8221aFbB33998d8584A2B05749bA73c37a938a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "REVV",
+    "name": "REVV",
+    "type": "ERC20",
+    "contractAddress": "0x557B933a7C2c45672B610F8954A3deB39a51A8Ca",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RIF_RBTC",
+    "name": "RIF (RSK)",
+    "type": "ERC20",
+    "contractAddress": "0x2AcC95758f8b5F583470ba265EB685a8F45fC9D5",
+    "nativeAsset": "RBTC",
+    "decimals": 18
+  },
+  {
+    "id": "RING",
+    "name": "Darwinia Network Native Token",
+    "type": "ERC20",
+    "contractAddress": "0x9469D013805bFfB7D3DEBe5E7839237e535ec483",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RLC",
+    "name": "iExec RLC",
+    "type": "ERC20",
+    "contractAddress": "0x607F4C5BB672230e8672085532f7e901544a7375",
+    "nativeAsset": "ETH",
+    "decimals": 9
+  },
+  {
+    "id": "RLUSD_B6QT1TZK_1LW4",
+    "name": "RLUSD",
+    "type": "ERC20",
+    "contractAddress": "0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RLUSD_XRP_MNHU",
+    "name": "RLUSD (Ripple)",
+    "type": "XRP_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XRP",
+    "decimals": 6,
+    "issuerAddress": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De"
+  },
+  {
+    "id": "RLY",
+    "name": "Rally",
+    "type": "ERC20",
+    "contractAddress": "0xf1f955016EcbCd7321c7266BccFB96c68ea5E49b",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RMESH",
+    "name": "RightMesh",
+    "type": "ERC20",
+    "contractAddress": "0x8D5682941cE456900b12d47ac06a88b47C764CE1",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RNDR",
+    "name": "Render Token",
+    "type": "ERC20",
+    "contractAddress": "0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "RON", "name": "Ronin", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "RON", "decimals": 18 },
+  {
+    "id": "ROOK",
+    "name": "ROOK",
+    "type": "ERC20",
+    "contractAddress": "0xfA5047c9c78B8877af97BDcb85Db743fD7313d4a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RPL",
+    "name": "Rocket Pool (Old)",
+    "type": "ERC20",
+    "contractAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RPL2",
+    "name": "Rocket Pool (New)",
+    "type": "ERC20",
+    "contractAddress": "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RSR",
+    "name": "Reserve Rights (new contract)",
+    "type": "ERC20",
+    "contractAddress": "0x320623b8E4fF03373931769A31Fc52A4E78B5d70",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RSR_OLD",
+    "name": "Reserve Rights (old)",
+    "type": "ERC20",
+    "contractAddress": "0x8762db106B2c2A0bccB3A80d1Ed41273552616E8",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RUNE",
+    "name": "THORChain ETH.RUNE",
+    "type": "ERC20",
+    "contractAddress": "0x3155BA85D5F96b2d030a4966AF206230e46849cb",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "RUNE_BSC",
+    "name": "Rune (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xA9776B590bfc2f956711b3419910A5Ec1F63153E",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "RUNE_THOR", "name": "THORChain Rune", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "RUNE_THOR", "decimals": 8 },
+  {
+    "id": "RUNE_THOR_TEST",
+    "name": "THORChain Rune Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "RUNE_THOR_TEST",
+    "decimals": 8
+  },
+  { "id": "SAGA", "name": "Saga", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SAGA", "decimals": 6 },
+  {
+    "id": "SAND",
+    "name": "SAND",
+    "type": "ERC20",
+    "contractAddress": "0x3845badAde8e6dFF049820680d1F14bD3903a5d0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SARCO",
+    "name": "Sarcophagus",
+    "type": "ERC20",
+    "contractAddress": "0x7697B462A7c4Ff5F8b55BDBC2F4076c2aF9cF51A",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SB_SOL",
+    "name": "SuperBonds Token (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "SuperbZyz7TsSdSoFAZ6RYHfAWe9NmjXBLVQpS8hqdx"
+  },
+  { "id": "SCROLL", "name": "Scroll Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SCROLL", "decimals": 18 },
+  {
+    "id": "SCROLL_SEPOLIA_TEST",
+    "name": "Scroll Sepolia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SCROLL_SEPOLIA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "SDAO",
+    "name": "Singularity Dao",
+    "type": "ERC20",
+    "contractAddress": "0x993864E43Caa7F7F12953AD6fEb1d1Ca635B875F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "SEI", "name": "Sei", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SEI", "decimals": 18 },
+  { "id": "SEI_TEST", "name": "Sei", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SEI_TEST", "decimals": 18 },
+  {
+    "id": "SEN_TEST_USD",
+    "name": "Silvergate SEN Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "SEN_TEST_USD",
+    "decimals": 2
+  },
+  { "id": "SEN_USD", "name": "Silvergate SEN", "type": "FIAT", "contractAddress": "", "nativeAsset": "SEN_USD", "decimals": 2 },
+  {
+    "id": "SENSE",
+    "name": "Sense",
+    "type": "ERC20",
+    "contractAddress": "0x6745fAB6801e376cD24F03572B9C9B0D4EdDDCcf",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "SFI",
+    "name": "Spice",
+    "type": "ERC20",
+    "contractAddress": "0xb753428af26E81097e7fD17f40c88aaA3E04902c",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "SGB", "name": "Songbird", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SGB", "decimals": 18 },
+  {
+    "id": "SGB_LEGACY",
+    "name": "Songbird (Legacy derivation)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SGB_LEGACY",
+    "decimals": 18
+  },
+  {
+    "id": "SHEESHA_BSC",
+    "name": "Sheesha Finance",
+    "type": "BEP20",
+    "contractAddress": "0x232FB065D9d24c34708eeDbF03724f2e95ABE768",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "SHFT",
+    "name": "Shyft [ Byfrost ]",
+    "type": "ERC20",
+    "contractAddress": "0xcba3eAe7f55D0F423AF43cC85E67ab0fBF87B61C",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SHFT_WRAPPED",
+    "name": "Shyft _ Wrapped _",
+    "type": "ERC20",
+    "contractAddress": "0xb17C88bDA07D28B3838E0c1dE6a30eAfBCF52D85",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SHIB",
+    "name": "SHIBA INU",
+    "type": "ERC20",
+    "contractAddress": "0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SHIB_BSC",
+    "name": "SHIBA INU (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x2859e4544C4bB03966803b044A93563Bd2D0DD4D",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "SHX_XLM",
+    "name": "Stronghold SHx (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDSTRSHXHGJ7ZIVRBXEYE5Q74XUVCUSEKEBR7UCHEUUEK72N7I7KJ6JH"
+  },
+  {
+    "id": "SIDUS",
+    "name": "SIDUS",
+    "type": "ERC20",
+    "contractAddress": "0x549020a9Cb845220D66d3E9c6D9F9eF61C981102",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SIGNET_TEST_USD",
+    "name": "Signet Test",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "SIGNET_TEST_USD",
+    "decimals": 2
+  },
+  { "id": "SIGNET_USD", "name": "Signet", "type": "FIAT", "contractAddress": "", "nativeAsset": "SIGNET_USD", "decimals": 2 },
+  {
+    "id": "SIS",
+    "name": "Symbiosis",
+    "type": "ERC20",
+    "contractAddress": "0xd38BB40815d2B0c2d2c866e0c72c5728ffC76dd9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SKL",
+    "name": "SKALE",
+    "type": "ERC20",
+    "contractAddress": "0x00c83aeCC790e8a4453e5dD3B0B4b3680501a7A7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SKY_B6QT1TZK_SRZ6",
+    "name": "SKY Governance Token",
+    "type": "ERC20",
+    "contractAddress": "0x56072C95FAA701256059aa122697B133aDEd9279",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SLP_RON",
+    "name": "Smooth Love Potion (Ronin)",
+    "type": "ERC20",
+    "contractAddress": "0xa8754b9Fa15fc18BB59458815510E40a12cD2014",
+    "nativeAsset": "RON",
+    "decimals": 0
+  },
+  {
+    "id": "SLP1",
+    "name": "Smooth Love Potion",
+    "type": "ERC20",
+    "contractAddress": "0xCC8Fa225D80b9c7D42F96e9570156c65D6cAAa25",
+    "nativeAsset": "ETH",
+    "decimals": 0
+  },
+  { "id": "SMARTBCH", "name": "SmartBCH", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SMARTBCH", "decimals": 18 },
+  { "id": "SMR_SMR", "name": "Shimmer", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SMR_SMR", "decimals": 18 },
+  { "id": "SMR_TEST", "name": "Shimmer Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SMR_TEST", "decimals": 18 },
+  {
+    "id": "SNC",
+    "name": "SunContract",
+    "type": "ERC20",
+    "contractAddress": "0xF4134146AF2d511Dd5EA8cDB1C4AC88C57D60404",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SNT",
+    "name": "Status",
+    "type": "ERC20",
+    "contractAddress": "0x744d70FDBE2Ba4CF95131626614a1763DF805B9E",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SNX",
+    "name": "Synthetix Network Token",
+    "type": "ERC20",
+    "contractAddress": "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SOCKS",
+    "name": "Unisocks Edition 0",
+    "type": "ERC20",
+    "contractAddress": "0x23B608675a2B2fB1890d3ABBd85c5775c51691d5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SOETH_SOL",
+    "name": "Wrapped Ethereum (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk"
+  },
+  { "id": "SOL", "name": "Solana", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOL", "decimals": 9 },
+  {
+    "id": "SOL_BSC",
+    "name": "Solana (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x41848d32f281383F214C69B7b248DC7C2E0a7374",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "SOL_MAPS_FD7T",
+    "name": "MAPS (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "MAPS41MDahZ9QdKXhVa4dWB9RuyfV4XqhyAZ8XcYepb"
+  },
+  {
+    "id": "SOL_SRM_R62M",
+    "name": "Serum (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt"
+  },
+  { "id": "SOL_TEST", "name": "Solana Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOL_TEST", "decimals": 9 },
+  {
+    "id": "SOL_TTOKEN_CHGU",
+    "name": "Solana Test Token",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL_TEST",
+    "decimals": 9,
+    "issuerAddress": "FYEEA9iZJpad1ZCkigi9BvkCNcW4QNun23hEPrAfELDA"
+  },
+  {
+    "id": "SOL_USDC_PTHX",
+    "name": "USD Coin (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  },
+  {
+    "id": "SOL_USDT_EWAY",
+    "name": "USDT (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+  },
+  {
+    "id": "SOL2_BSC",
+    "name": "SOLANA BSC (2)",
+    "type": "BEP20",
+    "contractAddress": "0x570A5D26f7765Ecb712C0924E4De545B89fD43dF",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "SOLX_SOL",
+    "name": "Soldex (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "CH74tuRLTYcxG7qNJCsV9rghfLXJCQJbsu7i52a8F1Gn"
+  },
+  { "id": "SOMNIA", "name": "Somnia", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOMNIA", "decimals": 18 },
+  { "id": "SOMNIA_TEST", "name": "Somnia Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOMNIA_TEST", "decimals": 18 },
+  {
+    "id": "SONEIUM_MINATO_TEST",
+    "name": "Soneium Minato Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SONEIUM_MINATO_TEST",
+    "decimals": 18
+  },
+  { "id": "SONIC", "name": "Sonic", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SONIC", "decimals": 18 },
+  { "id": "SONIC_TEST", "name": "Sonic Testnet", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SONIC_TEST", "decimals": 18 },
+  { "id": "SOPHON", "name": "Sophon", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOPHON", "decimals": 18 },
+  { "id": "SOPHON_TEST", "name": "Sophon Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SOPHON_TEST", "decimals": 18 },
+  { "id": "SPEI_MXN", "name": "MXN (SPEI)", "type": "FIAT", "contractAddress": "", "nativeAsset": "SPEI_MXN", "decimals": 2 },
+  {
+    "id": "SPELL",
+    "name": "Spell Token",
+    "type": "ERC20",
+    "contractAddress": "0x090185f2135308BaD17527004364eBcC2D37e5F6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SPS_BSC",
+    "name": "Splintershards (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x1633b7157e7638C4d6593436111Bf125Ee74703F",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "SRM",
+    "name": "Serum",
+    "type": "ERC20",
+    "contractAddress": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "STAKE",
+    "name": "STAKE",
+    "type": "ERC20",
+    "contractAddress": "0x0Ae055097C6d159879521C384F1D2123D1f195e6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STETH",
+    "name": "stakedETH",
+    "type": "ERC20",
+    "contractAddress": "0xDFe66B14D37C77F4E9b180cEb433d1b164f0281D",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STETH_ETH",
+    "name": "Liquid staked Ether 2_0",
+    "type": "ERC20",
+    "contractAddress": "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STETH_ETH_TEST_HOODI",
+    "name": "Liquid staked Ether 2_0",
+    "type": "ERC20",
+    "contractAddress": "0x3508A952176b3c15387C97BE809eaffB1982176a",
+    "nativeAsset": "ETH_TEST_HOODI",
+    "decimals": 18
+  },
+  {
+    "id": "STETH_ETH_TEST6_DZFA",
+    "name": "Liquid staked Ether 2_0",
+    "type": "ERC20",
+    "contractAddress": "0x3F1c547b21f65e10480dE3ad8E19fAAC46C95034",
+    "nativeAsset": "ETH_TEST6",
+    "decimals": 18
+  },
+  {
+    "id": "STG",
+    "name": "StargateToken",
+    "type": "ERC20",
+    "contractAddress": "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STKAAVE",
+    "name": "Staked Aave",
+    "type": "ERC20",
+    "contractAddress": "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STMX",
+    "name": "StormX",
+    "type": "ERC20",
+    "contractAddress": "0xbE9375C6a420D2eEB258962efB95551A5b722803",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STORJ",
+    "name": "Storj",
+    "type": "ERC20",
+    "contractAddress": "0xB64ef51C888972c908CFacf59B47C1AfBC0Ab8aC",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "STPT",
+    "name": "STPT",
+    "type": "ERC20",
+    "contractAddress": "0xDe7D85157d9714EADf595045CC12Ca4A5f3E2aDb",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STRK_ETH_WY3Q",
+    "name": "StarkNet Token",
+    "type": "ERC20",
+    "contractAddress": "0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STRONG",
+    "name": "Strong",
+    "type": "ERC20",
+    "contractAddress": "0x990f341946A3fdB507aE7e52d17851B87168017c",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "STSOL_SOL",
+    "name": "Lido Staked SOL (Solana)",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj"
+  },
+  {
+    "id": "STX",
+    "name": "Stox",
+    "type": "ERC20",
+    "contractAddress": "0x006BeA43Baa3f7A6f765F14f10A1a1b08334EF45",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "SUI", "name": "SUI", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SUI", "decimals": 9 },
+  { "id": "SUI_TEST", "name": "SUI Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "SUI_TEST", "decimals": 9 },
+  {
+    "id": "SUKU",
+    "name": "SUKU Token",
+    "type": "ERC20",
+    "contractAddress": "0x0763fdCCF1aE541A5961815C0872A8c5Bc6DE4d7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SUPER",
+    "name": "SuperVerse",
+    "type": "ERC20",
+    "contractAddress": "0xe53EC727dbDEB9E2d5456c3be40cFF031AB40A55",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SUSD",
+    "name": "Synth sUSD",
+    "type": "ERC20",
+    "contractAddress": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SUSHI",
+    "name": "Sushi Token",
+    "type": "ERC20",
+    "contractAddress": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SUSHI_POLYGON",
+    "name": "SushiSwap (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "SVT_SOL",
+    "name": "Solvent",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "svtMpL5eQzdmB3uqK9NXaQkq8prGZoKQFNVJghdWCkV"
+  },
+  {
+    "id": "SWEAT_NEAR",
+    "name": "SWEAT",
+    "type": "NEAR_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "NEAR",
+    "decimals": 18,
+    "issuerAddress": "token.sweat"
+  },
+  {
+    "id": "SXP",
+    "name": "Swipe",
+    "type": "ERC20",
+    "contractAddress": "0x8CE9137d39326AD0cD6491fb5CC0CbA0e089b6A9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SYLO",
+    "name": "Sylo",
+    "type": "ERC20",
+    "contractAddress": "0xf293d23BF2CDc05411Ca0edDD588eb1977e8dcd4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SYN",
+    "name": "Synapse",
+    "type": "ERC20",
+    "contractAddress": "0x0f2D719407FdBeFF09D87557AbB7232601FD9F29",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "SYRUP_B6QT1TZK_FOSR",
+    "name": "Syrup Token",
+    "type": "ERC20",
+    "contractAddress": "0x643C4E15d7d62Ad0aBeC4a9BD4b001aA3Ef52d66",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "t14_XRP_TEST_YB4D",
+    "name": "t14",
+    "type": "XRP_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XRP_TEST",
+    "decimals": 6,
+    "issuerAddress": "rDFUVuBZmdACfEm44ieCu73CE75pdi4fXa"
+  },
+  {
+    "id": "TAB1_XLM_OXFD_YK4G",
+    "name": "TAB1 (Stellar Test)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GCWAT6HJIHKNCA6UELZCIRLXP44RDVVPN2NOFNVLFOEOXG7GMK7AOSH3"
+  },
+  { "id": "TAC", "name": "TAC", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TAC", "decimals": 18 },
+  {
+    "id": "TAUD",
+    "name": "TrueAUD",
+    "type": "ERC20",
+    "contractAddress": "0x00006100F7090010005F1bd7aE6122c3C2CF0090",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TBTC",
+    "name": "tBTC",
+    "type": "ERC20",
+    "contractAddress": "0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TCR_ARB",
+    "name": "Tracer",
+    "type": "ERC20",
+    "contractAddress": "0xA72159FC390f0E3C6D415e658264c7c4051E9b87",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "TEL",
+    "name": "Telcoin",
+    "type": "ERC20",
+    "contractAddress": "0x467Bccd9d29f223BcE8043b84E8C8B282827790F",
+    "nativeAsset": "ETH",
+    "decimals": 2
+  },
+  { "id": "TELOS", "name": "TELOS", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TELOS", "decimals": 18 },
+  { "id": "TELOS_TEST", "name": "Telos Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TELOS_TEST", "decimals": 18 },
+  {
+    "id": "TEN",
+    "name": "Tokenomy",
+    "type": "ERC20",
+    "contractAddress": "0xDD16eC0F66E54d453e6756713E533355989040E4",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TKO",
+    "name": "TKO (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x9f589e3eabe42ebC94A44727b3f3531C0c877809",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "TKX", "name": "TokenX", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TKX", "decimals": 18 },
+  {
+    "id": "TLM1",
+    "name": "Alien Worlds Trilium",
+    "type": "ERC20",
+    "contractAddress": "0x888888848B652B3E3a0f34c96E00EEC0F3a23F72",
+    "nativeAsset": "ETH",
+    "decimals": 4
+  },
+  {
+    "id": "TOKE",
+    "name": "Tokemak",
+    "type": "ERC20",
+    "contractAddress": "0x2e9d63788249371f1DFC918a52f8d799F4a38C94",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TOKEN_BSC_RLDP",
+    "name": "TokenFi",
+    "type": "BEP20",
+    "contractAddress": "0x4507cEf57C46789eF8d1a19EA45f4216bae2B528",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 9
+  },
+  {
+    "id": "TOKEN_ETH_JIKQ",
+    "name": "TokenFi",
+    "type": "ERC20",
+    "contractAddress": "0x4507cEf57C46789eF8d1a19EA45f4216bae2B528",
+    "nativeAsset": "ETH",
+    "decimals": 9
+  },
+  { "id": "TON", "name": "TON", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TON", "decimals": 9 },
+  { "id": "TON_TEST", "name": "TON Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TON_TEST", "decimals": 9 },
+  {
+    "id": "TRAC",
+    "name": "OriginTrail",
+    "type": "ERC20",
+    "contractAddress": "0xaA7a9CA87d3694B5755f213B5D04094b8d0F0A6F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TRB",
+    "name": "Tellor Tributes",
+    "type": "ERC20",
+    "contractAddress": "0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TRB_L",
+    "name": "Tellor Tributes (Legacy)",
+    "type": "ERC20",
+    "contractAddress": "0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TRIBE",
+    "name": "Tribe",
+    "type": "ERC20",
+    "contractAddress": "0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TRU",
+    "name": "TrueFi",
+    "type": "ERC20",
+    "contractAddress": "0x4C19596f5aAfF459fA38B0f7eD92F11AE6543784",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "TRUMP_B6KKMHK5_E95U",
+    "name": "OFFICIAL TRUMP",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN"
+  },
+  { "id": "TRX", "name": "Tron", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TRX", "decimals": 6 },
+  {
+    "id": "TRX_BSC",
+    "name": "TRON (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "TRX_TEST", "name": "Tron Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "TRX_TEST", "decimals": 6 },
+  {
+    "id": "TRX_USDC_6NU3",
+    "name": "USD Coin (Tron)",
+    "type": "TRON_TRC20",
+    "contractAddress": "",
+    "nativeAsset": "TRX",
+    "decimals": 6,
+    "issuerAddress": "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8"
+  },
+  {
+    "id": "TRX_USDC_SKL5",
+    "name": "USD Coin Test (Tron)",
+    "type": "TRON_TRC20",
+    "contractAddress": "",
+    "nativeAsset": "TRX_TEST",
+    "decimals": 6,
+    "issuerAddress": "TFGBSrddCjLJAwuryZ9DUxtEmKv13BPjnh"
+  },
+  {
+    "id": "TRX_USDT_S2UZ",
+    "name": "USD Tether (Tron)",
+    "type": "TRON_TRC20",
+    "contractAddress": "",
+    "nativeAsset": "TRX",
+    "decimals": 6,
+    "issuerAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+  },
+  {
+    "id": "TTTT_ETH_TEST6",
+    "name": "TTTT_ETH_TEST6",
+    "type": "ERC20",
+    "contractAddress": "0x6558392AfdA386d1A6b451640e809a27153151d8",
+    "nativeAsset": "ETH_TEST6",
+    "decimals": 18
+  },
+  {
+    "id": "TUSD",
+    "name": "TrueUSD",
+    "type": "ERC20",
+    "contractAddress": "0x0000000000085d4780B73119b644AE5ecd22b376",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "TUSD_AVAX",
+    "name": "TrueUSD (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x1C20E891Bab6b1727d14Da358FAe2984Ed9B59EB",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "TVK",
+    "name": "Terra Virtua Kolect",
+    "type": "ERC20",
+    "contractAddress": "0xd084B83C305daFD76AE3E1b4E1F1fe2eCcCb3988",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UCO",
+    "name": "UnirisToken",
+    "type": "ERC20",
+    "contractAddress": "0x8a3d77e9d6968b780564936d15B09805827C21fa",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UD",
+    "name": ".crypto",
+    "type": "ERC20",
+    "contractAddress": "0xD1E5b0FF1287aA9f9A268759062E4Ab08b9Dacbe",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UFT",
+    "name": "UniLend Finance Token",
+    "type": "ERC20",
+    "contractAddress": "0x0202Be363B8a4820f3F4DE7FaF5224fF05943AB1",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UMA",
+    "name": "UMA Voting Token v1",
+    "type": "ERC20",
+    "contractAddress": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UMB",
+    "name": "Umbrella",
+    "type": "ERC20",
+    "contractAddress": "0x6fC13EACE26590B80cCCAB1ba5d51890577D83B2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UNI",
+    "name": "Uniswap",
+    "type": "ERC20",
+    "contractAddress": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UNI_BSC",
+    "name": "Binance-Peg Uniswap (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "UNI_ETH_TEST5_IXAC",
+    "name": "Uniswap",
+    "type": "ERC20",
+    "contractAddress": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    "nativeAsset": "ETH_TEST5",
+    "decimals": 18
+  },
+  {
+    "id": "UNI-V2-2GT-2",
+    "name": "Uniswap V2: 2GT 2",
+    "type": "ERC20",
+    "contractAddress": "0x9861F7187b58023d89B2C2b0767bdEE43345620A",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "UNICHAIN_ETH", "name": "Unichain", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "UNICHAIN_ETH", "decimals": 18 },
+  {
+    "id": "UNICHAIN_SEPOLIA_TEST",
+    "name": "Unichain Sepolia Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "UNICHAIN_SEPOLIA_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "UOS",
+    "name": "Ultra Token",
+    "type": "ERC20",
+    "contractAddress": "0xD13c7342e1ef687C5ad21b27c2b65D772cAb5C8c",
+    "nativeAsset": "ETH",
+    "decimals": 4
+  },
+  {
+    "id": "UPP",
+    "name": "SENTINEL PROTOCOL",
+    "type": "ERC20",
+    "contractAddress": "0xC86D054809623432210c107af2e3F619DcFbf652",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "USD_BY_WIRE", "name": "USD (wire)", "type": "FIAT", "contractAddress": "", "nativeAsset": "USD_BY_WIRE", "decimals": 2 },
+  {
+    "id": "USD_BY_WIRE_TEST",
+    "name": "USD Test (wire)",
+    "type": "FIAT",
+    "contractAddress": "",
+    "nativeAsset": "USD_BY_WIRE_TEST",
+    "decimals": 2
+  },
+  {
+    "id": "USDC",
+    "name": "USD Coin",
+    "type": "ERC20",
+    "contractAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_AMOY_POLYGON_TEST_7WWV",
+    "name": "USDC",
+    "type": "ERC20",
+    "contractAddress": "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+    "nativeAsset": "AMOY_POLYGON_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_ARB",
+    "name": "Bridged USDC (Arbitrum)",
+    "type": "ERC20",
+    "contractAddress": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_ARB_3SBJ",
+    "name": "USD Coin",
+    "type": "ERC20",
+    "contractAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_AVAX",
+    "name": "USD Coin (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+    "nativeAsset": "AVAX",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_AVAX_FUJI",
+    "name": " USD Coin (Avalanche Fuji)",
+    "type": "ERC20",
+    "contractAddress": "0x5425890298aed601595a70AB815c96711a31Bc65",
+    "nativeAsset": "AVAXTEST",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_B7WL2VK2_HTLH",
+    "name": "USDC",
+    "type": "ERC20",
+    "contractAddress": "xdcfA2958CB79b0491CC627c1557F441eF849Ca8eb1",
+    "nativeAsset": "XDC",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_BASECHAIN_ETH_5I5C",
+    "name": "USD Coin",
+    "type": "ERC20",
+    "contractAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_BASECHAIN_ETH_TEST5_8SH8",
+    "name": "USDC",
+    "type": "ERC20",
+    "contractAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "nativeAsset": "BASECHAIN_ETH_TEST5",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_BSC",
+    "name": "Binance-Peg USD Coin (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "USDC_CELO_ROI8",
+    "name": "USDC",
+    "type": "ERC20",
+    "contractAddress": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    "nativeAsset": "CELO",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_E_AVAX",
+    "name": "USD Coin (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+    "nativeAsset": "AVAX",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_E_B7DRHSD9_OINX",
+    "name": "Bridged USDC (world-chain-mainnet)",
+    "type": "ERC20",
+    "contractAddress": "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1",
+    "nativeAsset": "WORLDCHAIN",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_ETH_TEST5_0GER",
+    "name": "USDC",
+    "type": "ERC20",
+    "contractAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "nativeAsset": "ETH_TEST5",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_FANTOM",
+    "name": "USD Coin (Fantom)",
+    "type": "ERC20",
+    "contractAddress": "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_NEAR",
+    "name": "USD Coin",
+    "type": "NEAR_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "NEAR",
+    "decimals": 6,
+    "issuerAddress": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
+  },
+  { "id": "USDC_NOBLE", "name": "USDC Noble", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "USDC_NOBLE", "decimals": 6 },
+  {
+    "id": "USDC_NOBLE_TEST",
+    "name": "USDC Noble Testnet",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "USDC_NOBLE_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_OPT_9T08",
+    "name": "USD Coin",
+    "type": "ERC20",
+    "contractAddress": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_POLYGON",
+    "name": "USD Coin (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_POLYGON_NXTB",
+    "name": "USD Coin",
+    "type": "ERC20",
+    "contractAddress": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 6
+  },
+  {
+    "id": "USDC_SUI",
+    "name": "USDC",
+    "type": "SUI_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SUI",
+    "decimals": 6,
+    "issuerAddress": "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC"
+  },
+  {
+    "id": "USDE_ETH_N71B",
+    "name": "USDe",
+    "type": "ERC20",
+    "contractAddress": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "USDL_ETH_HYWN",
+    "name": "Lift Dollar",
+    "type": "ERC20",
+    "contractAddress": "0xbdC7c08592Ee4aa51D06C27Ee23D5087D65aDbcD",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "USDRIF_RSK_14FQ",
+    "name": "RIF US Dollar",
+    "type": "ERC20",
+    "contractAddress": "0x3A15461d8aE0F0Fb5Fa2629e9DA7D66A794a6e37",
+    "nativeAsset": "RBTC",
+    "decimals": 18
+  },
+  {
+    "id": "USDS_B6QT1TZK_0VGO",
+    "name": "USDS Stablecoin",
+    "type": "ERC20",
+    "contractAddress": "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "USDT",
+    "name": "Tether USD (Optimistic)",
+    "type": "ERC20",
+    "contractAddress": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_ARB",
+    "name": "Tether USD (Arbitrum)",
+    "type": "ERC20",
+    "contractAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_AVAX",
+    "name": "Tether USD (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
+    "nativeAsset": "AVAX",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_BSC",
+    "name": "Binance-Peg Tether (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x55d398326f99059fF775485246999027B3197955",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "USDT_BSC_TEST",
+    "name": "USDT Token (BSC Test)",
+    "type": "BEP20",
+    "contractAddress": "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+    "nativeAsset": "BNB_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "USDT_CELO",
+    "name": "Tether USD (Celo)",
+    "type": "ERC20",
+    "contractAddress": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+    "nativeAsset": "CELO",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_E_NEAR",
+    "name": "USDT Tether Bridged",
+    "type": "NEAR_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "NEAR",
+    "decimals": 6,
+    "issuerAddress": "dac17f958d2ee523a2206206994597c13d831ec7.factory.bridge.near"
+  },
+  {
+    "id": "USDT_ERC20",
+    "name": "Tether USD (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_NEAR",
+    "name": "USD Tether",
+    "type": "NEAR_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "NEAR",
+    "decimals": 6,
+    "issuerAddress": "usdt.tether-token.near"
+  },
+  { "id": "USDT_OMNI", "name": "Tether (Omni)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "BTC", "decimals": 8 },
+  {
+    "id": "USDT_POLYGON",
+    "name": "(PoS) Tether USD (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 6
+  },
+  {
+    "id": "USDT_TON",
+    "name": "Tether USD (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 6,
+    "issuerAddress": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
+  },
+  {
+    "id": "USDT0_B6MGR7R1_SS6H",
+    "name": "USDT0",
+    "type": "ERC20",
+    "contractAddress": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+    "nativeAsset": "PLASMA",
+    "decimals": 6
+  },
+  {
+    "id": "USDT2_AVAX",
+    "name": "TetherToken _Avalanche_ - USDT2",
+    "type": "ERC20",
+    "contractAddress": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+    "nativeAsset": "AVAX",
+    "decimals": 6
+  },
+  {
+    "id": "UST",
+    "name": "Wrapped UST Token",
+    "type": "ERC20",
+    "contractAddress": "0xa47c8bf37f92aBed4A126BDA807A7b7498661acD",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "UST_BSC",
+    "name": "Wrapped UST Token",
+    "type": "BEP20",
+    "contractAddress": "0x23396cF899Ca06c4472205fC903bDB4de249D6fC",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "UST_ETH",
+    "name": "UST (Wormhole)",
+    "type": "ERC20",
+    "contractAddress": "0xa693B19d2931d498c5B318dF961919BB4aee87a5",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "VEE",
+    "name": "BLOCKv",
+    "type": "ERC20",
+    "contractAddress": "0x340D2bdE5Eb28c1eed91B2f790723E3B160613B7",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "VEGA",
+    "name": "VEGA",
+    "type": "ERC20",
+    "contractAddress": "0xcB84d72e61e383767C4DFEb2d8ff7f4FB89abc6e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "VEST",
+    "name": "VestChain",
+    "type": "ERC20",
+    "contractAddress": "0x37F04d2C3AE075Fad5483bB918491F656B12BDB6",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "VGX_ETH",
+    "name": "Voyager Token",
+    "type": "ERC20",
+    "contractAddress": "0x3C4B6E6e1eA3D4863700D7F76b36B7f3D3f13E3d",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "VIB",
+    "name": "Viberate",
+    "type": "ERC20",
+    "contractAddress": "0x2C974B2d0BA1716E644c1FC59982a89DDD2fF724",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "VICTION", "name": "Viction", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "VICTION", "decimals": 18 },
+  {
+    "id": "VICTION_TEST",
+    "name": "Viction Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "VICTION_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "VIDYA",
+    "name": "Vidya",
+    "type": "ERC20",
+    "contractAddress": "0x3D3D35bb9bEC23b06Ca00fe472b50E7A4c692C30",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "VOXEL_POLYGON",
+    "name": "VOXEL Token (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0xd0258a3fD00f38aa8090dfee343f10A9D4d30D3F",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "VRA",
+    "name": "VERA",
+    "type": "ERC20",
+    "contractAddress": "0xF411903cbC70a74d22900a5DE66A2dda66507255",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "W_ETH_S5P9",
+    "name": "Wormhole Token",
+    "type": "ERC20",
+    "contractAddress": "0xB0fFa8000886e57F86dd5264b9582b2Ad87b2b91",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "W_SOL",
+    "name": "Wormhole",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 6,
+    "issuerAddress": "85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ"
+  },
+  {
+    "id": "WAL_SUI",
+    "name": "Walrus",
+    "type": "SUI_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SUI",
+    "decimals": 9,
+    "issuerAddress": "0x356a26eb9e012a68958082340d4c4116e7f55615cf27affcff209cf0ae544f59::wal::WAL"
+  },
+  {
+    "id": "WAVAX_AVAX",
+    "name": "Wrapped AVAX (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "WAVES",
+    "name": "WAVES token",
+    "type": "ERC20",
+    "contractAddress": "0x1cF4592ebfFd730c7dc92c1bdFFDfc3B9EfCf29a",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WBNB_BSC",
+    "name": "Wrapped BNB (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "WBTC",
+    "name": "Wrapped BTC",
+    "type": "ERC20",
+    "contractAddress": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    "nativeAsset": "ETH",
+    "decimals": 8
+  },
+  {
+    "id": "WBTC_ARB",
+    "name": "Wrapped BTC (Arbitrum)",
+    "type": "ERC20",
+    "contractAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 8
+  },
+  {
+    "id": "WBTC_AVAX",
+    "name": "Wrapped BTC (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x50b7545627a5162F82A992c33b87aDc75187B218",
+    "nativeAsset": "AVAX",
+    "decimals": 8
+  },
+  {
+    "id": "WCFG",
+    "name": "Wrapped Centrifuge",
+    "type": "ERC20",
+    "contractAddress": "0xc221b7E65FfC80DE234bbB6667aBDd46593D34F0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WCT_B7K5S6PF_H7HU",
+    "name": "WalletConnect",
+    "type": "ERC20",
+    "contractAddress": "0xeF4461891DfB3AC8572cCf7C794664A8DD927945",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 18
+  },
+  { "id": "WEMIX", "name": "WEMIX", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WEMIX", "decimals": 18 },
+  { "id": "WEMIX_TEST", "name": "WEMIX Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WEMIX_TEST", "decimals": 18 },
+  {
+    "id": "WETH",
+    "name": "Wrapped Ether",
+    "type": "ERC20",
+    "contractAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_ARB",
+    "name": "Wrapped Ether _Arbitrum_",
+    "type": "ERC20",
+    "contractAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    "nativeAsset": "ETH-AETH",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_BASECHAIN_ETH_QV3S",
+    "name": "Wrapped Ether",
+    "type": "ERC20",
+    "contractAddress": "0x4200000000000000000000000000000000000006",
+    "nativeAsset": "BASECHAIN_ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_E",
+    "name": "Wrapped Ether (Avalanche)",
+    "type": "ERC20",
+    "contractAddress": "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
+    "nativeAsset": "AVAX",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_ETH_TEST5_PU4S",
+    "name": "Wrapped Ether",
+    "type": "ERC20",
+    "contractAddress": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "nativeAsset": "ETH_TEST5",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_OPT",
+    "name": "Wrapped Ether (Optimism)",
+    "type": "ERC20",
+    "contractAddress": "0x4200000000000000000000000000000000000006",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 18
+  },
+  {
+    "id": "WETH_POLYGON",
+    "name": "Wrapped Ether (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  {
+    "id": "WFTM_FANTOM",
+    "name": "Wrapped Fantom (Fantom)",
+    "type": "ERC20",
+    "contractAddress": "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+    "nativeAsset": "FTM_FANTOM",
+    "decimals": 18
+  },
+  {
+    "id": "WILD",
+    "name": "Wilder",
+    "type": "ERC20",
+    "contractAddress": "0x2a3bFF78B79A009976EeA096a51A948a3dC00e34",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WIN_BSC",
+    "name": "WINk",
+    "type": "BEP20",
+    "contractAddress": "0xaeF0d72a118ce24feE3cD1d43d383897D05B4e99",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  { "id": "WIREXPAY_ETH", "name": "Ethereum", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WIREXPAY_ETH", "decimals": 18 },
+  {
+    "id": "WLD_B7DRHSD9_4C2M",
+    "name": "Worldcoin",
+    "type": "ERC20",
+    "contractAddress": "0x2cFc85d8E48F8EAB294be644d9E25C3030863003",
+    "nativeAsset": "WORLDCHAIN",
+    "decimals": 18
+  },
+  {
+    "id": "WLD_ETH_WMUS",
+    "name": "Worldcoin",
+    "type": "ERC20",
+    "contractAddress": "0x163f8C2467924be0ae7B5347228CABF260318753",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WLD_OPT_IGJW",
+    "name": "Worldcoin",
+    "type": "ERC20",
+    "contractAddress": "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
+    "nativeAsset": "ETH-OPT",
+    "decimals": 18
+  },
+  {
+    "id": "WLFI_B6QT1TZK_76SM",
+    "name": "World Liberty Financial",
+    "type": "ERC20",
+    "contractAddress": "0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WLUNA",
+    "name": "Wrapped LUNA Token",
+    "type": "ERC20",
+    "contractAddress": "0xd2877702675e6cEb975b4A1dFf9fb7BAF4C91ea9",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WMATIC_POLYGON",
+    "name": "Wrapped Matic (Polygon)",
+    "type": "ERC20",
+    "contractAddress": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  { "id": "WMTX", "name": "WMTX", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WMTX", "decimals": 18 },
+  { "id": "WND", "name": "Westend", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WND", "decimals": 12 },
+  {
+    "id": "WNXM",
+    "name": "Wrapped NXM",
+    "type": "ERC20",
+    "contractAddress": "0x0d438F3b5175Bebc262bF23753C1E53d03432bDE",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WOM",
+    "name": "WOM Token",
+    "type": "ERC20",
+    "contractAddress": "0xBd356a39BFf2cAda8E9248532DD879147221Cf76",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "WOMOX", "name": "WOMOX", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WOMOX", "decimals": 18 },
+  {
+    "id": "WOO",
+    "name": "Wootrade Network (Ethereum)",
+    "type": "ERC20",
+    "contractAddress": "0x4691937a7508860F876c9c0a2a617E7d9E945D4B",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "WORLDCHAIN", "name": "Worldchain", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "WORLDCHAIN", "decimals": 18 },
+  {
+    "id": "WORLDCHAIN_TEST",
+    "name": "Worldchain Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "WORLDCHAIN_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "WRX_BSC",
+    "name": "Wazirx Token (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0x8e17ed70334C87eCE574C9d537BC153d8609e2a3",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 8
+  },
+  {
+    "id": "WSOL_SOL",
+    "name": "Wrapped SOL _Solana_",
+    "type": "SOL_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "SOL",
+    "decimals": 9,
+    "issuerAddress": "So11111111111111111111111111111111111111112"
+  },
+  {
+    "id": "WSTETH",
+    "name": "Wrapped liquid staked Ether 2.0",
+    "type": "ERC20",
+    "contractAddress": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "WXT",
+    "name": "Wirex Token",
+    "type": "ERC20",
+    "contractAddress": "0xa02120696c7B8fE16C09C749E4598819b2B0E915",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "X_TON",
+    "name": "X Empire (Ton)",
+    "type": "TON_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "TON",
+    "decimals": 9,
+    "issuerAddress": "EQB4zZusHsbU2vVTPqjhlokIOoiZhEdCMT703CWEzhTOo__X"
+  },
+  {
+    "id": "XAUT2",
+    "name": "Tether Gold (New)",
+    "type": "ERC20",
+    "contractAddress": "0x68749665FF8D2d112Fa859AA293F07A622782F38",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "XCASH_POLYGON",
+    "name": "X-Cash (PoS)",
+    "type": "ERC20",
+    "contractAddress": "0x03678f2c2c762DC63c2Bb738c3a837D366eDa560",
+    "nativeAsset": "MATIC_POLYGON",
+    "decimals": 18
+  },
+  { "id": "XDAI", "name": "Gnosis xDAI", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XDAI", "decimals": 18 },
+  {
+    "id": "XDAI_TEST",
+    "name": "Gnosis xDAI Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDAI_TEST",
+    "decimals": 18
+  },
+  { "id": "XDB", "name": "XDB", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XDB", "decimals": 7 },
+  {
+    "id": "XDB_ROMA_G5H1",
+    "name": "ROMA (DigitalBits)",
+    "type": "XDB_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDB",
+    "decimals": 7,
+    "issuerAddress": "GBJPYIYYLCJED2ETN3YWPG23P77JWIE3SSNHZJPW2FOHKRBXNKF5UEEL"
+  },
+  { "id": "XDB_TEST", "name": "XDB Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XDB_TEST", "decimals": 7 },
+  {
+    "id": "XDB_USDS_7FSS",
+    "name": "USDS (DigitalBits)",
+    "type": "XDB_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDB",
+    "decimals": 7,
+    "issuerAddress": "GBFOHHXUNGIYJHPLXAC3AKNDDXWR6NSUJSKBMXY452Y4AQBZEUL7EKAB"
+  },
+  {
+    "id": "XDB_ZUSD_Q74F",
+    "name": "ZUSD (DigitalBits)",
+    "type": "XDB_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDB",
+    "decimals": 7,
+    "issuerAddress": "GBFOHHXUNGIYJHPLXAC3AKNDDXWR6NSUJSKBMXY452Y4AQBZEUL7EKAB"
+  },
+  { "id": "XDC", "name": "XDC Network", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XDC", "decimals": 18 },
+  { "id": "XEC", "name": "eCash", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XEC", "decimals": 2 },
+  { "id": "XEC_TEST", "name": "eCash Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XEC_TEST", "decimals": 2 },
+  { "id": "XEM", "name": "XEM", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XEM", "decimals": 6 },
+  { "id": "XEM_TEST", "name": "XEM Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XEM_TEST", "decimals": 6 },
+  { "id": "XION", "name": "Xion", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XION", "decimals": 6 },
+  { "id": "XION_TEST", "name": "Xion Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XION_TEST", "decimals": 6 },
+  { "id": "XLM", "name": "Stellar", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XLM", "decimals": 7 },
+  {
+    "id": "XLM_AKN_GNFL",
+    "name": "Akoin (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GACSHAJ2XBNKRNJEVDAII6E2EAASIAMDBCLJ3VKSZEWK3KC7Y7DPXUFX"
+  },
+  {
+    "id": "XLM_BRL_LQ3J",
+    "name": "BRL (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDVKY2GU2DRXWTBEYJJWSFXIGBZV6AZNBVVSUHEPZI54LIS6BA7DVVSP"
+  },
+  {
+    "id": "XLM_BRZ_EDTE",
+    "name": "BRZ Token (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GABMA6FPH3OJXNTGWO7PROF7I5WPQUZOB4BLTBTP4FK6QV7HWISLIEO2"
+  },
+  {
+    "id": "XLM_BTCE_DP2P",
+    "name": "BTCe Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBOPFWZZJZUMTS6KVQAHUUNLMXO424ZF7IWHF6GONLAVCDSN4TBBKCLV"
+  },
+  {
+    "id": "XLM_BTCEM_T_MVE5",
+    "name": "BTCEM Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBOPFWZZJZUMTS6KVQAHUUNLMXO424ZF7IWHF6GONLAVCDSN4TBBKCLV"
+  },
+  {
+    "id": "XLM_EURE_O4P4",
+    "name": "EURe Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBOPFWZZJZUMTS6KVQAHUUNLMXO424ZF7IWHF6GONLAVCDSN4TBBKCLV"
+  },
+  {
+    "id": "XLM_EUREM_T_B7SB",
+    "name": "EUREM Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBOPFWZZJZUMTS6KVQAHUUNLMXO424ZF7IWHF6GONLAVCDSN4TBBKCLV"
+  },
+  {
+    "id": "XLM_FBTEST_7SNX",
+    "name": "Fireblocks Test Token (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GC3NA75PU6HD5OWCZ7OHCSAL6HZSELNTTBAGHAOCGHBSAQTVI7GCQK2J"
+  },
+  {
+    "id": "XLM_GYEN_TLIE",
+    "name": "GMO JPY (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDF6VOEGRWLOZ64PQQGKD2IYWA22RLT37GJKS2EJXZHT2VLAGWLC5TOB"
+  },
+  {
+    "id": "XLM_GYEN_ZN63",
+    "name": "GMO JPY Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GAQQSET64FFYJLZB3XIFUVPGRDMETG2USH2R7VPUY2E4YEXH7STKRISN"
+  },
+  {
+    "id": "XLM_HODL_EFOE",
+    "name": "HODL Token (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GAQEDFS2JK6JSQO53DWT23TGOLH5ZUZG4O3MNLF3CFUZWEJ6M7MMGJAV"
+  },
+  {
+    "id": "XLM_IDK_JM2C",
+    "name": "IDK (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GAVDGVOARGIMZA47POPHGPC2FRDE7I7ZF3NGNNIGDPGEZRMTELFAD6DN"
+  },
+  {
+    "id": "XLM_LUNA_T_WZ5J",
+    "name": "Luna Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBDH4456HKE3BNIMIRWRHQDWN2KSOTY3FZFGUJTRZXY33Y3JEJGGFMCT"
+  },
+  {
+    "id": "XLM_NTT_PZV2",
+    "name": "NTT Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBWFD4RZAEMXLBDLVYTGTRZ53IIGLWOAPEMVRF5V62M7FH76QER5JNMI"
+  },
+  {
+    "id": "XLM_ROMA_G5H1",
+    "name": "ROMA _DigitalBits_",
+    "type": "XDB_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XDB",
+    "decimals": 7,
+    "issuerAddress": "GBJPYIYYLCJED2ETN3YWPG23P77JWIE3SSNHZJPW2FOHKRBXNKF5UEEL"
+  },
+  {
+    "id": "XLM_SBDD_T_GC74",
+    "name": "SBDD Issuance Wallet Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GC74OM3VHSTARP2BNCEFFCU5GUNRXGNYZUORHFVZIZJH7IPISKOVDHM4"
+  },
+  {
+    "id": "XLM_SBDD_T_GD7R",
+    "name": "SBDD Distribution Wallet Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GD7RN27CQZAAYDZZ5WCIFYRSXSFQCB72IKMFEU2LE6V5M7ILZOONALOK"
+  },
+  {
+    "id": "XLM_SIX_BIQ4",
+    "name": "SIX.Network",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDMS6EECOH6MBMCP3FYRYEVRBIV3TQGLOFQIPVAITBRJUMTI6V7A2X6Z"
+  },
+  {
+    "id": "XLM_SOLA_T_7WZU",
+    "name": "Sola Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GDFREACG4LEESEGBBQZKSMS7FS47YNULFKBKFP5WGNKEHXOGNQVGSZHV"
+  },
+  { "id": "XLM_TEST", "name": "Stellar Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XLM_TEST", "decimals": 7 },
+  {
+    "id": "XLM_TLFTST_UH6X",
+    "name": "TLFTST Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBN54AOKMC6H4Q25Y623IRVUJHVREZJV7DQEJKQ26WISKQZDY4MC6VI3"
+  },
+  {
+    "id": "XLM_USDC_5F3T",
+    "name": "USD Coin (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+  },
+  {
+    "id": "XLM_USDC_T_CEKS",
+    "name": "USD Coin Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
+  },
+  {
+    "id": "XLM_WXT_DQLC",
+    "name": "Wirex Token (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GASBLVHS5FOABSDNW5SPPH3QRJYXY5JHA2AOA2QHH2FJLZBRXSG4SWXT"
+  },
+  {
+    "id": "XLM_ZUSD_VQXC",
+    "name": "Z.com USD (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM",
+    "decimals": 7,
+    "issuerAddress": "GDF6VOEGRWLOZ64PQQGKD2IYWA22RLT37GJKS2EJXZHT2VLAGWLC5TOB"
+  },
+  {
+    "id": "XLM_ZUSD_XCYQ",
+    "name": "Z.com USD Test (Stellar)",
+    "type": "XLM_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XLM_TEST",
+    "decimals": 7,
+    "issuerAddress": "GAQQSET64FFYJLZB3XIFUVPGRDMETG2USH2R7VPUY2E4YEXH7STKRISN"
+  },
+  { "id": "XRP", "name": "XRP (Ripple)", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XRP", "decimals": 6 },
+  { "id": "XRP_TEST", "name": "XRP Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XRP_TEST", "decimals": 6 },
+  {
+    "id": "XSGD",
+    "name": "XSGD",
+    "type": "ERC20",
+    "contractAddress": "0x70e8dE73cE538DA2bEEd35d14187F6959a8ecA96",
+    "nativeAsset": "ETH",
+    "decimals": 6
+  },
+  {
+    "id": "XSUSHI",
+    "name": "SushiBar",
+    "type": "ERC20",
+    "contractAddress": "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "XTP",
+    "name": "TAP",
+    "type": "ERC20",
+    "contractAddress": "0x6368e1E18c4C419DDFC608A0BEd1ccb87b9250fc",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "XTZ", "name": "Tezos", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XTZ", "decimals": 6 },
+  {
+    "id": "XTZ_BSC",
+    "name": "Tezos BSC Token",
+    "type": "BEP20",
+    "contractAddress": "0x16939ef78684453bfDFb47825F8a5F714f12623a",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "XTZ_ETHERLINK",
+    "name": "Tezos (Etherlink)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XTZ_ETHERLINK",
+    "decimals": 18
+  },
+  {
+    "id": "XTZ_ETHERLINK_TEST",
+    "name": "Tezos Test (Etherlink Testnet)",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "XTZ_ETHERLINK_TEST",
+    "decimals": 18
+  },
+  { "id": "XTZ_TEST", "name": "Tezos Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "XTZ_TEST", "decimals": 6 },
+  {
+    "id": "XVS_BSC",
+    "name": "Venus (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 18
+  },
+  {
+    "id": "XYO",
+    "name": "XY Oracle",
+    "type": "ERC20",
+    "contractAddress": "0x55296f69f40Ea6d20E478533C15A6B08B654E758",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "YFI",
+    "name": "Yearn Finance",
+    "type": "ERC20",
+    "contractAddress": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "YFII",
+    "name": "YFII.finance",
+    "type": "ERC20",
+    "contractAddress": "0xa1d0E215a23d7030842FC67cE582a6aFa3CCaB83",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "YGG",
+    "name": "Yield Guild Games Token",
+    "type": "ERC20",
+    "contractAddress": "0x25f8087EAD173b73D6e8B84329989A8eEA16CF73",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ZCX",
+    "name": "ZEN Exchange Token",
+    "type": "ERC20",
+    "contractAddress": "0xC52C326331E9Ce41F04484d3B5E5648158028804",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  { "id": "ZEC", "name": "ZCash", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZEC", "decimals": 8 },
+  { "id": "ZEC_TEST", "name": "ZCash Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZEC_TEST", "decimals": 8 },
+  { "id": "ZERO_G_EVM", "name": "0G", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZERO_G_EVM", "decimals": 18 },
+  { "id": "ZERO_G_EVM_TEST", "name": "0G", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZERO_G_EVM_TEST", "decimals": 18 },
+  { "id": "ZIGCHAIN", "name": "Zigchain", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZIGCHAIN", "decimals": 6 },
+  {
+    "id": "ZIGCHAIN_TEST",
+    "name": "Zigchain Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ZIGCHAIN_TEST",
+    "decimals": 6
+  },
+  {
+    "id": "ZIL_BSC",
+    "name": "Zilliqa (BSC)",
+    "type": "BEP20",
+    "contractAddress": "0xb86AbCb37C3A4B64f74f59301AFF131a1BEcC787",
+    "nativeAsset": "BNB_BSC",
+    "decimals": 12
+  },
+  {
+    "id": "ZIL_MAINNET",
+    "name": "Zilliqa EVM Mainnet",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ZIL_MAINNET",
+    "decimals": 18
+  },
+  { "id": "ZIL_TEST", "name": "Zilliqa EVM Test", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZIL_TEST", "decimals": 18 },
+  { "id": "ZIRCUIT_ETH", "name": "Zircuit ETH", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZIRCUIT_ETH", "decimals": 18 },
+  {
+    "id": "ZIRCUIT_ETH_TEST",
+    "name": "Zircuit Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ZIRCUIT_ETH_TEST",
+    "decimals": 18
+  },
+  {
+    "id": "ZK_ZKSYNC_ERA_066A",
+    "name": "ZKsync",
+    "type": "ERC20",
+    "contractAddress": "0x5A7d6b2F92C77FAD6CCaBd7EE0624E64907Eaf3E",
+    "nativeAsset": "ETH_ZKSYNC_ERA",
+    "decimals": 18
+  },
+  { "id": "ZKCLOUD", "name": "ZkCloud", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZKCLOUD", "decimals": 6 },
+  {
+    "id": "ZKCLOUD_TEST",
+    "name": "ZkCloud Test",
+    "type": "BASE_ASSET",
+    "contractAddress": "",
+    "nativeAsset": "ZKCLOUD_TEST",
+    "decimals": 6
+  },
+  { "id": "ZKCLOUD_ZTH", "name": "ZkCloud ZTH", "type": "BASE_ASSET", "contractAddress": "", "nativeAsset": "ZKCLOUD_ZTH", "decimals": 6 },
+  {
+    "id": "ZKS",
+    "name": "Zks Token",
+    "type": "ERC20",
+    "contractAddress": "0xe4815AE53B124e7263F08dcDBBB757d41Ed658c6",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ZRO_ETH_W9BI",
+    "name": "LayerZero",
+    "type": "ERC20",
+    "contractAddress": "0x6985884C4392D348587B19cb9eAAf157F13271cd",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  },
+  {
+    "id": "ZRX",
+    "name": "0x",
+    "type": "ERC20",
+    "contractAddress": "0xE41d2489571d322189246DaFA5ebDe1F4699F498",
+    "nativeAsset": "ETH",
+    "decimals": 18
+  }
+]

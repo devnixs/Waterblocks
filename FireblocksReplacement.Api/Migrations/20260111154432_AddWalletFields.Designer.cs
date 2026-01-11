@@ -3,6 +3,7 @@ using System;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FireblocksReplacement.Api.Migrations
 {
     [DbContext(typeof(FireblocksDbContext))]
-    partial class FireblocksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111154432_AddWalletFields")]
+    partial class AddWalletFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,36 +33,13 @@ namespace FireblocksReplacement.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AddressFormat")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("AddressValue")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int?>("Bip44AddressIndex")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CustomerRefId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("EnterpriseAddress")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("LegacyAddress")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Tag")
                         .HasMaxLength(100)
@@ -79,25 +59,6 @@ namespace FireblocksReplacement.Api.Migrations
                     b.HasIndex("WalletId");
 
                     b.ToTable("Addresses");
-                });
-
-            modelBuilder.Entity("FireblocksReplacement.Api.Models.AdminSetting", b =>
-                {
-                    b.Property<string>("Key")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.HasKey("Key");
-
-                    b.ToTable("AdminSettings");
                 });
 
             modelBuilder.Entity("FireblocksReplacement.Api.Models.Asset", b =>
@@ -145,7 +106,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "BTC",
-                            CreatedAt = new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2110),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 44, 32, 553, DateTimeKind.Utc).AddTicks(9140),
                             Decimals = 8,
                             IsActive = true,
                             Name = "Bitcoin",
@@ -156,7 +117,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "ETH",
-                            CreatedAt = new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 44, 32, 553, DateTimeKind.Utc).AddTicks(9150),
                             Decimals = 18,
                             IsActive = true,
                             Name = "Ethereum",
@@ -167,7 +128,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDT",
-                            CreatedAt = new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 44, 32, 553, DateTimeKind.Utc).AddTicks(9150),
                             Decimals = 6,
                             IsActive = true,
                             Name = "Tether",
@@ -178,7 +139,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDC",
-                            CreatedAt = new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120),
+                            CreatedAt = new DateTime(2026, 1, 11, 15, 44, 32, 553, DateTimeKind.Utc).AddTicks(9150),
                             Decimals = 6,
                             IsActive = true,
                             Name = "USD Coin",

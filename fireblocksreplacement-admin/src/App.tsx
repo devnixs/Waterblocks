@@ -8,6 +8,7 @@ import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useRealtimeUpdates } from './hooks/useRealtimeUpdates';
+import { useAutoTransitions, useSetAutoTransitions } from './api/queries';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -25,6 +26,8 @@ function AppContent() {
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   const realtimeStatus = useRealtimeUpdates();
+  const autoTransitions = useAutoTransitions();
+  const setAutoTransitions = useSetAutoTransitions();
 
   useKeyboardShortcuts([
     { key: '1', handler: () => navigate('/transactions'), description: 'Navigate to Transactions' },
@@ -57,6 +60,16 @@ function AppContent() {
           >
             ?
           </button>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={autoTransitions.data?.enabled ?? false}
+              onChange={(e) => setAutoTransitions.mutate(e.target.checked)}
+              disabled={setAutoTransitions.isPending || autoTransitions.isLoading}
+            />
+            <span className="toggle-track" />
+            <span className="toggle-label">Auto-transition</span>
+          </label>
           <span
             className="realtime-status"
             data-status={realtimeStatus}

@@ -14,6 +14,7 @@ Work summary:
 - Broadcasts now include payloads for transaction/vault upserts to avoid refetches.
 - Moved AdminHub definition into Program.cs to ensure it is tracked and compiled in CI.
 - Added asset metadata columns and startup seeding from all_fireblocks_assets.json.
+- Added admin settings storage and background auto-transition service.
 
 Files touched:
 - `FireblocksReplacement.Api/Controllers/VaultAccountsController.cs`
@@ -35,3 +36,9 @@ Files touched:
 - `FireblocksReplacement.Api/Infrastructure/Db/FireblocksDbContext.cs`
 - `FireblocksReplacement.Api/Migrations/20260111102500_AddAssetMetadata.cs`
 - `FireblocksReplacement.Api/Migrations/20260111102500_AddAssetMetadata.Designer.cs`
+- `FireblocksReplacement.Api/Models/AdminSetting.cs`
+- `FireblocksReplacement.Api/Dtos/Admin/AdminSettingsDto.cs`
+- `FireblocksReplacement.Api/Controllers/Admin/AdminSettingsController.cs`
+- `FireblocksReplacement.Api/Services/AutoTransitionService.cs`
+- `FireblocksReplacement.Api/Migrations/20260111110500_AddAdminSettings.cs`
+- `FireblocksReplacement.Api/Migrations/20260111110500_AddAdminSettings.Designer.cs`

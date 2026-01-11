@@ -20,7 +20,7 @@ public class VaultAddressesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<AddressDto>>> GetAddresses(string vaultAccountId, string assetId)
+    public async Task<ActionResult<List<VaultWalletAddressDto>>> GetAddresses(string vaultAccountId, string assetId)
     {
         var wallet = await _context.Wallets
             .Include(w => w.Addresses)
@@ -31,18 +31,25 @@ public class VaultAddressesController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        var addresses = wallet.Addresses.Select(a => new AddressDto
+        var addresses = wallet.Addresses.Select(a => new VaultWalletAddressDto
         {
+            AssetId = assetId,
             Address = a.AddressValue,
+            Description = a.Description,
             Tag = a.Tag,
-            Type = a.Type
+            Type = a.Type,
+            CustomerRefId = a.CustomerRefId,
+            AddressFormat = a.AddressFormat,
+            LegacyAddress = a.LegacyAddress,
+            EnterpriseAddress = a.EnterpriseAddress,
+            Bip44AddressIndex = a.Bip44AddressIndex
         }).ToList();
 
         return Ok(addresses);
     }
 
     [HttpGet("~/vault/accounts/{vaultAccountId}/{assetId}/addresses_paginated")]
-    public async Task<ActionResult<object>> GetAddressesPaginated(
+    public async Task<ActionResult<PaginatedAddressResponseDto>> GetAddressesPaginated(
         string vaultAccountId,
         string assetId,
         [FromQuery] int limit = 100,
@@ -59,31 +66,71 @@ public class VaultAddressesController : ControllerBase
         }
 
         // Simple pagination without actual cursor implementation
-        var addresses = wallet.Addresses
-            .Take(limit)
-            .Select(a => new AddressDto
+        var allAddresses = wallet.Addresses.OrderBy(a => a.Id).ToList();
+
+        // Apply cursor-based pagination
+        IEnumerable<Address> filteredAddresses = allAddresses;
+
+        if (!string.IsNullOrEmpty(after))
+        {
+            // Parse the after cursor (using address ID as cursor)
+            if (int.TryParse(after, out var afterId))
             {
+                filteredAddresses = filteredAddresses.Where(a => a.Id > afterId);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(before))
+        {
+            // Parse the before cursor (using address ID as cursor)
+            if (int.TryParse(before, out var beforeId))
+            {
+                filteredAddresses = filteredAddresses.Where(a => a.Id < beforeId);
+            }
+        }
+
+        var addresses = filteredAddresses
+            .Take(limit)
+            .Select(a => new VaultWalletAddressDto
+            {
+                AssetId = assetId,
                 Address = a.AddressValue,
+                Description = a.Description,
                 Tag = a.Tag,
-                Type = a.Type
+                Type = a.Type,
+                CustomerRefId = a.CustomerRefId,
+                AddressFormat = a.AddressFormat,
+                LegacyAddress = a.LegacyAddress,
+                EnterpriseAddress = a.EnterpriseAddress,
+                Bip44AddressIndex = a.Bip44AddressIndex
             }).ToList();
 
-        var response = new
+        // Calculate pagination cursors
+        var paging = new PagingDto
         {
-            addresses,
-            paging = new PagingDto()
+            Before = addresses.Count > 0 ? addresses.First().Bip44AddressIndex?.ToString() : null,
+            After = addresses.Count > 0 && addresses.Count == limit
+                ? addresses.Last().Bip44AddressIndex?.ToString()
+                : null
+        };
+
+        var response = new PaginatedAddressResponseDto
+        {
+            Addresses = addresses,
+            Paging = paging
         };
 
         return Ok(response);
     }
 
     [HttpPost]
-    public async Task<ActionResult<AddressDto>> CreateAddress(
+    public async Task<ActionResult<CreateAddressResponseDto>> CreateAddress(
         string vaultAccountId,
         string assetId,
         [FromBody] CreateAddressRequestDto? request = null)
     {
         var wallet = await _context.Wallets
+            .Include(w => w.Addresses)
             .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
 
         if (wallet == null)
@@ -91,14 +138,28 @@ public class VaultAddressesController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        // Generate a mock address based on asset type
-        var addressValue = GenerateMockAddress(assetId);
+        // Determine address format based on asset type
+        var addressFormat = DetermineAddressFormat(assetId);
+
+        // Generate address and legacy/enterprise variants
+        var addressValue = GenerateAddress(assetId, addressFormat);
+        var legacyAddress = GenerateLegacyAddress(assetId, addressFormat);
+        var enterpriseAddress = GenerateEnterpriseAddress(assetId);
+
+        // Calculate BIP44 address index (count of existing addresses)
+        var bip44AddressIndex = wallet.Addresses.Count;
 
         var address = new Address
         {
             AddressValue = addressValue,
-            Tag = request?.Tag,
-            Type = request?.Type ?? "Deposit",
+            Tag = null,
+            Type = "DEPOSIT",
+            Description = request?.Description,
+            CustomerRefId = request?.CustomerRefId,
+            AddressFormat = addressFormat,
+            LegacyAddress = legacyAddress,
+            EnterpriseAddress = enterpriseAddress,
+            Bip44AddressIndex = bip44AddressIndex,
             WalletId = wallet.Id,
             CreatedAt = DateTime.UtcNow
         };
@@ -109,32 +170,56 @@ public class VaultAddressesController : ControllerBase
         _logger.LogInformation("Created address {Address} for asset {AssetId} in vault {VaultAccountId}",
             addressValue, assetId, vaultAccountId);
 
-        var dto = new AddressDto
+        var response = new CreateAddressResponseDto
         {
             Address = address.AddressValue,
+            LegacyAddress = address.LegacyAddress,
+            EnterpriseAddress = address.EnterpriseAddress,
             Tag = address.Tag,
-            Type = address.Type
+            Bip44AddressIndex = address.Bip44AddressIndex
         };
 
-        return Ok(dto);
+        return Ok(response);
     }
 
-    private string GenerateMockAddress(string assetId)
+    private string DetermineAddressFormat(string assetId)
     {
-        // Generate mock addresses based on asset type
-        return assetId switch
+        return assetId.ToUpperInvariant() switch
         {
-            "BTC" => $"bc1q{Guid.NewGuid().ToString("N")[..40]}",
-            "ETH" => $"0x{Guid.NewGuid().ToString("N")[..40]}",
-            "USDT" => $"0x{Guid.NewGuid().ToString("N")[..40]}",
-            "USDC" => $"0x{Guid.NewGuid().ToString("N")[..40]}",
-            _ => $"{assetId}_{Guid.NewGuid():N}"
+            "BTC" => "SEGWIT",
+            "ETH" or "USDT" or "USDC" => "BASE",
+            _ => "BASE"
         };
     }
-}
 
-public class CreateAddressRequestDto
-{
-    public string? Tag { get; set; }
-    public string? Type { get; set; }
+    private string GenerateAddress(string assetId, string addressFormat)
+    {
+        return assetId.ToUpperInvariant() switch
+        {
+            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
+            "BTC" => $"1{Guid.NewGuid():N}"[..34],
+            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
+            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}"
+        };
+    }
+
+    private string? GenerateLegacyAddress(string assetId, string addressFormat)
+    {
+        // Only generate legacy address for BTC when using SEGWIT
+        if (assetId.ToUpperInvariant() == "BTC" && addressFormat == "SEGWIT")
+        {
+            return $"1{Guid.NewGuid():N}"[..34];
+        }
+        return null;
+    }
+
+    private string? GenerateEnterpriseAddress(string assetId)
+    {
+        // Enterprise addresses are optional and only for certain assets
+        return assetId.ToUpperInvariant() switch
+        {
+            "ETH" or "USDT" or "USDC" => $"0xE{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
+            _ => null
+        };
+    }
 }

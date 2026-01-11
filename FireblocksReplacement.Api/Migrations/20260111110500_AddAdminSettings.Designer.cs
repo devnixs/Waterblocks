@@ -3,6 +3,7 @@ using System;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FireblocksReplacement.Api.Migrations
 {
     [DbContext(typeof(FireblocksDbContext))]
-    partial class FireblocksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111110500_AddAdminSettings")] 
+    partial class AddAdminSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,25 +81,6 @@ namespace FireblocksReplacement.Api.Migrations
                     b.HasIndex("WalletId");
 
                     b.ToTable("Addresses");
-                });
-
-            modelBuilder.Entity("FireblocksReplacement.Api.Models.AdminSetting", b =>
-                {
-                    b.Property<string>("Key")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.HasKey("Key");
-
-                    b.ToTable("AdminSettings");
                 });
 
             modelBuilder.Entity("FireblocksReplacement.Api.Models.Asset", b =>

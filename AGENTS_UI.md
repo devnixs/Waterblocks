@@ -14,6 +14,7 @@ Work summary:
 - Added SignalR client hook to invalidate queries on realtime updates.
 - Added realtime connection status badge and cache upserts on websocket payloads.
 - Added client-side paging controls for the transactions list.
+- Added auto-transition toggle in the header.
 
 Files touched:
 - `fireblocksreplacement-admin/src/api/adminClient.ts`

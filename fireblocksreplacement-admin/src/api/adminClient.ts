@@ -8,6 +8,7 @@ import type {
   FrozenBalance,
   CreateWalletRequest,
   AdminWallet,
+  AdminAutoTransitionSettings,
 } from '../types/admin';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -113,6 +114,17 @@ export const adminApi = {
     return fetchApi(`/admin/vaults/${vaultId}/wallets`, {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  },
+
+  async getAutoTransitions(): Promise<AdminResponse<AdminAutoTransitionSettings>> {
+    return fetchApi('/admin/settings/auto-transitions');
+  },
+
+  async setAutoTransitions(enabled: boolean): Promise<AdminResponse<AdminAutoTransitionSettings>> {
+    return fetchApi('/admin/settings/auto-transitions', {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
     });
   },
 };

@@ -96,3 +96,7 @@ export interface CreateVaultRequest {
 export interface CreateWalletRequest {
   assetId: string;
 }
+
+export interface AdminAutoTransitionSettings {
+  enabled: boolean;
+}

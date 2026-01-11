@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from './adminClient';
-import type { CreateTransactionRequest, CreateVaultRequest, CreateWalletRequest } from '../types/admin';
+import type { CreateTransactionRequest, CreateVaultRequest, CreateWalletRequest, AdminAutoTransitionSettings } from '../types/admin';
 
 // Transactions
 export function useTransactions() {
@@ -103,6 +103,27 @@ export function useCreateWallet(vaultId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
       queryClient.invalidateQueries({ queryKey: ['vault', vaultId] });
+    },
+  });
+}
+
+export function useAutoTransitions() {
+  return useQuery({
+    queryKey: ['settings', 'autoTransitions'],
+    queryFn: async () => {
+      const response = await adminApi.getAutoTransitions();
+      if (response.error) throw new Error(response.error.message);
+      return response.data as AdminAutoTransitionSettings;
+    },
+  });
+}
+
+export function useSetAutoTransitions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => adminApi.setAutoTransitions(enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings', 'autoTransitions'] });
     },
   });
 }

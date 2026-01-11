@@ -10,14 +10,6 @@ public class VaultAccountDto
     public List<VaultAssetDto> Assets { get; set; } = new();
 }
 
-public class VaultAssetDto
-{
-    public string Id { get; set; } = string.Empty;
-    public string Balance { get; set; } = "0";
-    public string LockedAmount { get; set; } = "0";
-    public string Available { get; set; } = "0";
-}
-
 public class VaultAccountsPagedResponseDto
 {
     public PagingDto? Paging { get; set; }

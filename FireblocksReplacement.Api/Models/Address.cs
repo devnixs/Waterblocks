@@ -18,6 +18,23 @@ public class Address
     [MaxLength(50)]
     public string? Type { get; set; }
 
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    [MaxLength(100)]
+    public string? CustomerRefId { get; set; }
+
+    [MaxLength(20)]
+    public string? AddressFormat { get; set; } // SEGWIT, LEGACY, BASE, PAYMENT
+
+    [MaxLength(500)]
+    public string? LegacyAddress { get; set; }
+
+    [MaxLength(500)]
+    public string? EnterpriseAddress { get; set; }
+
+    public int? Bip44AddressIndex { get; set; }
+
     public int WalletId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

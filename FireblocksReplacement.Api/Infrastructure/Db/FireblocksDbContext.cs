@@ -15,6 +15,7 @@ public class FireblocksDbContext : DbContext
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Asset> Assets { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<AdminSetting> AdminSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +64,11 @@ public class FireblocksDbContext : DbContext
             entity.HasIndex(e => e.Hash);
             entity.HasIndex(e => e.CreatedAt);
             entity.Property(e => e.State).HasConversion<string>();
+        });
+
+        modelBuilder.Entity<AdminSetting>(entity =>
+        {
+            entity.HasKey(e => e.Key);
         });
 
         // Seed some common assets

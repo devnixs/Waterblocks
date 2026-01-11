@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\all_fireblocks_assets.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="all_fireblocks_assets.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

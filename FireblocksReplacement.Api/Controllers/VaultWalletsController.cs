@@ -20,7 +20,7 @@ public class VaultWalletsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<WalletAssetDto>> GetWallet(string vaultAccountId, string assetId)
+    public async Task<ActionResult<VaultAssetDto>> GetWallet(string vaultAccountId, string assetId)
     {
         var wallet = await _context.Wallets
             .Include(w => w.Addresses)
@@ -31,25 +31,14 @@ public class VaultWalletsController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        var dto = new WalletAssetDto
-        {
-            Id = wallet.AssetId,
-            Balance = wallet.Balance.ToString("F18"),
-            LockedAmount = wallet.LockedAmount.ToString("F18"),
-            Available = (wallet.Balance - wallet.LockedAmount).ToString("F18"),
-            Addresses = wallet.Addresses.Select(a => new AddressDto
-            {
-                Address = a.AddressValue,
-                Tag = a.Tag,
-                Type = a.Type
-            }).ToList()
-        };
-
-        return Ok(dto);
+        return Ok(MapToVaultAssetDto(wallet));
     }
 
     [HttpPost]
-    public async Task<ActionResult<WalletAssetDto>> CreateWallet(string vaultAccountId, string assetId)
+    public async Task<ActionResult<CreateVaultAssetResponseDto>> CreateWallet(
+        string vaultAccountId,
+        string assetId,
+        [FromBody] CreateVaultAssetRequestDto? request = null)
     {
         // Verify vault account exists
         var vaultExists = await _context.VaultAccounts.AnyAsync(v => v.Id == vaultAccountId);
@@ -73,7 +62,7 @@ public class VaultWalletsController : ControllerBase
         if (existingWallet != null)
         {
             // Return existing wallet
-            return Ok(MapToDto(existingWallet));
+            return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName));
         }
 
         // Create new wallet
@@ -83,6 +72,9 @@ public class VaultWalletsController : ControllerBase
             AssetId = assetId,
             Balance = 0,
             LockedAmount = 0,
+            Pending = 0,
+            Frozen = 0,
+            Staked = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -90,18 +82,16 @@ public class VaultWalletsController : ControllerBase
         _context.Wallets.Add(wallet);
         await _context.SaveChangesAsync();
 
-        if (wallet.Addresses.Count == 0)
+        // Create initial address
+        var address = new Address
         {
-            var address = new Address
-            {
-                AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
-                Type = "DEPOSIT",
-                WalletId = wallet.Id,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Addresses.Add(address);
-            await _context.SaveChangesAsync();
-        }
+            AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
+            Type = "DEPOSIT",
+            WalletId = wallet.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Addresses.Add(address);
+        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created wallet for asset {AssetId} in vault {VaultAccountId}", assetId, vaultAccountId);
 
@@ -110,11 +100,11 @@ public class VaultWalletsController : ControllerBase
             .Include(w => w.Addresses)
             .FirstAsync(w => w.Id == wallet.Id);
 
-        return Ok(MapToDto(wallet));
+        return Ok(MapToCreateVaultAssetResponseDto(wallet, request?.EosAccountName));
     }
 
     [HttpPost("balance")]
-    public async Task<ActionResult<WalletAssetDto>> RefreshBalance(string vaultAccountId, string assetId)
+    public async Task<ActionResult<VaultAssetDto>> RefreshBalance(string vaultAccountId, string assetId)
     {
         var wallet = await _context.Wallets
             .Include(w => w.Addresses)
@@ -132,28 +122,61 @@ public class VaultWalletsController : ControllerBase
 
         _logger.LogInformation("Refreshed balance for asset {AssetId} in vault {VaultAccountId}", assetId, vaultAccountId);
 
-        return Ok(MapToDto(wallet));
+        return Ok(MapToVaultAssetDto(wallet));
     }
 
-    private WalletAssetDto MapToDto(Wallet wallet)
+    private VaultAssetDto MapToVaultAssetDto(Wallet wallet)
     {
-        return new WalletAssetDto
+        var total = wallet.Balance;
+        var available = wallet.Balance - wallet.LockedAmount - wallet.Frozen;
+
+        return new VaultAssetDto
         {
             Id = wallet.AssetId,
-            Balance = wallet.Balance.ToString("F18"),
-            LockedAmount = wallet.LockedAmount.ToString("F18"),
-            Available = (wallet.Balance - wallet.LockedAmount).ToString("F18"),
-            Addresses = wallet.Addresses.Select(a => new AddressDto
-            {
-                Address = a.AddressValue,
-                Tag = a.Tag,
-                Type = a.Type
-            }).ToList()
+            Total = total.ToString("G29"),
+            Balance = total.ToString("G29"), // Deprecated field, same as total
+            Available = available.ToString("G29"),
+            Pending = wallet.Pending.ToString("G29"),
+            Frozen = wallet.Frozen.ToString("G29"),
+            LockedAmount = wallet.LockedAmount.ToString("G29"),
+            Staked = wallet.Staked.ToString("G29"),
+            TotalStakedCPU = null,
+            TotalStakedNetwork = null,
+            SelfStakedCPU = null,
+            SelfStakedNetwork = null,
+            PendingRefundCPU = null,
+            PendingRefundNetwork = null,
+            BlockHeight = wallet.BlockHeight,
+            BlockHash = wallet.BlockHash,
+            AllocatedBalances = null
+        };
+    }
+
+    private CreateVaultAssetResponseDto MapToCreateVaultAssetResponseDto(Wallet wallet, string? eosAccountName)
+    {
+        var primaryAddress = wallet.Addresses.FirstOrDefault();
+
+        return new CreateVaultAssetResponseDto
+        {
+            Id = wallet.AssetId,
+            Address = primaryAddress?.AddressValue,
+            LegacyAddress = null,
+            EnterpriseAddress = null,
+            Tag = primaryAddress?.Tag,
+            EosAccountName = eosAccountName,
+            Status = "READY",
+            ActivationTxId = null
         };
     }
 
     private static string GenerateDepositAddress(string assetId, string vaultAccountId)
     {
-        return $"{assetId.ToLowerInvariant()}_{vaultAccountId[..8]}_{Guid.NewGuid():N}";
+        // Generate different address formats based on asset type
+        return assetId.ToUpperInvariant() switch
+        {
+            "BTC" => $"bc1q{Guid.NewGuid():N}"[..42],
+            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
+            _ => $"{assetId.ToLowerInvariant()}_{vaultAccountId[..Math.Min(8, vaultAccountId.Length)]}_{Guid.NewGuid():N}"
+        };
     }
 }
