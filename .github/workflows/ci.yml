@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-and-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore .NET
+        run: dotnet restore ./FireblocksReplacement.Api/FireblocksReplacement.Api.csproj
+
+      - name: Test .NET
+        run: |
+          set -euo pipefail
+          if find tests -name "*.csproj" -print -quit | grep -q .; then
+            dotnet test tests --configuration Release
+          else
+            dotnet build ./FireblocksReplacement.Api/FireblocksReplacement.Api.csproj --configuration Release
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: fireblocksreplacement-admin/package-lock.json
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: fireblocksreplacement-admin
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: fireblocksreplacement-admin
+
+      - name: Build backend docker image
+        run: docker build -t fireblocksreplacement-api:ci ./FireblocksReplacement.Api
+
+      - name: Build frontend docker image
+        run: docker build -t fireblocksreplacement-admin:ci ./fireblocksreplacement-admin
