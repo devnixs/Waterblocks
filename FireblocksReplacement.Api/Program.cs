@@ -1,4 +1,6 @@
+using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
+using FireblocksReplacement.Api.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -30,6 +32,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<FireblocksReplacement.Api.Services.AutoTransitionService>();
+builder.Services.AddScoped<FireblocksReplacement.Api.Infrastructure.WorkspaceContext>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AdminUi", policy =>
@@ -83,6 +86,7 @@ try
     {
         var db = scope.ServiceProvider.GetRequiredService<FireblocksDbContext>();
         db.Database.Migrate();
+        SeedHelpers.SeedWorkspaces(db, app.Logger);
         SeedAssets(db, app.Logger);
     }
 
@@ -162,34 +166,9 @@ static void SeedAssets(FireblocksDbContext db, Microsoft.Extensions.Logging.ILog
         asset.ContractAddress = string.IsNullOrWhiteSpace(seed.ContractAddress) ? null : seed.ContractAddress;
         asset.NativeAsset = seed.NativeAsset;
         asset.Decimals = seed.Decimals ?? 0;
-        asset.Symbol = DeriveSymbol(seed.Id);
+        asset.Symbol = SeedHelpers.DeriveSymbol(seed.Id);
         asset.IsActive = true;
     }
 
     db.SaveChanges();
-}
-
-static string DeriveSymbol(string assetId)
-{
-    var idx = assetId.IndexOf('_');
-    if (idx <= 0) return assetId.Length > 10 ? assetId[..10] : assetId;
-    var symbol = assetId[..idx];
-    return symbol.Length > 10 ? symbol[..10] : symbol;
-}
-
-sealed class FireblocksAssetSeed
-{
-    public string Id { get; set; } = string.Empty;
-    public string? Name { get; set; }
-    public string? Type { get; set; }
-    public string? ContractAddress { get; set; }
-    public int? Decimals { get; set; }
-    public string? NativeAsset { get; set; }
-}
-
-namespace FireblocksReplacement.Api.Hubs
-{
-    public class AdminHub : Hub
-    {
-    }
 }

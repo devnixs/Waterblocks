@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
@@ -12,16 +13,26 @@ public class TransactionsController : ControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<TransactionsController> _logger;
+    private readonly WorkspaceContext _workspace;
 
-    public TransactionsController(FireblocksDbContext context, ILogger<TransactionsController> logger)
+    public TransactionsController(
+        FireblocksDbContext context,
+        ILogger<TransactionsController> logger,
+        WorkspaceContext workspace)
     {
         _context = context;
         _logger = logger;
+        _workspace = workspace;
     }
 
     [HttpPost]
     public async Task<ActionResult<CreateTransactionResponseDto>> CreateTransaction([FromBody] CreateTransactionRequestDto request)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         // Validate required fields
         if (request.Source == null)
         {
@@ -35,7 +46,8 @@ public class TransactionsController : ControllerBase
 
         // Validate source vault exists
         var vaultAccountId = request.Source.Id;
-        var vaultAccount = await _context.VaultAccounts.FindAsync(vaultAccountId);
+        var vaultAccount = await _context.VaultAccounts
+            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
         if (vaultAccount == null)
         {
             throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
@@ -65,6 +77,7 @@ public class TransactionsController : ControllerBase
         {
             Id = Guid.NewGuid().ToString(),
             VaultAccountId = vaultAccountId,
+            WorkspaceId = _workspace.WorkspaceId,
             AssetId = request.AssetId,
             Amount = amount,
             RequestedAmount = amount,
@@ -99,7 +112,15 @@ public class TransactionsController : ControllerBase
         [FromQuery] string? status = null,
         [FromQuery] int limit = 100)
     {
-        var query = _context.Transactions.Include(t => t.VaultAccount).AsQueryable();
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
+        var query = _context.Transactions
+            .Where(t => t.WorkspaceId == _workspace.WorkspaceId)
+            .Include(t => t.VaultAccount)
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
         {
@@ -120,7 +141,7 @@ public class TransactionsController : ControllerBase
     {
         var transaction = await _context.Transactions
             .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.Id == txId);
+            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -135,7 +156,7 @@ public class TransactionsController : ControllerBase
     {
         var transaction = await _context.Transactions
             .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId);
+            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -148,7 +169,8 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/cancel")]
     public async Task<ActionResult<CancelTransactionResponseDto>> CancelTransaction(string txId)
     {
-        var transaction = await _context.Transactions.FindAsync(txId);
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -172,7 +194,8 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/freeze")]
     public async Task<ActionResult<FreezeTransactionResponseDto>> FreezeTransaction(string txId)
     {
-        var transaction = await _context.Transactions.FindAsync(txId);
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -190,7 +213,8 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/unfreeze")]
     public async Task<ActionResult<FreezeTransactionResponseDto>> UnfreezeTransaction(string txId)
     {
-        var transaction = await _context.Transactions.FindAsync(txId);
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -208,7 +232,8 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/drop")]
     public async Task<ActionResult<DropTransactionResponseDto>> DropTransaction(string txId, [FromBody] CreateTransactionRequestDto? replacementRequest = null)
     {
-        var transaction = await _context.Transactions.FindAsync(txId);
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -236,6 +261,7 @@ public class TransactionsController : ControllerBase
         {
             Id = Guid.NewGuid().ToString(),
             VaultAccountId = transaction.VaultAccountId,
+            WorkspaceId = transaction.WorkspaceId,
             AssetId = transaction.AssetId,
             Amount = transaction.Amount,
             RequestedAmount = transaction.RequestedAmount,

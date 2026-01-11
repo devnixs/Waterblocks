@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
@@ -12,16 +13,26 @@ public class VaultAccountsController : ControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultAccountsController> _logger;
+    private readonly WorkspaceContext _workspace;
 
-    public VaultAccountsController(FireblocksDbContext context, ILogger<VaultAccountsController> logger)
+    public VaultAccountsController(
+        FireblocksDbContext context,
+        ILogger<VaultAccountsController> logger,
+        WorkspaceContext workspace)
     {
         _context = context;
         _logger = logger;
+        _workspace = workspace;
     }
 
     [HttpPost]
     public async Task<ActionResult<VaultAccountDto>> CreateVaultAccount([FromBody] CreateVaultAccountRequestDto request)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         var vaultAccount = new VaultAccount
         {
             Id = Guid.NewGuid().ToString(),
@@ -29,6 +40,7 @@ public class VaultAccountsController : ControllerBase
             CustomerRefId = request.CustomerRefId,
             AutoFuel = request.AutoFuel,
             HiddenOnUI = false,
+            WorkspaceId = _workspace.WorkspaceId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -44,7 +56,13 @@ public class VaultAccountsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<VaultAccountDto>>> GetAllVaultAccounts()
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         var vaultAccounts = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
             .ToListAsync();
 
@@ -61,7 +79,15 @@ public class VaultAccountsController : ControllerBase
         [FromQuery] string? before = null,
         [FromQuery] string? after = null)
     {
-        var query = _context.VaultAccounts.Include(v => v.Wallets).AsQueryable();
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
+        var query = _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Include(v => v.Wallets)
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(namePrefix))
         {
@@ -95,7 +121,7 @@ public class VaultAccountsController : ControllerBase
     {
         var vaultAccount = await _context.VaultAccounts
             .Include(v => v.Wallets)
-            .FirstOrDefaultAsync(v => v.Id == vaultAccountId);
+            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
 
         if (vaultAccount == null)
         {
@@ -112,7 +138,7 @@ public class VaultAccountsController : ControllerBase
     {
         var vaultAccount = await _context.VaultAccounts
             .Include(v => v.Wallets)
-            .FirstOrDefaultAsync(v => v.Id == vaultAccountId);
+            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
 
         if (vaultAccount == null)
         {
@@ -134,7 +160,7 @@ public class VaultAccountsController : ControllerBase
     {
         var vaultAccount = await _context.VaultAccounts
             .Include(v => v.Wallets)
-            .FirstOrDefaultAsync(v => v.Id == vaultAccountId);
+            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
 
         if (vaultAccount == null)
         {
@@ -156,7 +182,7 @@ public class VaultAccountsController : ControllerBase
     {
         var vaultAccount = await _context.VaultAccounts
             .Include(v => v.Wallets)
-            .FirstOrDefaultAsync(v => v.Id == vaultAccountId);
+            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
 
         if (vaultAccount == null)
         {

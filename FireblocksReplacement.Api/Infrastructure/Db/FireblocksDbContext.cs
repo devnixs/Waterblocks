@@ -15,11 +15,29 @@ public class FireblocksDbContext : DbContext
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Asset> Assets { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<Workspace> Workspaces { get; set; }
+    public DbSet<ApiKey> ApiKeys { get; set; }
     public DbSet<AdminSetting> AdminSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Workspace>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Key).IsUnique();
+            entity.HasOne(e => e.Workspace)
+                .WithMany(w => w.ApiKeys)
+                .HasForeignKey(e => e.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // Configure VaultAccount
         modelBuilder.Entity<VaultAccount>(entity =>
@@ -29,6 +47,10 @@ public class FireblocksDbContext : DbContext
             entity.HasMany(e => e.Wallets)
                 .WithOne(w => w.VaultAccount)
                 .HasForeignKey(w => w.VaultAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Workspace)
+                .WithMany(w => w.VaultAccounts)
+                .HasForeignKey(e => e.WorkspaceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -63,7 +85,12 @@ public class FireblocksDbContext : DbContext
             entity.HasIndex(e => e.State);
             entity.HasIndex(e => e.Hash);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.WorkspaceId);
             entity.Property(e => e.State).HasConversion<string>();
+            entity.HasOne(e => e.Workspace)
+                .WithMany(w => w.Transactions)
+                .HasForeignKey(e => e.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AdminSetting>(entity =>

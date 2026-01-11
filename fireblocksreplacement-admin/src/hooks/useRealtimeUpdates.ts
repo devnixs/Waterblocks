@@ -14,35 +14,40 @@ function upsertById<T extends { id: string }>(items: T[] | undefined, next: T): 
   return clone;
 }
 
-export function useRealtimeUpdates() {
+export function useRealtimeUpdates(workspaceId?: string) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<'connecting' | 'connected' | 'reconnecting' | 'disconnected'>('connecting');
 
   useEffect(() => {
+    if (!workspaceId) {
+      setStatus('disconnected');
+      return undefined;
+    }
+
     const connection = new HubConnectionBuilder()
-      .withUrl(`${API_BASE_URL}/hubs/admin`, { withCredentials: false })
+      .withUrl(`${API_BASE_URL}/hubs/admin?workspaceId=${encodeURIComponent(workspaceId)}`, { withCredentials: false })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
       .build();
 
     connection.on('transactionUpserted', (transaction: AdminTransaction) => {
-      queryClient.setQueryData<AdminTransaction[]>(['transactions'], (prev) => upsertById(prev, transaction));
-      queryClient.setQueryData<AdminTransaction>(['transaction', transaction.id], transaction);
+      queryClient.setQueryData<AdminTransaction[]>(['transactions', workspaceId], (prev) => upsertById(prev, transaction));
+      queryClient.setQueryData<AdminTransaction>(['transaction', workspaceId, transaction.id], transaction);
     });
 
     connection.on('vaultUpserted', (vault: AdminVault) => {
-      queryClient.setQueryData<AdminVault[]>(['vaults'], (prev) => upsertById(prev, vault));
-      queryClient.setQueryData<AdminVault>(['vault', vault.id], vault);
+      queryClient.setQueryData<AdminVault[]>(['vaults', workspaceId], (prev) => upsertById(prev, vault));
+      queryClient.setQueryData<AdminVault>(['vault', workspaceId, vault.id], vault);
     });
 
     connection.on('transactionsUpdated', () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['transaction'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['transaction', workspaceId] });
     });
 
     connection.on('vaultsUpdated', () => {
-      queryClient.invalidateQueries({ queryKey: ['vaults'] });
-      queryClient.invalidateQueries({ queryKey: ['vault'] });
+      queryClient.invalidateQueries({ queryKey: ['vaults', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['vault', workspaceId] });
     });
 
     connection.onreconnecting(() => setStatus('reconnecting'));
@@ -63,7 +68,7 @@ export function useRealtimeUpdates() {
       isMounted = false;
       connection.stop().catch(() => undefined);
     };
-  }, [queryClient]);
+  }, [queryClient, workspaceId]);
 
   return status;
 }

@@ -100,9 +100,13 @@ public class AutoTransitionService : BackgroundService
                     var vaultNameLookup = await BuildVaultNameLookupAsync(db, updated, stoppingToken);
                     foreach (var tx in updated)
                     {
-                        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(tx, vaultNameLookup), stoppingToken);
+                        await _hub.Clients.Group(tx.WorkspaceId).SendAsync("transactionUpserted", MapToDto(tx, vaultNameLookup), stoppingToken);
                     }
-                    await _hub.Clients.All.SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
+                    var updatedWorkspaces = updated.Select(t => t.WorkspaceId).Where(id => !string.IsNullOrEmpty(id)).Distinct();
+                    foreach (var workspaceId in updatedWorkspaces)
+                    {
+                        await _hub.Clients.Group(workspaceId).SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
+                    }
                 }
             }
             catch (Exception ex)

@@ -10,15 +10,27 @@ import type {
   AdminWallet,
   AdminAutoTransitionSettings,
   Asset,
+  AdminWorkspace,
+  CreateWorkspaceRequest,
 } from '../types/admin';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+function getWorkspaceId() {
+  try {
+    return localStorage.getItem('workspaceId') || '';
+  } catch {
+    return '';
+  }
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<AdminResponse<T>> {
+  const workspaceId = endpoint.startsWith('/admin') ? getWorkspaceId() : '';
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(workspaceId ? { 'X-Workspace-Id': workspaceId } : {}),
       ...options?.headers,
     },
   });
@@ -132,10 +144,7 @@ export const adminApi = {
   // Assets
   async getAssets(): Promise<AdminResponse<Asset[]>> {
     const response = await fetch(`${API_BASE_URL}/supported_assets`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': 'admin',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
@@ -148,5 +157,21 @@ export const adminApi = {
 
     const data = await response.json();
     return { data, error: null };
+  },
+
+  // Workspaces
+  async getWorkspaces(): Promise<AdminResponse<AdminWorkspace[]>> {
+    return fetchApi('/admin/workspaces');
+  },
+
+  async createWorkspace(request: CreateWorkspaceRequest): Promise<AdminResponse<AdminWorkspace>> {
+    return fetchApi('/admin/workspaces', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async deleteWorkspace(id: string): Promise<AdminResponse<boolean>> {
+    return fetchApi(`/admin/workspaces/${id}`, { method: 'DELETE' });
   },
 };

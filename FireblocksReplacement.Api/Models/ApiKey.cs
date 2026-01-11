@@ -3,9 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FireblocksReplacement.Api.Models;
 
-public class VaultAccount
+public class ApiKey
 {
     [Key]
+    [MaxLength(50)]
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
     [Required]
@@ -13,15 +14,12 @@ public class VaultAccount
     public string Name { get; set; } = string.Empty;
 
     [Required]
+    [MaxLength(255)]
+    public string Key { get; set; } = string.Empty;
+
+    [Required]
     [MaxLength(50)]
     public string WorkspaceId { get; set; } = string.Empty;
-
-    public bool HiddenOnUI { get; set; } = false;
-
-    [MaxLength(255)]
-    public string? CustomerRefId { get; set; }
-
-    public bool AutoFuel { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -29,7 +27,4 @@ public class VaultAccount
 
     [ForeignKey(nameof(WorkspaceId))]
     public Workspace Workspace { get; set; } = null!;
-
-    // Navigation properties
-    public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 }

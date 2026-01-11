@@ -110,3 +110,22 @@ export interface Asset {
   decimals: number;
   type?: string;
 }
+
+export interface AdminApiKey {
+  id: string;
+  name: string;
+  key: string;
+  createdAt: string;
+}
+
+export interface AdminWorkspace {
+  id: string;
+  name: string;
+  apiKeys: AdminApiKey[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWorkspaceRequest {
+  name: string;
+}

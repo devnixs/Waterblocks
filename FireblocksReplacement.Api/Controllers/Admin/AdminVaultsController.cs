@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
+using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Admin;
@@ -15,21 +16,30 @@ public class AdminVaultsController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminVaultsController> _logger;
     private readonly IHubContext<AdminHub> _hub;
+    private readonly WorkspaceContext _workspace;
 
     public AdminVaultsController(
         FireblocksDbContext context,
         ILogger<AdminVaultsController> logger,
-        IHubContext<AdminHub> hub)
+        IHubContext<AdminHub> hub,
+        WorkspaceContext workspace)
     {
         _context = context;
         _logger = logger;
         _hub = hub;
+        _workspace = workspace;
     }
 
     [HttpGet]
     public async Task<ActionResult<AdminResponse<List<AdminVaultDto>>>> GetVaults()
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<List<AdminVaultDto>>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
         var vaults = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .OrderByDescending(v => v.CreatedAt)
@@ -42,7 +52,13 @@ public class AdminVaultsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<AdminResponse<AdminVaultDto>>> GetVault(string id)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<AdminVaultDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
         var vault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstOrDefaultAsync(v => v.Id == id);
@@ -61,6 +77,11 @@ public class AdminVaultsController : ControllerBase
     public async Task<ActionResult<AdminResponse<AdminVaultDto>>> CreateVault(
         [FromBody] CreateAdminVaultRequestDto request)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<AdminVaultDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
         var vault = new VaultAccount
         {
             Id = Guid.NewGuid().ToString(),
@@ -68,6 +89,7 @@ public class AdminVaultsController : ControllerBase
             CustomerRefId = request.CustomerRefId,
             AutoFuel = request.AutoFuel,
             HiddenOnUI = false,
+            WorkspaceId = _workspace.WorkspaceId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -80,20 +102,27 @@ public class AdminVaultsController : ControllerBase
 
         // Reload with wallets
         vault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstAsync(v => v.Id == vault.Id);
 
         var dto = MapToDto(vault);
-        await _hub.Clients.All.SendAsync("vaultUpserted", dto);
-        await _hub.Clients.All.SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultUpserted", dto);
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
         return Ok(AdminResponse<AdminVaultDto>.Success(dto));
     }
 
     [HttpGet("{id}/frozen")]
     public async Task<ActionResult<AdminResponse<List<FrozenBalanceDto>>>> GetFrozenBalances(string id)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<List<FrozenBalanceDto>>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
         var vault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
             .FirstOrDefaultAsync(v => v.Id == id);
 
@@ -121,7 +150,13 @@ public class AdminVaultsController : ControllerBase
         string id,
         [FromBody] CreateAdminWalletRequestDto request)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<AdminWalletDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
         var vault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstOrDefaultAsync(v => v.Id == id);
@@ -182,11 +217,12 @@ public class AdminVaultsController : ControllerBase
         };
 
         var updatedVault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstAsync(v => v.Id == vault.Id);
-        await _hub.Clients.All.SendAsync("vaultUpserted", MapToDto(updatedVault));
-        await _hub.Clients.All.SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultUpserted", MapToDto(updatedVault));
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
         return Ok(AdminResponse<AdminWalletDto>.Success(dto));
     }
 

@@ -46,6 +46,20 @@
   align-items: center;
 }
 
+.workspace-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+}
+
+.workspace-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
 .nav-link {
   color: var(--text-secondary);
   font-weight: 500;

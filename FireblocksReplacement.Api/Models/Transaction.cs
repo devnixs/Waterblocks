@@ -15,6 +15,10 @@ public class Transaction
 
     [Required]
     [MaxLength(50)]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(50)]
     public string AssetId { get; set; } = string.Empty;
 
     [Required]
@@ -98,6 +102,9 @@ public class Transaction
     // Navigation properties
     [ForeignKey(nameof(VaultAccountId))]
     public VaultAccount VaultAccount { get; set; } = null!;
+
+    [ForeignKey(nameof(WorkspaceId))]
+    public Workspace Workspace { get; set; } = null!;
 
     public void TransitionTo(TransactionState newState)
     {

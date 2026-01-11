@@ -1,28 +1,45 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from './adminClient';
-import type { CreateTransactionRequest, CreateVaultRequest, CreateWalletRequest, AdminAutoTransitionSettings } from '../types/admin';
+import type {
+  CreateTransactionRequest,
+  CreateVaultRequest,
+  CreateWalletRequest,
+  AdminAutoTransitionSettings,
+  CreateWorkspaceRequest,
+} from '../types/admin';
+
+function getWorkspaceId() {
+  try {
+    return localStorage.getItem('workspaceId') || '';
+  } catch {
+    return '';
+  }
+}
 
 // Transactions
 export function useTransactions() {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', workspaceId],
     queryFn: async () => {
       const response = await adminApi.getTransactions();
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
+    enabled: !!workspaceId,
   });
 }
 
 export function useTransaction(id: string) {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['transaction', id],
+    queryKey: ['transaction', workspaceId, id],
     queryFn: async () => {
       const response = await adminApi.getTransaction(id);
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
-    enabled: !!id,
+    enabled: !!id && !!workspaceId,
   });
 }
 
@@ -64,25 +81,28 @@ export function useTransitionTransaction() {
 
 // Vaults
 export function useVaults() {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['vaults'],
+    queryKey: ['vaults', workspaceId],
     queryFn: async () => {
       const response = await adminApi.getVaults();
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
+    enabled: !!workspaceId,
   });
 }
 
 export function useVault(id: string) {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['vault', id],
+    queryKey: ['vault', workspaceId, id],
     queryFn: async () => {
       const response = await adminApi.getVault(id);
       if (response.error) throw new Error(response.error.message);
       return response.data;
     },
-    enabled: !!id,
+    enabled: !!id && !!workspaceId,
   });
 }
 
@@ -108,35 +128,39 @@ export function useCreateWallet(vaultId: string) {
 }
 
 export function useAutoTransitions() {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['settings', 'autoTransitions'],
+    queryKey: ['settings', 'autoTransitions', workspaceId],
     queryFn: async () => {
       const response = await adminApi.getAutoTransitions();
       if (response.error) throw new Error(response.error.message);
       return response.data as AdminAutoTransitionSettings;
     },
+    enabled: !!workspaceId,
   });
 }
 
 export function useSetAutoTransitions() {
+  const workspaceId = getWorkspaceId();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (enabled: boolean) => adminApi.setAutoTransitions(enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', 'autoTransitions'] });
+      queryClient.invalidateQueries({ queryKey: ['settings', 'autoTransitions', workspaceId] });
     },
   });
 }
 
 export function useFrozenBalances(vaultId: string) {
+  const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['vault', vaultId, 'frozen'],
+    queryKey: ['vault', workspaceId, vaultId, 'frozen'],
     queryFn: async () => {
       const response = await adminApi.getFrozenBalances(vaultId);
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
-    enabled: !!vaultId,
+    enabled: !!vaultId && !!workspaceId,
   });
 }
 
@@ -148,6 +172,38 @@ export function useAssets() {
       const response = await adminApi.getAssets();
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
+    },
+  });
+}
+
+// Workspaces
+export function useWorkspaces() {
+  return useQuery({
+    queryKey: ['workspaces'],
+    queryFn: async () => {
+      const response = await adminApi.getWorkspaces();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+  });
+}
+
+export function useCreateWorkspace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateWorkspaceRequest) => adminApi.createWorkspace(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    },
+  });
+}
+
+export function useDeleteWorkspace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteWorkspace(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     },
   });
 }

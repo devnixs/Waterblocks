@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FireblocksReplacement.Api.Infrastructure;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
@@ -12,19 +13,30 @@ public class VaultAddressesController : ControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultAddressesController> _logger;
+    private readonly WorkspaceContext _workspace;
 
-    public VaultAddressesController(FireblocksDbContext context, ILogger<VaultAddressesController> logger)
+    public VaultAddressesController(
+        FireblocksDbContext context,
+        ILogger<VaultAddressesController> logger,
+        WorkspaceContext workspace)
     {
         _context = context;
         _logger = logger;
+        _workspace = workspace;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<VaultWalletAddressDto>>> GetAddresses(string vaultAccountId, string assetId)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         var wallet = await _context.Wallets
+            .Include(w => w.VaultAccount)
             .Include(w => w.Addresses)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
 
         if (wallet == null)
         {
@@ -56,9 +68,15 @@ public class VaultAddressesController : ControllerBase
         [FromQuery] string? before = null,
         [FromQuery] string? after = null)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         var wallet = await _context.Wallets
+            .Include(w => w.VaultAccount)
             .Include(w => w.Addresses)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
 
         if (wallet == null)
         {
@@ -129,9 +147,15 @@ public class VaultAddressesController : ControllerBase
         string assetId,
         [FromBody] CreateAddressRequestDto? request = null)
     {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            throw new UnauthorizedAccessException("Workspace is required");
+        }
+
         var wallet = await _context.Wallets
+            .Include(w => w.VaultAccount)
             .Include(w => w.Addresses)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
 
         if (wallet == null)
         {
