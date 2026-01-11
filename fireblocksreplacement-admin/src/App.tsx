@@ -54,8 +54,7 @@ function AppContent() {
           </Link>
           <button
             onClick={() => setShowShortcuts(true)}
-            className="nav-link"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            className="btn-icon"
             title="Keyboard shortcuts (?)"
           >
             ?

@@ -13,6 +13,12 @@ public class FireblocksAuthenticationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (HttpMethods.IsOptions(context.Request.Method))
+        {
+            await _next(context);
+            return;
+        }
+
         // Skip authentication for health endpoint and Swagger
         var path = context.Request.Path.Value?.ToLowerInvariant() ?? "";
         if (path.Contains("/health") || path.Contains("/swagger") || path.Contains("/admin"))

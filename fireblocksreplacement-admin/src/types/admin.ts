@@ -102,3 +102,11 @@ export interface CreateWalletRequest {
 export interface AdminAutoTransitionSettings {
   enabled: boolean;
 }
+
+export interface Asset {
+  id: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  type?: string;
+}

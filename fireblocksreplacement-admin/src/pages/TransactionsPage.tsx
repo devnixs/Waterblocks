@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTransactions, useTransitionTransaction, useCreateTransaction, useVaults } from '../api/queries';
+import { useTransactions, useTransitionTransaction, useCreateTransaction, useVaults, useAssets } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { AdminTransaction } from '../types/admin';
@@ -7,6 +7,7 @@ import type { AdminTransaction } from '../types/admin';
 export default function TransactionsPage() {
   const { data: transactions, isLoading, error } = useTransactions();
   const { data: vaults } = useVaults();
+  const { data: assets } = useAssets();
   const transition = useTransitionTransaction();
   const createTransaction = useCreateTransaction();
   const { showToast } = useToast();
@@ -224,8 +225,15 @@ export default function TransactionsPage() {
     }
   }, [vaults, sourceType, destinationType, sourceVaultId, destinationVaultId]);
 
-  if (isLoading) return <div>Loading transactions...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  useEffect(() => {
+    if (!assets || assets.length === 0) return;
+    if (!assetId) {
+      setAssetId(assets[0].id);
+    }
+  }, [assets, assetId]);
+
+  if (isLoading) return <div className="p-8 text-center text-muted">Loading transactions...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => {
@@ -253,8 +261,8 @@ export default function TransactionsPage() {
   };
 
   const handleCreateTransaction = async () => {
-    if (!assetId.trim()) {
-      showToast({ title: 'Asset code is required', type: 'error' });
+    if (!assetId) {
+      showToast({ title: 'Asset is required', type: 'error' });
       return;
     }
     if (!amount.trim()) {
@@ -280,7 +288,7 @@ export default function TransactionsPage() {
     }
 
     const result = await createTransaction.mutateAsync({
-      assetId: assetId.trim().toUpperCase(),
+      assetId: assetId,
       amount: amount.trim(),
       sourceType,
       sourceAddress: sourceType === 'EXTERNAL' ? sourceAddress.trim() : undefined,
@@ -377,36 +385,38 @@ export default function TransactionsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="flex-between mb-4">
         <h2>
-          Transactions ({displayedTransactions.length}
-          {transactions && displayedTransactions.length !== transactions.length ? ` of ${transactions.length}` : ''})
+          Transactions <span className="text-muted text-sm">({displayedTransactions.length})</span>
         </h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowCreateForm((prev) => !prev)}
-        >
-          {showCreateForm ? 'Close' : '+ New Transaction'}
-        </button>
-        {selectedIds.size > 0 && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ color: '#aaa', fontSize: '0.875rem' }}>
-              {selectedIds.size} selected
-            </span>
-            <button className="btn btn-primary" onClick={() => handleBulkAction('approve')}>
-              Approve All
-            </button>
-            <button className="btn btn-primary" onClick={() => handleBulkAction('sign')}>
-              Sign All
-            </button>
-            <button className="btn btn-primary" onClick={() => handleBulkAction('complete')}>
-              Complete All
-            </button>
-            <button className="btn btn-danger" onClick={() => setSelectedIds(new Set())}>
-              Clear Selection
-            </button>
-          </div>
-        )}
+        <div className="flex-gap-4">
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowCreateForm((prev) => !prev)}
+          >
+            {showCreateForm ? 'Close' : '+ New Transaction'}
+          </button>
+
+          {selectedIds.size > 0 && (
+            <div className="flex-gap-2 items-center bg-secondary p-2 rounded-md">
+              <span className="text-muted text-sm px-2">
+                {selectedIds.size} selected
+              </span>
+              <button className="btn btn-primary" onClick={() => handleBulkAction('approve')}>
+                Approve
+              </button>
+              <button className="btn btn-primary" onClick={() => handleBulkAction('sign')}>
+                Sign
+              </button>
+              <button className="btn btn-primary" onClick={() => handleBulkAction('complete')}>
+                Complete
+              </button>
+              <button className="btn btn-danger" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {showCreateForm && (
@@ -415,150 +425,111 @@ export default function TransactionsPage() {
             e.preventDefault();
             handleCreateTransaction();
           }}
-          style={{ background: '#252525', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}
+          className="card"
         >
-          <h3>Create Blockchain Transaction</h3>
-          <div style={{ display: 'grid', gap: '0.75rem' }}>
-            <input
-              type="text"
-              placeholder="Asset code (e.g. BTC)"
-              value={assetId}
-              onChange={(e) => setAssetId(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                background: '#1a1a1a',
-                border: '1px solid #444',
-                color: '#fff',
-                borderRadius: '4px',
-              }}
-            />
-
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <label style={{ fontWeight: 600 }}>Source Address Type</label>
+          <h3 className="mb-4 text-lg font-semibold">Create Blockchain Transaction</h3>
+          <div className="grid gap-4">
+            <div>
+              <label className="block text-sm text-muted mb-1">Asset</label>
               <select
-                value={sourceType}
-                onChange={(e) => setSourceType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
-                style={{
-                  padding: '0.5rem',
-                  background: '#1a1a1a',
-                  border: '1px solid #444',
-                  color: '#fff',
-                  borderRadius: '4px',
-                }}
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
               >
-                <option value="EXTERNAL">External</option>
-                <option value="INTERNAL">Internal</option>
+                <option value="">Select asset</option>
+                {(assets || []).map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.name} ({asset.symbol})
+                  </option>
+                ))}
               </select>
-              {sourceType === 'EXTERNAL' ? (
-                <input
-                  type="text"
-                  placeholder="Source address"
-                  value={sourceAddress}
-                  onChange={(e) => setSourceAddress(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    background: '#1a1a1a',
-                    border: '1px solid #444',
-                    color: '#fff',
-                    borderRadius: '4px',
-                  }}
-                />
-              ) : (
-                <select
-                  value={sourceVaultId}
-                  onChange={(e) => setSourceVaultId(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    background: '#1a1a1a',
-                    border: '1px solid #444',
-                    color: '#fff',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <option value="">Select source vault</option>
-                  {(vaults || []).map((vault) => (
-                    <option key={vault.id} value={vault.id}>
-                      {vault.name} ({vault.id.slice(0, 8)}...)
-                    </option>
-                  ))}
-                </select>
-              )}
             </div>
 
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <label style={{ fontWeight: 600 }}>Destination Address Type</label>
-              <select
-                value={destinationType}
-                onChange={(e) => setDestinationType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
-                style={{
-                  padding: '0.5rem',
-                  background: '#1a1a1a',
-                  border: '1px solid #444',
-                  color: '#fff',
-                  borderRadius: '4px',
-                }}
-              >
-                <option value="EXTERNAL">External</option>
-                <option value="INTERNAL">Internal</option>
-              </select>
-              {destinationType === 'EXTERNAL' ? (
-                <input
-                  type="text"
-                  placeholder="Destination address"
-                  value={destinationAddress}
-                  onChange={(e) => setDestinationAddress(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    background: '#1a1a1a',
-                    border: '1px solid #444',
-                    color: '#fff',
-                    borderRadius: '4px',
-                  }}
-                />
-              ) : (
-                <select
-                  value={destinationVaultId}
-                  onChange={(e) => setDestinationVaultId(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    background: '#1a1a1a',
-                    border: '1px solid #444',
-                    color: '#fff',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <option value="">Select destination vault</option>
-                  {(vaults || []).map((vault) => (
-                    <option key={vault.id} value={vault.id}>
-                      {vault.name} ({vault.id.slice(0, 8)}...)
-                    </option>
-                  ))}
-                </select>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-muted mb-1">Source</label>
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={sourceType}
+                    onChange={(e) => setSourceType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
+                    className="w-1/3"
+                  >
+                    <option value="EXTERNAL">External</option>
+                    <option value="INTERNAL">Internal</option>
+                  </select>
+                  {sourceType === 'EXTERNAL' ? (
+                    <input
+                      type="text"
+                      placeholder="Source address"
+                      value={sourceAddress}
+                      onChange={(e) => setSourceAddress(e.target.value)}
+                      className="w-2/3"
+                    />
+                  ) : (
+                    <select
+                      value={sourceVaultId}
+                      onChange={(e) => setSourceVaultId(e.target.value)}
+                      className="w-2/3"
+                    >
+                      <option value="">Select source vault</option>
+                      {(vaults || []).map((vault) => (
+                        <option key={vault.id} value={vault.id}>
+                          {vault.name} ({vault.id.slice(0, 8)}...)
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-muted mb-1">Destination</label>
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={destinationType}
+                    onChange={(e) => setDestinationType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
+                    className="w-1/3"
+                  >
+                    <option value="EXTERNAL">External</option>
+                    <option value="INTERNAL">Internal</option>
+                  </select>
+                  {destinationType === 'EXTERNAL' ? (
+                    <input
+                      type="text"
+                      placeholder="Destination address"
+                      value={destinationAddress}
+                      onChange={(e) => setDestinationAddress(e.target.value)}
+                      className="w-2/3"
+                    />
+                  ) : (
+                    <select
+                      value={destinationVaultId}
+                      onChange={(e) => setDestinationVaultId(e.target.value)}
+                      className="w-2/3"
+                    >
+                      <option value="">Select destination vault</option>
+                      {(vaults || []).map((vault) => (
+                        <option key={vault.id} value={vault.id}>
+                          {vault.name} ({vault.id.slice(0, 8)}...)
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <input
-              type="text"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                background: '#1a1a1a',
-                border: '1px solid #444',
-                color: '#fff',
-                borderRadius: '4px',
-              }}
-            />
+            <div>
+              <label className="block text-sm text-muted mb-1">Amount</label>
+              <input
+                type="text"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
           </div>
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createTransaction.isPending}
-            >
-              Create Transaction
-            </button>
+
+          <div className="flex gap-2 mt-6 justify-end">
             <button
               type="button"
               className="btn btn-secondary"
@@ -566,49 +537,43 @@ export default function TransactionsPage() {
             >
               Cancel
             </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={createTransaction.isPending}
+            >
+              Create Transaction
+            </button>
           </div>
         </form>
       )}
 
-      <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: '1fr 1fr 1fr auto', marginBottom: '1rem' }}>
-        <input
-          type="text"
-          placeholder="Filter by asset"
+      <div className="flex gap-4 mb-6">
+        <select
           value={filterAsset}
           onChange={(e) => setFilterAsset(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            background: '#1a1a1a',
-            border: '1px solid #444',
-            color: '#fff',
-            borderRadius: '4px',
-          }}
-        />
+          className="flex-1"
+        >
+          <option value="">All assets</option>
+          {(assets || []).map((asset) => (
+            <option key={asset.id} value={asset.id}>
+              {asset.name} ({asset.symbol})
+            </option>
+          ))}
+        </select>
         <input
           type="text"
-          placeholder="Filter by transaction ID"
+          placeholder="Filter by ID"
           value={filterId}
           onChange={(e) => setFilterId(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            background: '#1a1a1a',
-            border: '1px solid #444',
-            color: '#fff',
-            borderRadius: '4px',
-          }}
+          className="flex-1"
         />
         <input
           type="text"
-          placeholder="Filter by transaction hash"
+          placeholder="Filter by hash"
           value={filterHash}
           onChange={(e) => setFilterHash(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            background: '#1a1a1a',
-            border: '1px solid #444',
-            color: '#fff',
-            borderRadius: '4px',
-          }}
+          className="flex-1"
         />
         <button
           className="btn btn-secondary"
@@ -619,42 +584,37 @@ export default function TransactionsPage() {
           }}
           disabled={!filterAsset && !filterId && !filterHash}
         >
-          Clear Filters
+          Clear
         </button>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div className="flex-between mb-3">
+        <div className="flex-gap-2 items-center">
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary text-sm py-1 px-2"
             onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
             disabled={pageIndex === 0}
           >
-            Prev
+            Previous
           </button>
-          <span style={{ color: '#aaa', fontSize: '0.875rem' }}>
+          <span className="text-muted text-sm">
             Page {pageIndex + 1} of {totalPages}
           </span>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary text-sm py-1 px-2"
             onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
             disabled={pageIndex >= totalPages - 1}
           >
             Next
           </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: '#aaa', fontSize: '0.875rem' }}>Rows</span>
+
+        <div className="flex items-center gap-2">
+          <span className="text-muted text-sm">Rows per page</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            style={{
-              padding: '0.35rem 0.5rem',
-              background: '#1a1a1a',
-              border: '1px solid #444',
-              color: '#fff',
-              borderRadius: '4px',
-            }}
+            className="py-1 px-2 text-sm w-auto"
           >
             {[10, 25, 50, 100].map((size) => (
               <option key={size} value={size}>{size}</option>
@@ -663,121 +623,100 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th style={{ width: '40px' }}>
-              <input
-                type="checkbox"
-                checked={selectedIds.size === pagedTransactions.length && pagedTransactions.length > 0}
-                onChange={(e) => {
-                  if (e.target.checked && pagedTransactions.length > 0) {
-                    setSelectedIds(new Set(pagedTransactions.map((tx) => tx.id)));
-                  } else {
-                    setSelectedIds(new Set());
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              />
-            </th>
-            <th>ID</th>
-            <th>State</th>
-            <th>Asset</th>
-            <th>Amount</th>
-            <th>Vault</th>
-            <th>Destination</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagedTransactions.map((tx, index) => (
-            <tr
-              key={tx.id}
-              onClick={() => setSelectedTx(tx)}
-              style={{
-                cursor: 'pointer',
-                background: selectedIndex === index ? '#2a2a2a' : undefined,
-              }}
-            >
-              <td onClick={(e) => e.stopPropagation()}>
+      <div className="overflow-x-auto rounded-lg border border-tertiary">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="w-10 text-center">
                 <input
                   type="checkbox"
-                  checked={selectedIds.has(tx.id)}
-                  onChange={() => toggleSelection(tx.id)}
-                  style={{ cursor: 'pointer' }}
-                />
-              </td>
-              <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {tx.id.substring(0, 8)}...
-              </td>
-              <td>
-                <span className={`state-badge state-${tx.state}`}>
-                  {tx.state}
-                </span>
-              </td>
-              <td>{tx.assetId}</td>
-              <td>{parseFloat(tx.amount).toFixed(4)}</td>
-              <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {formatVaultLabel(tx.vaultAccountId)}
-              </td>
-              <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {tx.destinationType === 'INTERNAL'
-                  ? formatVaultLabel(tx.destinationVaultAccountId, tx.destinationVaultAccountName)
-                  : `${tx.destinationAddress.substring(0, 12)}...`}
-              </td>
-              <td>{new Date(tx.createdAt).toLocaleString()}</td>
-              <td>
-                <button
-                  className="btn btn-primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTx(tx);
+                  checked={selectedIds.size === pagedTransactions.length && pagedTransactions.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked && pagedTransactions.length > 0) {
+                      setSelectedIds(new Set(pagedTransactions.map((tx) => tx.id)));
+                    } else {
+                      setSelectedIds(new Set());
+                    }
                   }}
-                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                >
-                  View
-                </button>
-              </td>
+                  className="cursor-pointer"
+                />
+              </th>
+              <th>ID</th>
+              <th>State</th>
+              <th>Asset</th>
+              <th>Amount</th>
+              <th>Vault</th>
+              <th>Destination</th>
+              <th>Created</th>
+              <th className="text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {pagedTransactions.map((tx, index) => (
+              <tr
+                key={tx.id}
+                onClick={() => setSelectedTx(tx)}
+                className={`cursor-pointer transition-colors ${selectedIndex === index ? 'bg-white/5' : 'hover:bg-white/5'}`}
+                style={selectedIndex === index ? { backgroundColor: 'var(--bg-tertiary)' } : undefined}
+              >
+                <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(tx.id)}
+                    onChange={() => toggleSelection(tx.id)}
+                    className="cursor-pointer"
+                  />
+                </td>
+                <td className="text-mono text-sm text-muted">
+                  {tx.id.substring(0, 8)}...
+                </td>
+                <td>
+                  <span className={`state-badge state-${tx.state}`}>
+                    {tx.state}
+                  </span>
+                </td>
+                <td className="font-medium">{tx.assetId}</td>
+                <td className="text-mono">{parseFloat(tx.amount).toFixed(4)}</td>
+                <td className="text-mono text-sm text-muted">
+                  {formatVaultLabel(tx.vaultAccountId)}
+                </td>
+                <td className="text-mono text-sm text-muted">
+                  {tx.destinationType === 'INTERNAL'
+                    ? formatVaultLabel(tx.destinationVaultAccountId, tx.destinationVaultAccountName)
+                    : `${tx.destinationAddress.substring(0, 12)}...`}
+                </td>
+                <td className="text-sm text-muted">{new Date(tx.createdAt).toLocaleString()}</td>
+                <td className="text-right">
+                  <button
+                    className="btn btn-ghost text-sm py-1 px-3"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTx(tx);
+                    }}
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Bulk confirmation dialog */}
       {showBulkConfirm && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9998,
-          }}
-          onClick={() => setShowBulkConfirm(null)}
-        >
-          <div
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              padding: '2rem',
-              maxWidth: '500px',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>Confirm Bulk Action</h3>
-            <p>
-              Are you sure you want to {showBulkConfirm.action} {showBulkConfirm.count} transaction(s)?
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-secondary border border-tertiary rounded-lg p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold mb-2">Confirm Bulk Action</h3>
+            <p className="text-muted mb-6">
+              Are you sure you want to <strong>{showBulkConfirm.action}</strong> {showBulkConfirm.count} transaction(s)?
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-              <button className="btn btn-primary" onClick={() => setShowBulkConfirm(null)}>
+            <div className="flex justify-end gap-3">
+              <button className="btn btn-secondary" onClick={() => setShowBulkConfirm(null)}>
                 Cancel
               </button>
               <button className="btn btn-danger" onClick={executeBulkAction}>
-                Confirm
+                Confirm {showBulkConfirm.action}
               </button>
             </div>
           </div>
@@ -791,77 +730,99 @@ export default function TransactionsPage() {
             <button className="close-btn" onClick={() => setSelectedTx(null)}>×</button>
           </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <h3>Information</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div><strong>ID:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.id}</span></div>
-              <div><strong>State:</strong> <span className={`state-badge state-${selectedTx.state}`}>{selectedTx.state}</span></div>
-              <div><strong>Asset:</strong> {selectedTx.assetId}</div>
-              <div><strong>Source Type:</strong> {selectedTx.sourceType}</div>
-              {selectedTx.sourceType === 'EXTERNAL' ? (
-                <div><strong>Source Address:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.sourceAddress}</span></div>
-              ) : (
-                <div><strong>Source Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.sourceVaultAccountId, selectedTx.sourceVaultAccountName)}</span></div>
-              )}
-              <div><strong>Amount:</strong> {selectedTx.amount}</div>
-              <div><strong>Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.vaultAccountId)}</span></div>
-              <div><strong>Destination Type:</strong> {selectedTx.destinationType}</div>
-              {selectedTx.destinationType === 'EXTERNAL' ? (
-                <div><strong>Destination:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationAddress}</span></div>
-              ) : (
-                <div><strong>Destination Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{formatVaultLabel(selectedTx.destinationVaultAccountId, selectedTx.destinationVaultAccountName)}</span></div>
-              )}
-              {selectedTx.hash && <div><strong>Hash:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.hash}</span></div>}
-              <div><strong>Fee:</strong> {selectedTx.fee}</div>
-              <div><strong>Network Fee:</strong> {selectedTx.networkFee}</div>
-              <div><strong>Confirmations:</strong> {selectedTx.confirmations}</div>
-              {selectedTx.failureReason && <div><strong>Failure Reason:</strong> {selectedTx.failureReason}</div>}
-              <div><strong>Created:</strong> {new Date(selectedTx.createdAt).toLocaleString()}</div>
-              <div><strong>Updated:</strong> {new Date(selectedTx.updatedAt).toLocaleString()}</div>
+          <div className="mb-8">
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Information</h3>
+            <div className="grid gap-3 p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+              <div className="flex justify-between">
+                <span className="text-muted">ID</span>
+                <span className="text-mono select-all">{selectedTx.id}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted">State</span>
+                <span className={`state-badge state-${selectedTx.state}`}>{selectedTx.state}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Asset</span>
+                <span className="font-medium">{selectedTx.assetId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Amount</span>
+                <span className="text-mono">{selectedTx.amount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Created</span>
+                <span>{new Date(selectedTx.createdAt).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
-          <div>
-            <h3>State Transitions</h3>
-            {getAvailableActions(selectedTx.state).length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {getAvailableActions(selectedTx.state).map((action) => (
-                  <button
-                    key={action}
-                    className={`btn ${action === 'fail' || action === 'reject' || action === 'cancel' || action === 'timeout' ? 'btn-danger' : 'btn-primary'}`}
-                    onClick={() => {
-                      if (action === 'fail') {
-                        const reason = prompt('Enter failure reason (INSUFFICIENT_FUNDS, NETWORK_ERROR, etc):');
-                        if (reason) {
-                          handleTransition(selectedTx.id, action, reason);
-                        }
-                      } else if (action === 'reject' || action === 'cancel' || action === 'timeout') {
-                        if (confirm(`Are you sure you want to ${action} this transaction?`)) {
-                          handleTransition(selectedTx.id, action);
-                        }
-                      } else {
-                        handleTransition(selectedTx.id, action);
-                      }
-                    }}
-                    disabled={transition.isPending}
-                    title={`Keyboard shortcut: ${action[0]}`}
-                  >
-                    {action.charAt(0).toUpperCase() + action.slice(1)}
-                  </button>
-                ))}
+          <div className="mb-8">
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Flow</h3>
+            <div className="grid gap-4">
+              <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+                <div className="text-xs text-muted uppercase mb-1">Source</div>
+                <div className="font-medium">{selectedTx.sourceType}</div>
+                <div className="text-mono text-sm text-muted break-all mt-1">
+                  {selectedTx.sourceType === 'INTERNAL'
+                    ? `Vault: ${selectedTx.vaultAccountId}`
+                    : selectedTx.sourceAddress}
+                </div>
               </div>
-            ) : (
-              <p>No transitions available (terminal state)</p>
-            )}
+
+              <div className="flex justify-center text-muted">↓</div>
+
+              <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+                <div className="text-xs text-muted uppercase mb-1">Destination</div>
+                <div className="font-medium">{selectedTx.destinationType}</div>
+                <div className="text-mono text-sm text-muted break-all mt-1">
+                  {selectedTx.destinationType === 'INTERNAL'
+                    ? `Vault: ${selectedTx.destinationVaultAccountId}`
+                    : selectedTx.destinationAddress}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style={{ marginTop: '2rem' }}>
-            <details>
-              <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Raw JSON</summary>
-              <pre style={{ background: '#000', padding: '1rem', borderRadius: '4px', overflow: 'auto', fontSize: '0.75rem' }}>
-                {JSON.stringify(selectedTx, null, 2)}
-              </pre>
-            </details>
+          {selectedTx.hash && (
+            <div className="mb-8">
+              <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Blockchain</h3>
+              <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+                <div className="text-xs text-muted uppercase mb-1">Transaction Hash</div>
+                <div className="text-mono text-sm break-all text-accent cursor-pointer hover:underline">
+                  {selectedTx.hash}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Actions</h3>
+            <div className="flex flex-wrap gap-2">
+              {getAvailableActions(selectedTx.state).map((action) => (
+                <button
+                  key={action}
+                  className={`btn ${action === 'fail' || action === 'reject' || action === 'cancel' || action === 'timeout'
+                    ? 'btn-danger'
+                    : 'btn-primary'
+                    }`}
+                  onClick={() => {
+                    if (action === 'fail') {
+                      const reason = prompt('Enter failure reason:');
+                      if (reason) handleTransition(selectedTx.id, 'fail', reason);
+                    } else if (action === 'cancel') {
+                      if (confirm('Are you sure?')) handleTransition(selectedTx.id, 'cancel');
+                    } else {
+                      handleTransition(selectedTx.id, action);
+                    }
+                  }}
+                >
+                  {action.charAt(0).toUpperCase() + action.slice(1)}
+                </button>
+              ))}
+              {getAvailableActions(selectedTx.state).length === 0 && (
+                <div className="text-muted text-sm italic">No actions available for this state</div>
+              )}
+            </div>
           </div>
         </div>
       )}

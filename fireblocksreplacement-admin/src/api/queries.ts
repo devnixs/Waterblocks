@@ -139,3 +139,15 @@ export function useFrozenBalances(vaultId: string) {
     enabled: !!vaultId,
   });
 }
+
+// Assets
+export function useAssets() {
+  return useQuery({
+    queryKey: ['assets'],
+    queryFn: async () => {
+      const response = await adminApi.getAssets();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+  });
+}

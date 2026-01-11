@@ -9,6 +9,7 @@ import type {
   CreateWalletRequest,
   AdminWallet,
   AdminAutoTransitionSettings,
+  Asset,
 } from '../types/admin';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -126,5 +127,26 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ enabled }),
     });
+  },
+
+  // Assets
+  async getAssets(): Promise<AdminResponse<Asset[]>> {
+    const response = await fetch(`${API_BASE_URL}/supported_assets`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'admin',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        data: null,
+        error: { message: `HTTP ${response.status}`, code: 'HTTP_ERROR' },
+      }));
+      return error;
+    }
+
+    const data = await response.json();
+    return { data, error: null };
   },
 };

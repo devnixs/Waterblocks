@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet } from '../api/queries';
+import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet, useAssets } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import type { AdminVault } from '../types/admin';
 
 export default function VaultsPage() {
   const { data: vaults, isLoading, error } = useVaults();
+  const { data: assets } = useAssets();
   const createVault = useCreateVault();
   const { showToast } = useToast();
   const [selectedVault, setSelectedVault] = useState<AdminVault | null>(null);
@@ -22,8 +23,15 @@ export default function VaultsPage() {
     }
   }, [vaults, selectedVault]);
 
-  if (isLoading) return <div>Loading vaults...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  useEffect(() => {
+    if (!assets || assets.length === 0) return;
+    if (!walletAssetId) {
+      setWalletAssetId(assets[0].id);
+    }
+  }, [assets, walletAssetId]);
+
+  if (isLoading) return <div className="p-8 text-center text-muted">Loading vaults...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
   const handleCreateVault = async () => {
     if (!vaultName.trim()) {
@@ -44,7 +52,7 @@ export default function VaultsPage() {
   const handleCreateWallet = async () => {
     if (!selectedVault) return;
     if (!walletAssetId.trim()) {
-      showToast({ title: 'Asset code is required', type: 'error' });
+      showToast({ title: 'Asset is required', type: 'error' });
       return;
     }
 
@@ -59,8 +67,8 @@ export default function VaultsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>Vaults ({vaults?.length || 0})</h2>
+      <div className="flex-between mb-4">
+        <h2>Vaults <span className="text-muted text-sm">({vaults?.length || 0})</span></h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -75,71 +83,70 @@ export default function VaultsPage() {
             e.preventDefault();
             handleCreateVault();
           }}
-          style={{ background: '#252525', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}
+          className="card"
         >
-          <h3>Create New Vault</h3>
-          <input
-            type="text"
-            placeholder="Vault name"
-            value={vaultName}
-            onChange={(e) => setVaultName(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              marginBottom: '0.5rem',
-              background: '#1a1a1a',
-              border: '1px solid #444',
-              color: '#fff',
-              borderRadius: '4px'
-            }}
-          />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={createVault.isPending}
-          >
-            Create
-          </button>
+          <h3 className="mb-4 text-lg font-semibold">Create New Vault</h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Vault name"
+              value={vaultName}
+              onChange={(e) => setVaultName(e.target.value)}
+              className="flex-1"
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={createVault.isPending}
+            >
+              Create
+            </button>
+          </div>
         </form>
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Assets</th>
-            <th>Hidden</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vaults?.map((vault) => (
-            <tr key={vault.id} onClick={() => setSelectedVault(vault)} style={{ cursor: 'pointer' }}>
-              <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {vault.id.substring(0, 8)}...
-              </td>
-              <td>{vault.name}</td>
-              <td>{vault.wallets.length}</td>
-              <td>{vault.hiddenOnUI ? 'Yes' : 'No'}</td>
-              <td>{new Date(vault.createdAt).toLocaleString()}</td>
-              <td>
-                <button
-                  className="btn btn-primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedVault(vault);
-                  }}
-                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                >
-                  View
-                </button>
-              </td>
+      <div className="overflow-x-auto rounded-lg border border-tertiary">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Assets</th>
+              <th>Hidden</th>
+              <th>Created</th>
+              <th className="text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {vaults?.map((vault) => (
+              <tr
+                key={vault.id}
+                onClick={() => setSelectedVault(vault)}
+                className="cursor-pointer hover:bg-white/5 transition-colors"
+              >
+                <td className="text-mono text-sm text-muted">
+                  {vault.id.substring(0, 8)}...
+                </td>
+                <td className="font-medium">{vault.name}</td>
+                <td className="text-mono">{vault.wallets.length}</td>
+                <td>{vault.hiddenOnUI ? 'Yes' : 'No'}</td>
+                <td className="text-sm text-muted">{new Date(vault.createdAt).toLocaleString()}</td>
+                <td className="text-right">
+                  <button
+                    className="btn btn-ghost text-sm py-1 px-3"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVault(vault);
+                    }}
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {selectedVault && (
         <div className="detail-panel">
@@ -148,121 +155,148 @@ export default function VaultsPage() {
             <button className="close-btn" onClick={() => setSelectedVault(null)}>×</button>
           </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <h3>Information</h3>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <div><strong>ID:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedVault.id}</span></div>
-              <div><strong>Name:</strong> {selectedVault.name}</div>
-              <div><strong>Hidden:</strong> {selectedVault.hiddenOnUI ? 'Yes' : 'No'}</div>
-              <div><strong>Auto Fuel:</strong> {selectedVault.autoFuel ? 'Yes' : 'No'}</div>
-              {selectedVault.customerRefId && <div><strong>Customer Ref:</strong> {selectedVault.customerRefId}</div>}
-              <div><strong>Created:</strong> {new Date(selectedVault.createdAt).toLocaleString()}</div>
-              <div><strong>Updated:</strong> {new Date(selectedVault.updatedAt).toLocaleString()}</div>
+          <div className="mb-8">
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Information</h3>
+            <div className="grid gap-4 p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+              <div className="flex justify-between">
+                <span className="text-muted">ID</span>
+                <span className="text-mono select-all">{selectedVault.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Name</span>
+                <span className="font-medium">{selectedVault.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Hidden</span>
+                <span>{selectedVault.hiddenOnUI ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Auto Fuel</span>
+                <span>{selectedVault.autoFuel ? 'Yes' : 'No'}</span>
+              </div>
+              {selectedVault.customerRefId && (
+                <div className="flex justify-between">
+                  <span className="text-muted">Customer Ref</span>
+                  <span className="text-mono">{selectedVault.customerRefId}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted">Created</span>
+                <span className="text-sm">{new Date(selectedVault.createdAt).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <h3>Assets ({selectedVault.wallets.length})</h3>
+          <div className="mb-8">
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">
+              Assets <span className="text-muted">({selectedVault.wallets.length})</span>
+            </h3>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleCreateWallet();
               }}
-              style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
+              className="flex gap-2 mb-4"
             >
-              <input
-                type="text"
-                placeholder="Asset code (e.g. BTC)"
+              <select
                 value={walletAssetId}
                 onChange={(e) => setWalletAssetId(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  background: '#1a1a1a',
-                  border: '1px solid #444',
-                  color: '#fff',
-                  borderRadius: '4px'
-                }}
-              />
+                className="flex-1"
+              >
+                <option value="">Select asset</option>
+                {(assets || []).map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.name} ({asset.symbol})
+                  </option>
+                ))}
+              </select>
               <button
                 type="submit"
                 className="btn btn-primary"
                 disabled={createWallet.isPending}
               >
-                Create Wallet
+                + Wallet
               </button>
             </form>
-            {selectedVault.wallets.length > 0 ? (
-              <table style={{ fontSize: '0.875rem' }}>
-                <thead>
-                  <tr>
-                    <th>Asset</th>
-                    <th>Balance</th>
-                    <th>Locked</th>
-                    <th>Available</th>
-                    <th>Addresses</th>
-                    <th>Deposit Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedVault.wallets.map((wallet) => (
-                    <tr key={wallet.assetId}>
-                      <td>{wallet.assetId}</td>
-                      <td>{parseFloat(wallet.balance).toFixed(8)}</td>
-                      <td style={{
-                        color: parseFloat(wallet.lockedAmount) > 0 ? '#fbbf24' : 'inherit',
-                        fontWeight: parseFloat(wallet.lockedAmount) > 0 ? 'bold' : 'normal'
-                      }}>
-                        {parseFloat(wallet.lockedAmount).toFixed(8)}
-                      </td>
-                      <td>{parseFloat(wallet.available).toFixed(8)}</td>
-                      <td>{wallet.addressCount}</td>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {wallet.depositAddress ?? '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No assets in this vault</p>
-            )}
-          </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <h3>Frozen Balances</h3>
-            {frozenBalancesQuery.isLoading && <p>Loading frozen balances...</p>}
-            {frozenBalancesQuery.error && (
-              <p>Error loading frozen balances: {String(frozenBalancesQuery.error)}</p>
-            )}
-            {!frozenBalancesQuery.isLoading && !frozenBalancesQuery.error && (
-              frozenBalancesQuery.data && frozenBalancesQuery.data.length > 0 ? (
-                <table style={{ fontSize: '0.875rem' }}>
+            {selectedVault.wallets.length > 0 ? (
+              <div className="overflow-x-auto rounded-lg border border-tertiary">
+                <table className="w-full text-sm">
                   <thead>
                     <tr>
                       <th>Asset</th>
-                      <th>Amount</th>
+                      <th>Balance</th>
+                      <th>Locked</th>
+                      <th>Available</th>
+                      <th>Deposit Address</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {frozenBalancesQuery.data.map((balance) => (
-                      <tr key={balance.assetId}>
-                        <td>{balance.assetId}</td>
-                        <td>{parseFloat(balance.amount).toFixed(8)}</td>
+                    {selectedVault.wallets.map((wallet) => (
+                      <tr key={wallet.assetId}>
+                        <td className="font-bold">{wallet.assetId}</td>
+                        <td className="text-mono">{parseFloat(wallet.balance).toFixed(8)}</td>
+                        <td className="text-mono" style={{
+                          color: parseFloat(wallet.lockedAmount) > 0 ? 'var(--warning)' : 'inherit',
+                          fontWeight: parseFloat(wallet.lockedAmount) > 0 ? 'bold' : 'normal'
+                        }}>
+                          {parseFloat(wallet.lockedAmount).toFixed(8)}
+                        </td>
+                        <td className="text-mono text-success">{parseFloat(wallet.available).toFixed(8)}</td>
+                        <td className="text-mono">
+                          {wallet.depositAddress ? wallet.depositAddress : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            ) : (
+              <div className="p-4 text-center text-muted border border-dashed border-tertiary rounded-lg">
+                No assets in this vault
+              </div>
+            )}
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Frozen Balances</h3>
+            {frozenBalancesQuery.isLoading && <p className="text-muted">Loading frozen balances...</p>}
+            {frozenBalancesQuery.error && (
+              <p className="text-danger">Error: {String(frozenBalancesQuery.error)}</p>
+            )}
+            {!frozenBalancesQuery.isLoading && !frozenBalancesQuery.error && (
+              frozenBalancesQuery.data && frozenBalancesQuery.data.length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border border-tertiary">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th>Asset</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {frozenBalancesQuery.data.map((balance) => (
+                        <tr key={balance.assetId}>
+                          <td className="font-bold">{balance.assetId}</td>
+                          <td className="text-mono">{parseFloat(balance.amount).toFixed(8)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
-                <p>No frozen balances</p>
+                <div className="p-4 text-center text-muted border border-dashed border-tertiary rounded-lg">
+                  No frozen balances
+                </div>
               )
             )}
           </div>
 
-          <div>
+          <div className="mt-8">
             <details>
-              <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Raw JSON</summary>
-              <pre style={{ background: '#000', padding: '1rem', borderRadius: '4px', overflow: 'auto', fontSize: '0.75rem' }}>
+              <summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-muted mb-2">Raw JSON</summary>
+              <pre className="bg-black/50 p-4 rounded-lg overflow-auto text-xs font-mono border border-tertiary">
                 {JSON.stringify(selectedVault, null, 2)}
               </pre>
             </details>
