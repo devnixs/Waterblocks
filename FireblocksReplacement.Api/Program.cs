@@ -1,4 +1,5 @@
 using FireblocksReplacement.Api.Infrastructure.Db;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -93,4 +94,10 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+namespace FireblocksReplacement.Api.Hubs;
+
+public class AdminHub : Hub
+{
 }

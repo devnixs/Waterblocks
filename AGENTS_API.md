@@ -12,6 +12,7 @@ Work summary:
 - Ensured wallet creation also generates a deposit address in the Fireblocks-compatible endpoint.
 - Added SignalR hub and broadcast events for realtime admin updates.
 - Broadcasts now include payloads for transaction/vault upserts to avoid refetches.
+- Moved AdminHub definition into Program.cs to ensure it is tracked and compiled in CI.
 
 Files touched:
 - `FireblocksReplacement.Api/Controllers/VaultAccountsController.cs`
