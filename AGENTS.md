@@ -5,3 +5,4 @@
 - AGENTS_TESTING.md: Tests directory scaffolding.
 - AGENTS_CI.md: GitHub Actions CI and frontend Docker assets.
 - AGENTS_DOCKER.md: Compose files for full/backend/frontend stacks and runner scripts.
+- AGENTS_DOCS.md: Documentation updates and rule overrides.

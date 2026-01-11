@@ -18,6 +18,23 @@ public class Transaction
     public string AssetId { get; set; } = string.Empty;
 
     [Required]
+    [MaxLength(20)]
+    public string SourceType { get; set; } = "EXTERNAL";
+
+    [MaxLength(500)]
+    public string? SourceAddress { get; set; }
+
+    [MaxLength(50)]
+    public string? SourceVaultAccountId { get; set; }
+
+    [Required]
+    [MaxLength(20)]
+    public string DestinationType { get; set; } = "EXTERNAL";
+
+    [MaxLength(50)]
+    public string? DestinationVaultAccountId { get; set; }
+
+    [Required]
     [Column(TypeName = "decimal(36,18)")]
     public decimal Amount { get; set; }
 

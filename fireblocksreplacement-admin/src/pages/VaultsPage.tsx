@@ -1,31 +1,59 @@
-import { useState } from 'react';
-import { useVaults, useCreateVault, useFrozenBalances } from '../api/queries';
+import { useEffect, useState } from 'react';
+import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet } from '../api/queries';
+import { useToast } from '../components/ToastProvider';
 import type { AdminVault } from '../types/admin';
 
 export default function VaultsPage() {
   const { data: vaults, isLoading, error } = useVaults();
   const createVault = useCreateVault();
+  const { showToast } = useToast();
   const [selectedVault, setSelectedVault] = useState<AdminVault | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [vaultName, setVaultName] = useState('');
+  const [walletAssetId, setWalletAssetId] = useState('');
   const frozenBalancesQuery = useFrozenBalances(selectedVault?.id ?? '');
+  const createWallet = useCreateWallet(selectedVault?.id ?? '');
+
+  useEffect(() => {
+    if (!selectedVault || !vaults) return;
+    const updated = vaults.find((vault) => vault.id === selectedVault.id);
+    if (updated) {
+      setSelectedVault(updated);
+    }
+  }, [vaults, selectedVault]);
 
   if (isLoading) return <div>Loading vaults...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   const handleCreateVault = async () => {
     if (!vaultName.trim()) {
-      alert('Vault name is required');
+      showToast({ title: 'Vault name is required', type: 'error' });
       return;
     }
 
     const result = await createVault.mutateAsync({ name: vaultName });
     if (result.error) {
-      alert(`Error: ${result.error.message}`);
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
     } else {
-      alert('Vault created successfully');
+      showToast({ title: 'Vault created successfully', type: 'success', duration: 3000 });
       setVaultName('');
       setShowCreateForm(false);
+    }
+  };
+
+  const handleCreateWallet = async () => {
+    if (!selectedVault) return;
+    if (!walletAssetId.trim()) {
+      showToast({ title: 'Asset code is required', type: 'error' });
+      return;
+    }
+
+    const result = await createWallet.mutateAsync({ assetId: walletAssetId.trim().toUpperCase() });
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+    } else {
+      showToast({ title: 'Wallet created successfully', type: 'success', duration: 3000 });
+      setWalletAssetId('');
     }
   };
 
@@ -42,7 +70,13 @@ export default function VaultsPage() {
       </div>
 
       {showCreateForm && (
-        <div style={{ background: '#252525', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateVault();
+          }}
+          style={{ background: '#252525', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}
+        >
           <h3>Create New Vault</h3>
           <input
             type="text"
@@ -60,13 +94,13 @@ export default function VaultsPage() {
             }}
           />
           <button
+            type="submit"
             className="btn btn-primary"
-            onClick={handleCreateVault}
             disabled={createVault.isPending}
           >
             Create
           </button>
-        </div>
+        </form>
       )}
 
       <table>
@@ -129,6 +163,35 @@ export default function VaultsPage() {
 
           <div style={{ marginBottom: '2rem' }}>
             <h3>Assets ({selectedVault.wallets.length})</h3>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateWallet();
+              }}
+              style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
+            >
+              <input
+                type="text"
+                placeholder="Asset code (e.g. BTC)"
+                value={walletAssetId}
+                onChange={(e) => setWalletAssetId(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  background: '#1a1a1a',
+                  border: '1px solid #444',
+                  color: '#fff',
+                  borderRadius: '4px'
+                }}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={createWallet.isPending}
+              >
+                Create Wallet
+              </button>
+            </form>
             {selectedVault.wallets.length > 0 ? (
               <table style={{ fontSize: '0.875rem' }}>
                 <thead>
@@ -138,6 +201,7 @@ export default function VaultsPage() {
                     <th>Locked</th>
                     <th>Available</th>
                     <th>Addresses</th>
+                    <th>Deposit Address</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,6 +217,9 @@ export default function VaultsPage() {
                       </td>
                       <td>{parseFloat(wallet.available).toFixed(8)}</td>
                       <td>{wallet.addressCount}</td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                        {wallet.depositAddress ?? '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

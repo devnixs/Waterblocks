@@ -12,6 +12,11 @@ export interface AdminTransaction {
   id: string;
   vaultAccountId: string;
   assetId: string;
+  sourceType: 'EXTERNAL' | 'INTERNAL';
+  sourceAddress?: string;
+  sourceVaultAccountId?: string;
+  destinationType: 'EXTERNAL' | 'INTERNAL';
+  destinationVaultAccountId?: string;
   amount: string;
   destinationAddress: string;
   destinationTag?: string;
@@ -41,11 +46,14 @@ export type TransactionState =
   | 'TIMEOUT';
 
 export interface CreateTransactionRequest {
-  type: 'INCOMING' | 'OUTGOING';
-  vaultAccountId: string;
   assetId: string;
-  amount: string;
+  sourceType: 'EXTERNAL' | 'INTERNAL';
+  sourceAddress?: string;
+  sourceVaultAccountId?: string;
+  destinationType: 'EXTERNAL' | 'INTERNAL';
   destinationAddress?: string;
+  destinationVaultAccountId?: string;
+  amount: string;
   destinationTag?: string;
   initialState?: string;
 }
@@ -71,6 +79,7 @@ export interface AdminWallet {
   lockedAmount: string;
   available: string;
   addressCount: number;
+  depositAddress?: string;
 }
 
 export interface FrozenBalance {
@@ -82,4 +91,8 @@ export interface CreateVaultRequest {
   name: string;
   customerRefId?: string;
   autoFuel?: boolean;
+}
+
+export interface CreateWalletRequest {
+  assetId: string;
 }

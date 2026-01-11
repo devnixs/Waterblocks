@@ -27,7 +27,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-fireblocksreplacement};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
     ports:
-      - "5000:8080"
+      - "5671:8080"
     depends_on:
       postgres:
         condition: service_healthy

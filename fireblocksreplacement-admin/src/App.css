@@ -22,6 +22,7 @@
 .nav {
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 
 .nav-link {
@@ -40,6 +41,34 @@
 .nav-link.active {
   color: #fff;
   background: #3b82f6;
+}
+
+.realtime-status {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  text-transform: capitalize;
+  background: #1f2937;
+  color: #9ca3af;
+  border: 1px solid #374151;
+}
+
+.realtime-status[data-status="connected"] {
+  background: #064e3b;
+  color: #d1fae5;
+  border-color: #10b981;
+}
+
+.realtime-status[data-status="reconnecting"] {
+  background: #78350f;
+  color: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.realtime-status[data-status="disconnected"] {
+  background: #7f1d1d;
+  color: #fee2e2;
+  border-color: #ef4444;
 }
 
 .main {

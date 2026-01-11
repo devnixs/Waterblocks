@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Admin;
+using FireblocksReplacement.Api.Hubs;
 
 namespace FireblocksReplacement.Api.Controllers.Admin;
 
@@ -12,11 +14,16 @@ public class AdminVaultsController : ControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminVaultsController> _logger;
+    private readonly IHubContext<AdminHub> _hub;
 
-    public AdminVaultsController(FireblocksDbContext context, ILogger<AdminVaultsController> logger)
+    public AdminVaultsController(
+        FireblocksDbContext context,
+        ILogger<AdminVaultsController> logger,
+        IHubContext<AdminHub> hub)
     {
         _context = context;
         _logger = logger;
+        _hub = hub;
     }
 
     [HttpGet]
@@ -77,7 +84,10 @@ public class AdminVaultsController : ControllerBase
                 .ThenInclude(w => w.Addresses)
             .FirstAsync(v => v.Id == vault.Id);
 
-        return Ok(AdminResponse<AdminVaultDto>.Success(MapToDto(vault)));
+        var dto = MapToDto(vault);
+        await _hub.Clients.All.SendAsync("vaultUpserted", dto);
+        await _hub.Clients.All.SendAsync("vaultsUpdated");
+        return Ok(AdminResponse<AdminVaultDto>.Success(dto));
     }
 
     [HttpGet("{id}/frozen")]
@@ -106,6 +116,80 @@ public class AdminVaultsController : ControllerBase
         return Ok(AdminResponse<List<FrozenBalanceDto>>.Success(frozenBalances));
     }
 
+    [HttpPost("{id}/wallets")]
+    public async Task<ActionResult<AdminResponse<AdminWalletDto>>> CreateWallet(
+        string id,
+        [FromBody] CreateAdminWalletRequestDto request)
+    {
+        var vault = await _context.VaultAccounts
+            .Include(v => v.Wallets)
+                .ThenInclude(w => w.Addresses)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (vault == null)
+        {
+            return NotFound(AdminResponse<AdminWalletDto>.Failure(
+                $"Vault {id} not found",
+                "VAULT_NOT_FOUND"));
+        }
+
+        var assetExists = await _context.Assets.AnyAsync(a => a.AssetId == request.AssetId);
+        if (!assetExists)
+        {
+            return BadRequest(AdminResponse<AdminWalletDto>.Failure(
+                $"Asset {request.AssetId} not found",
+                "ASSET_NOT_FOUND"));
+        }
+
+        var wallet = vault.Wallets.FirstOrDefault(w => w.AssetId == request.AssetId);
+        if (wallet == null)
+        {
+            wallet = new Wallet
+            {
+                VaultAccountId = vault.Id,
+                AssetId = request.AssetId,
+                Balance = 0,
+                LockedAmount = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Wallets.Add(wallet);
+            await _context.SaveChangesAsync();
+        }
+
+        if (wallet.Addresses.Count == 0)
+        {
+            var address = new Address
+            {
+                AddressValue = GenerateDepositAddress(request.AssetId, vault.Id),
+                Type = "DEPOSIT",
+                WalletId = wallet.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+            wallet.Addresses.Add(address);
+        }
+
+        var dto = new AdminWalletDto
+        {
+            AssetId = wallet.AssetId,
+            Balance = wallet.Balance.ToString("F18"),
+            LockedAmount = wallet.LockedAmount.ToString("F18"),
+            Available = (wallet.Balance - wallet.LockedAmount).ToString("F18"),
+            AddressCount = wallet.Addresses.Count,
+            DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue
+        };
+
+        var updatedVault = await _context.VaultAccounts
+            .Include(v => v.Wallets)
+                .ThenInclude(w => w.Addresses)
+            .FirstAsync(v => v.Id == vault.Id);
+        await _hub.Clients.All.SendAsync("vaultUpserted", MapToDto(updatedVault));
+        await _hub.Clients.All.SendAsync("vaultsUpdated");
+        return Ok(AdminResponse<AdminWalletDto>.Success(dto));
+    }
+
     private AdminVaultDto MapToDto(VaultAccount vault)
     {
         return new AdminVaultDto
@@ -121,10 +205,16 @@ public class AdminVaultsController : ControllerBase
                 Balance = w.Balance.ToString("F18"),
                 LockedAmount = w.LockedAmount.ToString("F18"),
                 Available = (w.Balance - w.LockedAmount).ToString("F18"),
-                AddressCount = w.Addresses.Count
+                AddressCount = w.Addresses.Count,
+                DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue
             }).ToList(),
             CreatedAt = vault.CreatedAt,
             UpdatedAt = vault.UpdatedAt
         };
+    }
+
+    private static string GenerateDepositAddress(string assetId, string vaultId)
+    {
+        return $"{assetId.ToLowerInvariant()}_{vaultId[..8]}_{Guid.NewGuid():N}";
     }
 }

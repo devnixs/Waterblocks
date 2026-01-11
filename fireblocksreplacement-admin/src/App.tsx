@@ -7,6 +7,7 @@ import VaultsPage from './pages/VaultsPage';
 import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useRealtimeUpdates } from './hooks/useRealtimeUpdates';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -22,6 +23,8 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const realtimeStatus = useRealtimeUpdates();
 
   useKeyboardShortcuts([
     { key: '1', handler: () => navigate('/transactions'), description: 'Navigate to Transactions' },
@@ -54,6 +57,13 @@ function AppContent() {
           >
             ?
           </button>
+          <span
+            className="realtime-status"
+            data-status={realtimeStatus}
+            title={`Realtime: ${realtimeStatus}`}
+          >
+            {realtimeStatus}
+          </span>
         </nav>
       </header>
       <main className="main">

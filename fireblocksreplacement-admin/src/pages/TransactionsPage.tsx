@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTransactions, useTransitionTransaction } from '../api/queries';
+import { useTransactions, useTransitionTransaction, useCreateTransaction, useVaults } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { AdminTransaction } from '../types/admin';
 
 export default function TransactionsPage() {
   const { data: transactions, isLoading, error } = useTransactions();
+  const { data: vaults } = useVaults();
   const transition = useTransitionTransaction();
+  const createTransaction = useCreateTransaction();
   const { showToast } = useToast();
   const [selectedTx, setSelectedTx] = useState<AdminTransaction | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -15,6 +17,17 @@ export default function TransactionsPage() {
   const [filterAsset, setFilterAsset] = useState('');
   const [filterId, setFilterId] = useState('');
   const [filterHash, setFilterHash] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [assetId, setAssetId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [sourceType, setSourceType] = useState<'EXTERNAL' | 'INTERNAL'>('EXTERNAL');
+  const [sourceAddress, setSourceAddress] = useState('');
+  const [sourceVaultId, setSourceVaultId] = useState('');
+  const [destinationType, setDestinationType] = useState<'EXTERNAL' | 'INTERNAL'>('INTERNAL');
+  const [destinationAddress, setDestinationAddress] = useState('');
+  const [destinationVaultId, setDestinationVaultId] = useState('');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
 
   const displayedTransactions = useMemo(() => {
     const normalizedAsset = filterAsset.trim().toLowerCase();
@@ -33,6 +46,12 @@ export default function TransactionsPage() {
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   }, [transactions, filterAsset, filterId, filterHash]);
 
+  const totalPages = Math.max(1, Math.ceil(displayedTransactions.length / pageSize));
+  const pagedTransactions = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return displayedTransactions.slice(start, start + pageSize);
+  }, [displayedTransactions, pageIndex, pageSize]);
+
   // Reset selection when transactions change
   useEffect(() => {
     if (displayedTransactions.length > 0 && selectedIndex >= displayedTransactions.length) {
@@ -42,17 +61,21 @@ export default function TransactionsPage() {
     }
   }, [displayedTransactions, selectedIndex]);
 
+  useEffect(() => {
+    setPageIndex(0);
+  }, [filterAsset, filterId, filterHash, pageSize]);
+
   // Keyboard shortcuts for list navigation
   useKeyboardShortcuts(
     [
       {
         key: 'j',
-        handler: () => setSelectedIndex((prev) => Math.min(displayedTransactions.length - 1, prev + 1)),
+        handler: () => setSelectedIndex((prev) => Math.min(pagedTransactions.length - 1, prev + 1)),
         description: 'Move selection down',
       },
       {
         key: 'ArrowDown',
-        handler: () => setSelectedIndex((prev) => Math.min(displayedTransactions.length - 1, prev + 1)),
+        handler: () => setSelectedIndex((prev) => Math.min(pagedTransactions.length - 1, prev + 1)),
         description: 'Move selection down',
       },
       {
@@ -68,8 +91,8 @@ export default function TransactionsPage() {
       {
         key: 'Enter',
         handler: () => {
-          if (selectedIndex >= 0 && displayedTransactions[selectedIndex]) {
-            setSelectedTx(displayedTransactions[selectedIndex]);
+          if (selectedIndex >= 0 && pagedTransactions[selectedIndex]) {
+            setSelectedTx(pagedTransactions[selectedIndex]);
           }
         },
         description: 'Open detail panel',
@@ -77,8 +100,8 @@ export default function TransactionsPage() {
       {
         key: ' ',
         handler: () => {
-          if (selectedIndex >= 0 && displayedTransactions[selectedIndex]) {
-            toggleSelection(displayedTransactions[selectedIndex].id);
+          if (selectedIndex >= 0 && pagedTransactions[selectedIndex]) {
+            toggleSelection(pagedTransactions[selectedIndex].id);
           }
         },
         description: 'Toggle checkbox',
@@ -87,8 +110,8 @@ export default function TransactionsPage() {
         key: 'a',
         ctrlKey: true,
         handler: () => {
-          if (displayedTransactions.length > 0) {
-            setSelectedIds(new Set(displayedTransactions.map((tx) => tx.id)));
+          if (pagedTransactions.length > 0) {
+            setSelectedIds(new Set(pagedTransactions.map((tx) => tx.id)));
           }
         },
         description: 'Select all',
@@ -185,6 +208,16 @@ export default function TransactionsPage() {
     !!selectedTx
   );
 
+  useEffect(() => {
+    if (!vaults || vaults.length === 0) return;
+    if (sourceType === 'INTERNAL' && !sourceVaultId) {
+      setSourceVaultId(vaults[0].id);
+    }
+    if (destinationType === 'INTERNAL' && !destinationVaultId) {
+      setDestinationVaultId(vaults[0].id);
+    }
+  }, [vaults, sourceType, destinationType, sourceVaultId, destinationVaultId]);
+
   if (isLoading) return <div>Loading transactions...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
@@ -210,6 +243,56 @@ export default function TransactionsPage() {
       }
     } catch (err) {
       showToast({ title: `Failed: ${err}`, type: 'error', duration: 5000 });
+    }
+  };
+
+  const handleCreateTransaction = async () => {
+    if (!assetId.trim()) {
+      showToast({ title: 'Asset code is required', type: 'error' });
+      return;
+    }
+    if (!amount.trim()) {
+      showToast({ title: 'Amount is required', type: 'error' });
+      return;
+    }
+
+    if (sourceType === 'INTERNAL' && !sourceVaultId) {
+      showToast({ title: 'Source vault is required', type: 'error' });
+      return;
+    }
+    if (sourceType === 'EXTERNAL' && !sourceAddress.trim()) {
+      showToast({ title: 'Source address is required', type: 'error' });
+      return;
+    }
+    if (destinationType === 'INTERNAL' && !destinationVaultId) {
+      showToast({ title: 'Destination vault is required', type: 'error' });
+      return;
+    }
+    if (destinationType === 'EXTERNAL' && !destinationAddress.trim()) {
+      showToast({ title: 'Destination address is required', type: 'error' });
+      return;
+    }
+
+    const result = await createTransaction.mutateAsync({
+      assetId: assetId.trim().toUpperCase(),
+      amount: amount.trim(),
+      sourceType,
+      sourceAddress: sourceType === 'EXTERNAL' ? sourceAddress.trim() : undefined,
+      sourceVaultAccountId: sourceType === 'INTERNAL' ? sourceVaultId : undefined,
+      destinationType,
+      destinationAddress: destinationType === 'EXTERNAL' ? destinationAddress.trim() : undefined,
+      destinationVaultAccountId: destinationType === 'INTERNAL' ? destinationVaultId : undefined,
+    });
+
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+    } else {
+      showToast({ title: 'Transaction created', type: 'success', duration: 3000 });
+      setAssetId('');
+      setAmount('');
+      setSourceAddress('');
+      setDestinationAddress('');
+      setShowCreateForm(false);
     }
   };
 
@@ -293,6 +376,12 @@ export default function TransactionsPage() {
           Transactions ({displayedTransactions.length}
           {transactions && displayedTransactions.length !== transactions.length ? ` of ${transactions.length}` : ''})
         </h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowCreateForm((prev) => !prev)}
+        >
+          {showCreateForm ? 'Close' : '+ New Transaction'}
+        </button>
         {selectedIds.size > 0 && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <span style={{ color: '#aaa', fontSize: '0.875rem' }}>
@@ -313,6 +402,167 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+
+      {showCreateForm && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateTransaction();
+          }}
+          style={{ background: '#252525', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}
+        >
+          <h3>Create Blockchain Transaction</h3>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            <input
+              type="text"
+              placeholder="Asset code (e.g. BTC)"
+              value={assetId}
+              onChange={(e) => setAssetId(e.target.value)}
+              style={{
+                padding: '0.5rem',
+                background: '#1a1a1a',
+                border: '1px solid #444',
+                color: '#fff',
+                borderRadius: '4px',
+              }}
+            />
+
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <label style={{ fontWeight: 600 }}>Source Address Type</label>
+              <select
+                value={sourceType}
+                onChange={(e) => setSourceType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
+                style={{
+                  padding: '0.5rem',
+                  background: '#1a1a1a',
+                  border: '1px solid #444',
+                  color: '#fff',
+                  borderRadius: '4px',
+                }}
+              >
+                <option value="EXTERNAL">External</option>
+                <option value="INTERNAL">Internal</option>
+              </select>
+              {sourceType === 'EXTERNAL' ? (
+                <input
+                  type="text"
+                  placeholder="Source address"
+                  value={sourceAddress}
+                  onChange={(e) => setSourceAddress(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    background: '#1a1a1a',
+                    border: '1px solid #444',
+                    color: '#fff',
+                    borderRadius: '4px',
+                  }}
+                />
+              ) : (
+                <select
+                  value={sourceVaultId}
+                  onChange={(e) => setSourceVaultId(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    background: '#1a1a1a',
+                    border: '1px solid #444',
+                    color: '#fff',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <option value="">Select source vault</option>
+                  {(vaults || []).map((vault) => (
+                    <option key={vault.id} value={vault.id}>
+                      {vault.name} ({vault.id.slice(0, 8)}...)
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <label style={{ fontWeight: 600 }}>Destination Address Type</label>
+              <select
+                value={destinationType}
+                onChange={(e) => setDestinationType(e.target.value as 'EXTERNAL' | 'INTERNAL')}
+                style={{
+                  padding: '0.5rem',
+                  background: '#1a1a1a',
+                  border: '1px solid #444',
+                  color: '#fff',
+                  borderRadius: '4px',
+                }}
+              >
+                <option value="EXTERNAL">External</option>
+                <option value="INTERNAL">Internal</option>
+              </select>
+              {destinationType === 'EXTERNAL' ? (
+                <input
+                  type="text"
+                  placeholder="Destination address"
+                  value={destinationAddress}
+                  onChange={(e) => setDestinationAddress(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    background: '#1a1a1a',
+                    border: '1px solid #444',
+                    color: '#fff',
+                    borderRadius: '4px',
+                  }}
+                />
+              ) : (
+                <select
+                  value={destinationVaultId}
+                  onChange={(e) => setDestinationVaultId(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    background: '#1a1a1a',
+                    border: '1px solid #444',
+                    color: '#fff',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <option value="">Select destination vault</option>
+                  {(vaults || []).map((vault) => (
+                    <option key={vault.id} value={vault.id}>
+                      {vault.name} ({vault.id.slice(0, 8)}...)
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <input
+              type="text"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              style={{
+                padding: '0.5rem',
+                background: '#1a1a1a',
+                border: '1px solid #444',
+                color: '#fff',
+                borderRadius: '4px',
+              }}
+            />
+          </div>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={createTransaction.isPending}
+            >
+              Create Transaction
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowCreateForm(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
 
       <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: '1fr 1fr 1fr auto', marginBottom: '1rem' }}>
         <input
@@ -367,16 +617,56 @@ export default function TransactionsPage() {
         </button>
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
+            disabled={pageIndex === 0}
+          >
+            Prev
+          </button>
+          <span style={{ color: '#aaa', fontSize: '0.875rem' }}>
+            Page {pageIndex + 1} of {totalPages}
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
+            disabled={pageIndex >= totalPages - 1}
+          >
+            Next
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: '#aaa', fontSize: '0.875rem' }}>Rows</span>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            style={{
+              padding: '0.35rem 0.5rem',
+              background: '#1a1a1a',
+              border: '1px solid #444',
+              color: '#fff',
+              borderRadius: '4px',
+            }}
+          >
+            {[10, 25, 50, 100].map((size) => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <table>
         <thead>
           <tr>
             <th style={{ width: '40px' }}>
               <input
                 type="checkbox"
-                checked={selectedIds.size === displayedTransactions.length && displayedTransactions.length > 0}
+                checked={selectedIds.size === pagedTransactions.length && pagedTransactions.length > 0}
                 onChange={(e) => {
-                  if (e.target.checked && displayedTransactions.length > 0) {
-                    setSelectedIds(new Set(displayedTransactions.map((tx) => tx.id)));
+                  if (e.target.checked && pagedTransactions.length > 0) {
+                    setSelectedIds(new Set(pagedTransactions.map((tx) => tx.id)));
                   } else {
                     setSelectedIds(new Set());
                   }
@@ -395,7 +685,7 @@ export default function TransactionsPage() {
           </tr>
         </thead>
         <tbody>
-          {displayedTransactions.map((tx, index) => (
+          {pagedTransactions.map((tx, index) => (
             <tr
               key={tx.id}
               onClick={() => setSelectedTx(tx)}
@@ -499,9 +789,20 @@ export default function TransactionsPage() {
               <div><strong>ID:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.id}</span></div>
               <div><strong>State:</strong> <span className={`state-badge state-${selectedTx.state}`}>{selectedTx.state}</span></div>
               <div><strong>Asset:</strong> {selectedTx.assetId}</div>
+              <div><strong>Source Type:</strong> {selectedTx.sourceType}</div>
+              {selectedTx.sourceType === 'EXTERNAL' ? (
+                <div><strong>Source Address:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.sourceAddress}</span></div>
+              ) : (
+                <div><strong>Source Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.sourceVaultAccountId}</span></div>
+              )}
               <div><strong>Amount:</strong> {selectedTx.amount}</div>
               <div><strong>Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.vaultAccountId}</span></div>
-              <div><strong>Destination:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationAddress}</span></div>
+              <div><strong>Destination Type:</strong> {selectedTx.destinationType}</div>
+              {selectedTx.destinationType === 'EXTERNAL' ? (
+                <div><strong>Destination:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationAddress}</span></div>
+              ) : (
+                <div><strong>Destination Vault:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.destinationVaultAccountId}</span></div>
+              )}
               {selectedTx.hash && <div><strong>Hash:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedTx.hash}</span></div>}
               <div><strong>Fee:</strong> {selectedTx.fee}</div>
               <div><strong>Network Fee:</strong> {selectedTx.networkFee}</div>

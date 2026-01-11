@@ -6,6 +6,8 @@ import type {
   FailTransactionRequest,
   CreateVaultRequest,
   FrozenBalance,
+  CreateWalletRequest,
+  AdminWallet,
 } from '../types/admin';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -105,5 +107,12 @@ export const adminApi = {
 
   async getFrozenBalances(id: string): Promise<AdminResponse<FrozenBalance[]>> {
     return fetchApi(`/admin/vaults/${id}/frozen`);
+  },
+
+  async createWallet(vaultId: string, request: CreateWalletRequest): Promise<AdminResponse<AdminWallet>> {
+    return fetchApi(`/admin/vaults/${vaultId}/wallets`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
   },
 };

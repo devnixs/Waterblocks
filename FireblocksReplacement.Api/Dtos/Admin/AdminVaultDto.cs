@@ -19,6 +19,7 @@ public class AdminWalletDto
     public string LockedAmount { get; set; } = "0";
     public string Available { get; set; } = "0";
     public int AddressCount { get; set; }
+    public string? DepositAddress { get; set; }
 }
 
 public class CreateAdminVaultRequestDto
@@ -32,4 +33,9 @@ public class FrozenBalanceDto
 {
     public string AssetId { get; set; } = string.Empty;
     public string Amount { get; set; } = "0";
+}
+
+public class CreateAdminWalletRequestDto
+{
+    public string AssetId { get; set; } = string.Empty;
 }

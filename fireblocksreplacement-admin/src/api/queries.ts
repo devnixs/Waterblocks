@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from './adminClient';
-import type { CreateTransactionRequest, CreateVaultRequest } from '../types/admin';
+import type { CreateTransactionRequest, CreateVaultRequest, CreateWalletRequest } from '../types/admin';
 
 // Transactions
 export function useTransactions() {
@@ -11,7 +11,6 @@ export function useTransactions() {
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
-    refetchInterval: 5000, // Poll every 5 seconds
   });
 }
 
@@ -72,7 +71,6 @@ export function useVaults() {
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
-    refetchInterval: 5000,
   });
 }
 
@@ -94,6 +92,17 @@ export function useCreateVault() {
     mutationFn: (request: CreateVaultRequest) => adminApi.createVault(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
+    },
+  });
+}
+
+export function useCreateWallet(vaultId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateWalletRequest) => adminApi.createWallet(vaultId, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+      queryClient.invalidateQueries({ queryKey: ['vault', vaultId] });
     },
   });
 }

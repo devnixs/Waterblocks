@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Admin;
+using FireblocksReplacement.Api.Hubs;
 
 namespace FireblocksReplacement.Api.Controllers.Admin;
 
@@ -12,11 +14,16 @@ public class AdminTransactionsController : ControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminTransactionsController> _logger;
+    private readonly IHubContext<AdminHub> _hub;
 
-    public AdminTransactionsController(FireblocksDbContext context, ILogger<AdminTransactionsController> logger)
+    public AdminTransactionsController(
+        FireblocksDbContext context,
+        ILogger<AdminTransactionsController> logger,
+        IHubContext<AdminHub> hub)
     {
         _context = context;
         _logger = logger;
+        _hub = hub;
     }
 
     [HttpGet]
@@ -49,15 +56,6 @@ public class AdminTransactionsController : ControllerBase
     public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> CreateTransaction(
         [FromBody] CreateAdminTransactionRequestDto request)
     {
-        // Validate vault exists
-        var vault = await _context.VaultAccounts.FindAsync(request.VaultAccountId);
-        if (vault == null)
-        {
-            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
-                $"Vault account {request.VaultAccountId} not found",
-                "VAULT_NOT_FOUND"));
-        }
-
         // Validate asset exists
         var asset = await _context.Assets.FindAsync(request.AssetId);
         if (asset == null)
@@ -74,29 +72,122 @@ public class AdminTransactionsController : ControllerBase
                 "INVALID_AMOUNT"));
         }
 
+        var sourceType = NormalizeEndpointType(request.SourceType);
+        var destinationType = NormalizeEndpointType(request.DestinationType);
+
+        var sourceInternal = sourceType == "INTERNAL";
+        var destinationInternal = destinationType == "INTERNAL";
+
+        if (!sourceInternal && !destinationInternal)
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                "At least one side of the transaction must be INTERNAL",
+                "INVALID_TRANSACTION_SCOPE"));
+        }
+
+        var sourceVaultId = request.SourceVaultAccountId;
+        var destinationVaultId = request.DestinationVaultAccountId;
+
+        if (sourceInternal)
+        {
+            if (string.IsNullOrWhiteSpace(sourceVaultId))
+            {
+                return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                    "Source vault account is required for INTERNAL source",
+                    "SOURCE_VAULT_REQUIRED"));
+            }
+
+            var sourceVault = await _context.VaultAccounts.FindAsync(sourceVaultId);
+            if (sourceVault == null)
+            {
+                return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                    $"Vault account {sourceVaultId} not found",
+                    "VAULT_NOT_FOUND"));
+            }
+        }
+
+        if (destinationInternal)
+        {
+            if (string.IsNullOrWhiteSpace(destinationVaultId))
+            {
+                return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                    "Destination vault account is required for INTERNAL destination",
+                    "DESTINATION_VAULT_REQUIRED"));
+            }
+
+            var destinationVault = await _context.VaultAccounts.FindAsync(destinationVaultId);
+            if (destinationVault == null)
+            {
+                return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                    $"Vault account {destinationVaultId} not found",
+                    "VAULT_NOT_FOUND"));
+            }
+        }
+
+        var transactionVaultId = sourceInternal ? sourceVaultId : destinationVaultId;
+        if (string.IsNullOrWhiteSpace(transactionVaultId))
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                "Transaction requires an internal vault account",
+                "VAULT_REQUIRED"));
+        }
+
+        var destinationAddress = request.DestinationAddress ?? "";
+        if (destinationInternal)
+        {
+            var destinationWallet = await EnsureWalletWithDepositAddress(destinationVaultId!, request.AssetId);
+            destinationAddress = destinationWallet.Addresses.FirstOrDefault()?.AddressValue ?? "";
+        }
+        else if (string.IsNullOrWhiteSpace(destinationAddress))
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                "Destination address is required for EXTERNAL destination",
+                "DESTINATION_ADDRESS_REQUIRED"));
+        }
+
+        if (!sourceInternal && string.IsNullOrWhiteSpace(request.SourceAddress))
+        {
+            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
+                "Source address is required for EXTERNAL source",
+                "SOURCE_ADDRESS_REQUIRED"));
+        }
+
         var transaction = new Transaction
         {
             Id = Guid.NewGuid().ToString(),
-            VaultAccountId = request.VaultAccountId,
+            VaultAccountId = transactionVaultId!,
             AssetId = request.AssetId,
+            SourceType = sourceType,
+            SourceAddress = sourceInternal ? null : request.SourceAddress,
+            SourceVaultAccountId = sourceInternal ? sourceVaultId : null,
+            DestinationType = destinationType,
+            DestinationVaultAccountId = destinationInternal ? destinationVaultId : null,
             Amount = amount,
-            DestinationAddress = request.DestinationAddress ?? "",
+            DestinationAddress = destinationAddress,
             DestinationTag = request.DestinationTag,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         // Handle INCOMING vs OUTGOING
-        if (request.Type.ToUpper() == "INCOMING")
+        var derivedType = sourceInternal && !destinationInternal
+            ? "OUTGOING"
+            : !sourceInternal && destinationInternal
+                ? "INCOMING"
+                : "TRANSFER";
+
+        if (derivedType == "INCOMING")
         {
             // Incoming transactions are automatically completed and update balance
-            transaction.State = TransactionState.COMPLETED;
-            transaction.Hash = $"0x{Guid.NewGuid():N}";
-            transaction.Confirmations = 6;
+            transaction.State = ResolveInitialState(request.InitialState, TransactionState.COMPLETED);
+            if (transaction.State == TransactionState.COMPLETED)
+            {
+                transaction.Confirmations = 6;
+            }
 
             // Update wallet balance
             var wallet = await _context.Wallets
-                .FirstOrDefaultAsync(w => w.VaultAccountId == request.VaultAccountId && w.AssetId == request.AssetId);
+                .FirstOrDefaultAsync(w => w.VaultAccountId == destinationVaultId && w.AssetId == request.AssetId);
 
             if (wallet == null)
             {
@@ -113,7 +204,7 @@ public class AdminTransactionsController : ControllerBase
                 _context.Wallets.Add(wallet);
             }
 
-            wallet.Balance += amount;
+                wallet.Balance += amount;
             wallet.UpdatedAt = DateTime.UtcNow;
 
             _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}, new balance: {Balance}",
@@ -122,15 +213,7 @@ public class AdminTransactionsController : ControllerBase
         else
         {
             // OUTGOING transactions start in specified state or SUBMITTED
-            if (!string.IsNullOrEmpty(request.InitialState) &&
-                Enum.TryParse<TransactionState>(request.InitialState, out var initialState))
-            {
-                transaction.State = initialState;
-            }
-            else
-            {
-                transaction.State = TransactionState.SUBMITTED;
-            }
+            transaction.State = ResolveInitialState(request.InitialState, TransactionState.SUBMITTED);
 
             _logger.LogInformation("Created OUTGOING transaction {TxId} in state {State}",
                 transaction.Id, transaction.State);
@@ -138,8 +221,11 @@ public class AdminTransactionsController : ControllerBase
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
+        var dto = MapToDto(transaction);
+        await _hub.Clients.All.SendAsync("transactionUpserted", dto);
+        await _hub.Clients.All.SendAsync("transactionsUpdated");
 
-        return Ok(AdminResponse<AdminTransactionDto>.Success(MapToDto(transaction)));
+        return Ok(AdminResponse<AdminTransactionDto>.Success(dto));
     }
 
     // Positive State Transitions
@@ -238,6 +324,8 @@ public class AdminTransactionsController : ControllerBase
         transaction.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction));
+        await _hub.Clients.All.SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
             id, transaction.FailureReason);
@@ -306,6 +394,8 @@ public class AdminTransactionsController : ControllerBase
 
         transaction.TransitionTo(newState);
         await _context.SaveChangesAsync();
+        await _hub.Clients.All.SendAsync("transactionUpserted", MapToDto(transaction));
+        await _hub.Clients.All.SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
             id, transaction.State, newState);
@@ -326,6 +416,11 @@ public class AdminTransactionsController : ControllerBase
             Id = transaction.Id,
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
+            SourceType = transaction.SourceType,
+            SourceAddress = transaction.SourceAddress,
+            SourceVaultAccountId = transaction.SourceVaultAccountId,
+            DestinationType = transaction.DestinationType,
+            DestinationVaultAccountId = transaction.DestinationVaultAccountId,
             Amount = transaction.Amount.ToString("F18"),
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
@@ -340,5 +435,65 @@ public class AdminTransactionsController : ControllerBase
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt
         };
+    }
+
+    private static string NormalizeEndpointType(string? type)
+    {
+        var normalized = (type ?? "EXTERNAL").Trim().ToUpperInvariant();
+        return normalized == "INTERNAL" ? "INTERNAL" : "EXTERNAL";
+    }
+
+    private static TransactionState ResolveInitialState(string? initialState, TransactionState fallback)
+    {
+        if (!string.IsNullOrEmpty(initialState) &&
+            Enum.TryParse<TransactionState>(initialState, out var parsed))
+        {
+            return parsed;
+        }
+
+        return fallback;
+    }
+
+    private async Task<Wallet> EnsureWalletWithDepositAddress(string vaultAccountId, string assetId)
+    {
+        var wallet = await _context.Wallets
+            .Include(w => w.Addresses)
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
+
+        if (wallet == null)
+        {
+            wallet = new Wallet
+            {
+                VaultAccountId = vaultAccountId,
+                AssetId = assetId,
+                Balance = 0,
+                LockedAmount = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Wallets.Add(wallet);
+            await _context.SaveChangesAsync();
+        }
+
+        if (!wallet.Addresses.Any())
+        {
+            var address = new Address
+            {
+                AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
+                Type = "DEPOSIT",
+                WalletId = wallet.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+            wallet.Addresses.Add(address);
+        }
+
+        return wallet;
+    }
+
+    private static string GenerateDepositAddress(string assetId, string vaultAccountId)
+    {
+        return $"{assetId.ToLowerInvariant()}_{vaultAccountId[..8]}_{Guid.NewGuid():N}";
     }
 }

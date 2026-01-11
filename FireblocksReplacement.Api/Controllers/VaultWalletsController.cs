@@ -90,6 +90,19 @@ public class VaultWalletsController : ControllerBase
         _context.Wallets.Add(wallet);
         await _context.SaveChangesAsync();
 
+        if (wallet.Addresses.Count == 0)
+        {
+            var address = new Address
+            {
+                AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
+                Type = "DEPOSIT",
+                WalletId = wallet.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+        }
+
         _logger.LogInformation("Created wallet for asset {AssetId} in vault {VaultAccountId}", assetId, vaultAccountId);
 
         // Reload with addresses
@@ -137,5 +150,10 @@ public class VaultWalletsController : ControllerBase
                 Type = a.Type
             }).ToList()
         };
+    }
+
+    private static string GenerateDepositAddress(string assetId, string vaultAccountId)
+    {
+        return $"{assetId.ToLowerInvariant()}_{vaultAccountId[..8]}_{Guid.NewGuid():N}";
     }
 }

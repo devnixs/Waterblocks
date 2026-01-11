@@ -113,7 +113,7 @@ docker-compose down
 - **No internal HTTP calls**: Controllers → Services → Repositories only
 - **Single monolith**: Admin and Fireblocks APIs are separate modules within one service
 - **Controllers only**: Use traditional controllers, not minimal APIs
-- **No WebSockets**: Use polling for UI real-time updates
+- **WebSockets allowed**: Use WebSockets (SignalR) for UI real-time updates
 
 ### Data and Naming Conventions
 - **Database**: PascalCase for tables and columns (e.g., `VaultAccount`, `TransactionState`)

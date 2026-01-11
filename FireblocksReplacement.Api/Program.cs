@@ -26,6 +26,17 @@ builder.Services.AddDbContext<FireblocksDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AdminUi", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowCredentials()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -52,14 +63,25 @@ app.UseSerilogRequestLogging(options =>
 // Add Fireblocks authentication middleware
 app.UseMiddleware<FireblocksReplacement.Api.Middleware.FireblocksAuthenticationMiddleware>();
 
+app.UseRouting();
+
+app.UseCors("AdminUi");
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<FireblocksReplacement.Api.Hubs.AdminHub>("/hubs/admin");
 
 try
 {
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<FireblocksDbContext>();
+        db.Database.Migrate();
+    }
+
     Log.Information("Starting FireblocksReplacement API");
     app.Run();
 }
