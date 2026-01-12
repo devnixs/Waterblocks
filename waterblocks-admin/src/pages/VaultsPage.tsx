@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet, useAssets } from '../api/queries';
+import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet, useAssets, useUpdateVault, useDeleteVault } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import type { AdminVault } from '../types/admin';
 
@@ -7,6 +7,8 @@ export default function VaultsPage() {
   const { data: vaults, isLoading, error } = useVaults();
   const { data: assets } = useAssets();
   const createVault = useCreateVault();
+  const updateVault = useUpdateVault();
+  const deleteVault = useDeleteVault();
   const { showToast } = useToast();
   const [selectedVault, setSelectedVault] = useState<AdminVault | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -63,6 +65,35 @@ export default function VaultsPage() {
       showToast({ title: 'Wallet created successfully', type: 'success', duration: 3000 });
       setWalletAssetId('');
     }
+  };
+
+  const handleRenameVault = async () => {
+    if (!selectedVault) return;
+    const nextName = prompt('Enter new vault name:', selectedVault.name);
+    if (!nextName || !nextName.trim()) return;
+
+    const result = await updateVault.mutateAsync({ id: selectedVault.id, request: { name: nextName.trim() } });
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+      return;
+    }
+
+    showToast({ title: 'Vault renamed', type: 'success', duration: 3000 });
+  };
+
+  const handleDeleteVault = async () => {
+    if (!selectedVault) return;
+    const confirmed = confirm(`Delete vault "${selectedVault.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const result = await deleteVault.mutateAsync(selectedVault.id);
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+      return;
+    }
+
+    showToast({ title: 'Vault deleted', type: 'success', duration: 3000 });
+    setSelectedVault(null);
   };
 
   return (
@@ -153,6 +184,23 @@ export default function VaultsPage() {
           <div className="detail-panel-header">
             <h2>Vault Details</h2>
             <button className="close-btn" onClick={() => setSelectedVault(null)}>×</button>
+          </div>
+
+          <div className="flex gap-2 mb-6">
+            <button
+              className="btn btn-secondary"
+              onClick={handleRenameVault}
+              disabled={updateVault.isPending}
+            >
+              Rename
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={handleDeleteVault}
+              disabled={deleteVault.isPending}
+            >
+              Delete
+            </button>
           </div>
 
           <div className="mb-8">

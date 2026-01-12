@@ -32,6 +32,11 @@ public class CreateAdminVaultRequestDto
     public bool AutoFuel { get; set; } = false;
 }
 
+public class UpdateAdminVaultRequestDto
+{
+    public string Name { get; set; } = string.Empty;
+}
+
 public class FrozenBalanceDto
 {
     public string AssetId { get; set; } = string.Empty;

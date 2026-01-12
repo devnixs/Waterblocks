@@ -116,6 +116,70 @@ public class AdminVaultsController : AdminControllerBase
         return Ok(AdminResponse<AdminVaultDto>.Success(dto));
     }
 
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<AdminResponse<AdminVaultDto>>> UpdateVault(
+        string id,
+        [FromBody] UpdateAdminVaultRequestDto request)
+    {
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
+        {
+            return WorkspaceRequired<AdminVaultDto>();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(AdminResponse<AdminVaultDto>.Failure("Vault name is required", "NAME_REQUIRED"));
+        }
+
+        var vault = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == Workspace.WorkspaceId)
+            .Include(v => v.Wallets)
+                .ThenInclude(w => w.Addresses)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (vault == null)
+        {
+            return NotFound(AdminResponse<AdminVaultDto>.Failure(
+                $"Vault {id} not found",
+                "VAULT_NOT_FOUND"));
+        }
+
+        vault.Name = request.Name.Trim();
+        vault.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var dto = MapToDto(vault);
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("vaultUpserted", dto);
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("vaultsUpdated");
+        return Ok(AdminResponse<AdminVaultDto>.Success(dto));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<AdminResponse<bool>>> DeleteVault(string id)
+    {
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
+        {
+            return WorkspaceRequired<bool>();
+        }
+
+        var vault = await _context.VaultAccounts
+            .Include(v => v.Wallets)
+            .FirstOrDefaultAsync(v => v.Id == id && v.WorkspaceId == Workspace.WorkspaceId);
+
+        if (vault == null)
+        {
+            return NotFound(AdminResponse<bool>.Failure(
+                $"Vault {id} not found",
+                "VAULT_NOT_FOUND"));
+        }
+
+        _context.VaultAccounts.Remove(vault);
+        await _context.SaveChangesAsync();
+
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("vaultsUpdated");
+        return Ok(AdminResponse<bool>.Success(true));
+    }
+
     [HttpGet("{id}/frozen")]
     public async Task<ActionResult<AdminResponse<List<FrozenBalanceDto>>>> GetFrozenBalances(string id)
     {

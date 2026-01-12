@@ -102,6 +102,10 @@ export interface CreateVaultRequest {
   autoFuel?: boolean;
 }
 
+export interface UpdateVaultRequest {
+  name: string;
+}
+
 export interface CreateWalletRequest {
   assetId: string;
 }

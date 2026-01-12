@@ -6,6 +6,7 @@ import type {
   CreateWalletRequest,
   AdminAutoTransitionSettings,
   CreateWorkspaceRequest,
+  UpdateVaultRequest,
 } from '../types/admin';
 
 function getWorkspaceId() {
@@ -139,6 +140,26 @@ export function useCreateVault() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: CreateVaultRequest) => adminApi.createVault(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+    },
+  });
+}
+
+export function useUpdateVault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, request }: { id: string; request: UpdateVaultRequest }) => adminApi.updateVault(id, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+    },
+  });
+}
+
+export function useDeleteVault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteVault(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
     },

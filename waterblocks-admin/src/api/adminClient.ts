@@ -6,6 +6,7 @@ import type {
   CreateTransactionRequest,
   FailTransactionRequest,
   CreateVaultRequest,
+  UpdateVaultRequest,
   FrozenBalance,
   CreateWalletRequest,
   AdminWallet,
@@ -136,6 +137,17 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify(request),
     });
+  },
+
+  async updateVault(id: string, request: UpdateVaultRequest): Promise<AdminResponse<AdminVault>> {
+    return fetchApi(`/admin/vaults/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async deleteVault(id: string): Promise<AdminResponse<boolean>> {
+    return fetchApi(`/admin/vaults/${id}`, { method: 'DELETE' });
   },
 
   async getFrozenBalances(id: string): Promise<AdminResponse<FrozenBalance[]>> {
