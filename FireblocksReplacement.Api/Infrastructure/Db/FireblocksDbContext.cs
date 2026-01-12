@@ -112,6 +112,8 @@ public class FireblocksDbContext : DbContext
                 Type = "BASE_ASSET",
                 BlockchainType = BlockchainType.AddressBased,
                 NativeAsset = "BTC",
+                BaseFee = 0.0001m, // Fee in BTC
+                FeeAssetId = "BTC",
                 IsActive = true
             },
             new Asset
@@ -123,6 +125,8 @@ public class FireblocksDbContext : DbContext
                 Type = "BASE_ASSET",
                 BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
+                BaseFee = 0.002m, // Fee in ETH
+                FeeAssetId = "ETH",
                 IsActive = true
             },
             new Asset
@@ -134,6 +138,8 @@ public class FireblocksDbContext : DbContext
                 Type = "ERC20",
                 BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
+                BaseFee = 0.005m, // Fee in ETH (gas for ERC20 transfer)
+                FeeAssetId = "ETH", // ERC20 fees are paid in ETH
                 IsActive = true
             },
             new Asset
@@ -145,6 +151,8 @@ public class FireblocksDbContext : DbContext
                 Type = "ERC20",
                 BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
+                BaseFee = 0.005m, // Fee in ETH (gas for ERC20 transfer)
+                FeeAssetId = "ETH", // ERC20 fees are paid in ETH
                 IsActive = true
             }
         );

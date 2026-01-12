@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FireblocksReplacement.Api.Models;
 
@@ -53,7 +54,33 @@ public class Asset
     [MaxLength(50)]
     public string? NativeAsset { get; set; }
 
+    /// <summary>
+    /// Fixed network fee for transactions in this asset.
+    /// For tokens (ERC20), this is denominated in the native asset (e.g., ETH).
+    /// </summary>
+    [Column(TypeName = "decimal(36,18)")]
+    public decimal BaseFee { get; set; } = 0;
+
+    /// <summary>
+    /// The asset used to pay fees. If null, fees are paid in the native asset.
+    /// For base assets (BTC, ETH), this is the same as AssetId.
+    /// For tokens (USDC, USDT), this is typically "ETH".
+    /// </summary>
+    [MaxLength(50)]
+    public string? FeeAssetId { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// Gets the asset ID used to pay fees for this asset.
+    /// Returns FeeAssetId if set, otherwise NativeAsset, otherwise self.
+    /// </summary>
+    public string GetFeeAssetId() => FeeAssetId ?? NativeAsset ?? AssetId;
+
+    /// <summary>
+    /// Returns true if fees for this asset are paid in a different asset.
+    /// </summary>
+    public bool HasSeparateFeeAsset() => GetFeeAssetId() != AssetId;
 }

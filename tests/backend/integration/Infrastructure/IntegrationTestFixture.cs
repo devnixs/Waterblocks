@@ -48,6 +48,10 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Symbol = "BTC",
                 Decimals = 8,
                 Type = "BASE_ASSET",
+                BlockchainType = FireblocksReplacement.Api.Models.BlockchainType.AddressBased,
+                NativeAsset = "BTC",
+                BaseFee = 0.0001m,
+                FeeAssetId = "BTC",
                 IsActive = true,
                 CreatedAt = DateTimeOffset.UtcNow
             });
@@ -63,6 +67,10 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Symbol = "ETH",
                 Decimals = 18,
                 Type = "BASE_ASSET",
+                BlockchainType = FireblocksReplacement.Api.Models.BlockchainType.AccountBased,
+                NativeAsset = "ETH",
+                BaseFee = 0.002m,
+                FeeAssetId = "ETH",
                 IsActive = true,
                 CreatedAt = DateTimeOffset.UtcNow
             });

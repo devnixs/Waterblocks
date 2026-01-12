@@ -95,6 +95,13 @@ public class Transaction
     [MaxLength(20)]
     public string? FeeCurrency { get; set; }
 
+    /// <summary>
+    /// If true, fee was deducted from the requested amount.
+    /// Amount = RequestedAmount - NetworkFee
+    /// If false, fee is added on top of the amount.
+    /// </summary>
+    public bool TreatAsGrossAmount { get; set; } = false;
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

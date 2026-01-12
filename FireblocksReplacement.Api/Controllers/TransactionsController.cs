@@ -73,7 +73,7 @@ public class TransactionsController : ControllerBase
         }
 
         // Parse amount
-        if (!decimal.TryParse(request.Amount, out var amount) || amount <= 0)
+        if (!decimal.TryParse(request.Amount, out var requestedAmount) || requestedAmount <= 0)
         {
             throw new ArgumentException("Invalid amount");
         }
@@ -88,6 +88,37 @@ public class TransactionsController : ControllerBase
             }
         }
 
+        // Calculate fee from asset configuration
+        var networkFee = asset.BaseFee;
+        var feeCurrency = asset.GetFeeAssetId();
+        var treatAsGrossAmount = request.TreatAsGrossAmount ?? false;
+
+        // Calculate actual transfer amount based on TreatAsGrossAmount
+        decimal transferAmount;
+        if (treatAsGrossAmount)
+        {
+            // Fee is deducted from the requested amount
+            // Only applies if fee is in same currency as transfer
+            if (feeCurrency == request.AssetId)
+            {
+                transferAmount = requestedAmount - networkFee;
+                if (transferAmount <= 0)
+                {
+                    throw new ArgumentException($"Amount ({requestedAmount}) must be greater than fee ({networkFee})");
+                }
+            }
+            else
+            {
+                // Fee is in different currency, transfer full amount
+                transferAmount = requestedAmount;
+            }
+        }
+        else
+        {
+            // Fee is added on top, transfer the full requested amount
+            transferAmount = requestedAmount;
+        }
+
         var transaction = new Transaction
         {
             Id = Guid.NewGuid().ToString(),
@@ -96,8 +127,10 @@ public class TransactionsController : ControllerBase
             AssetId = request.AssetId,
             SourceType = "INTERNAL",
             SourceVaultAccountId = vaultAccountId,
-            Amount = amount,
-            RequestedAmount = amount,
+            Amount = transferAmount,
+            RequestedAmount = requestedAmount,
+            NetworkFee = networkFee,
+            Fee = networkFee,
             DestinationAddress = destinationAddress,
             DestinationTag = request.Destination?.OneTimeAddress?.Tag,
             DestinationType = request.Destination?.Type ?? "ONE_TIME_ADDRESS",
@@ -106,7 +139,8 @@ public class TransactionsController : ControllerBase
             ExternalTxId = request.ExternalTxId,
             CustomerRefId = request.CustomerRefId,
             Operation = request.Operation ?? "TRANSFER",
-            FeeCurrency = request.AssetId,
+            FeeCurrency = feeCurrency,
+            TreatAsGrossAmount = treatAsGrossAmount,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -121,8 +155,8 @@ public class TransactionsController : ControllerBase
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} from vault {VaultAccountId}",
-            transaction.Id, amount, request.AssetId, vaultAccountId);
+        _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} (requested: {RequestedAmount}, fee: {Fee} {FeeCurrency}) from vault {VaultAccountId}",
+            transaction.Id, transferAmount, request.AssetId, requestedAmount, networkFee, feeCurrency, vaultAccountId);
 
         return Ok(new CreateTransactionResponseDto
         {
@@ -325,35 +359,28 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Asset {request.AssetId} not found");
         }
 
-        // Return fixed fee estimation values
+        // Use asset's configured fee (with Low/Medium/High multipliers)
+        var baseFee = asset.BaseFee;
+        var lowFee = baseFee.ToString("G29");
+        var mediumFee = (baseFee * 1.5m).ToString("G29");
+        var highFee = (baseFee * 2.5m).ToString("G29");
+
         var response = new EstimateFeeResponseDto
         {
             Low = new FeeEstimateDto
             {
-                FeePerByte = "10",
-                GasPrice = "20000000000",
-                GasLimit = "21000",
-                NetworkFee = "0.00042",
-                BaseFee = "15000000000",
-                PriorityFee = "1000000000"
+                NetworkFee = lowFee,
+                BaseFee = lowFee
             },
             Medium = new FeeEstimateDto
             {
-                FeePerByte = "20",
-                GasPrice = "30000000000",
-                GasLimit = "21000",
-                NetworkFee = "0.00063",
-                BaseFee = "15000000000",
-                PriorityFee = "2000000000"
+                NetworkFee = mediumFee,
+                BaseFee = mediumFee
             },
             High = new FeeEstimateDto
             {
-                FeePerByte = "30",
-                GasPrice = "50000000000",
-                GasLimit = "21000",
-                NetworkFee = "0.00105",
-                BaseFee = "15000000000",
-                PriorityFee = "5000000000"
+                NetworkFee = highFee,
+                BaseFee = highFee
             }
         };
 
