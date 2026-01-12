@@ -20,35 +20,35 @@ public class TransactionDto
     public decimal? CreatedAt { get; set; }
     public decimal LastUpdated { get; set; }
     public string Status { get; set; } = "SUBMITTED";
-    public string? TxHash { get; set; }
-    public string? Tag { get; set; }
+    public string TxHash { get; set; } = string.Empty;
+    public string Tag { get; set; } = string.Empty;
     public string? SubStatus { get; set; }
-    public string? DestinationAddress { get; set; }
-    public string? SourceAddress { get; set; }
-    public string? DestinationAddressDescription { get; set; }
-    public string? DestinationTag { get; set; }
-    public List<string>? SignedBy { get; set; }
-    public string? CreatedBy { get; set; }
-    public string? RejectedBy { get; set; }
-    public string? AddressType { get; set; }
-    public string? Note { get; set; }
-    public string? ExchangeTxId { get; set; }
-    public string? FeeCurrency { get; set; }
-    public string? Operation { get; set; }
-    public List<NetworkRecordDto>? NetworkRecords { get; set; }
-    public AmlScreeningResultDto? AmlScreeningResult { get; set; }
-    public string? CustomerRefId { get; set; }
+    public string DestinationAddress { get; set; } = string.Empty;
+    public string SourceAddress { get; set; } = string.Empty;
+    public string DestinationAddressDescription { get; set; } = string.Empty;
+    public string DestinationTag { get; set; } = string.Empty;
+    public List<string> SignedBy { get; set; } = new();
+    public string CreatedBy { get; set; } = string.Empty;
+    public string RejectedBy { get; set; } = string.Empty;
+    public string AddressType { get; set; } = string.Empty;
+    public string Note { get; set; } = string.Empty;
+    public string ExchangeTxId { get; set; } = string.Empty;
+    public string FeeCurrency { get; set; } = string.Empty;
+    public string Operation { get; set; } = string.Empty;
+    public List<NetworkRecordDto> NetworkRecords { get; set; } = new();
+    public AmlScreeningResultDto AmlScreeningResult { get; set; } = new();
+    public string CustomerRefId { get; set; } = string.Empty;
     public decimal? NumOfConfirmations { get; set; }
-    public List<SignedMessageDto>? SignedMessages { get; set; }
-    public object? ExtraParameters { get; set; }
-    public string? ExternalTxId { get; set; }
-    public string? ReplacedTxHash { get; set; }
-    public List<TransactionResponseDestinationDto>? Destinations { get; set; }
-    public BlockInfoDto? BlockInfo { get; set; }
-    public AuthorizationInfoDto? AuthorizationInfo { get; set; }
-    public AmountInfoDto? AmountInfo { get; set; }
+    public List<SignedMessageDto> SignedMessages { get; set; } = new();
+    public object ExtraParameters { get; set; } = new Dictionary<string, object>();
+    public string ExternalTxId { get; set; } = string.Empty;
+    public string ReplacedTxHash { get; set; } = string.Empty;
+    public List<TransactionResponseDestinationDto> Destinations { get; set; } = new();
+    public BlockInfoDto BlockInfo { get; set; } = new();
+    public AuthorizationInfoDto AuthorizationInfo { get; set; } = new();
+    public AmountInfoDto AmountInfo { get; set; } = new();
     public decimal? Index { get; set; }
-    public string? BlockchainIndex { get; set; }
+    public string BlockchainIndex { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -91,7 +91,7 @@ public class AuthorizationInfoDto
 {
     public bool? AllowOperatorAsAuthorizer { get; set; }
     public string? Logic { get; set; }
-    public List<AuthorizationGroupDto>? Groups { get; set; }
+    public List<AuthorizationGroupDto> Groups { get; set; } = new();
 }
 
 /// <summary>
@@ -110,15 +110,15 @@ public class NetworkRecordDto
 {
     public TransferPeerPathResponseDto? Source { get; set; }
     public TransferPeerPathResponseDto? Destination { get; set; }
-    public string? TxHash { get; set; }
-    public string? NetworkFee { get; set; }
-    public string? AssetId { get; set; }
-    public string? NetAmount { get; set; }
+    public string TxHash { get; set; } = string.Empty;
+    public string NetworkFee { get; set; } = string.Empty;
+    public string AssetId { get; set; } = string.Empty;
+    public string NetAmount { get; set; } = string.Empty;
     public bool? IsDropped { get; set; }
-    public string? Type { get; set; }
-    public string? DestinationAddress { get; set; }
-    public string? SourceAddress { get; set; }
-    public string? AmountUSD { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string DestinationAddress { get; set; } = string.Empty;
+    public string SourceAddress { get; set; } = string.Empty;
+    public string AmountUSD { get; set; } = string.Empty;
     public decimal? Index { get; set; }
 }
 
@@ -127,8 +127,8 @@ public class NetworkRecordDto
 /// </summary>
 public class AmlScreeningResultDto
 {
-    public string? Provider { get; set; }
-    public object? Payload { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public object Payload { get; set; } = new Dictionary<string, object>();
 }
 
 /// <summary>
@@ -136,11 +136,11 @@ public class AmlScreeningResultDto
 /// </summary>
 public class SignedMessageDto
 {
-    public string? Content { get; set; }
-    public string? Algorithm { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public string Algorithm { get; set; } = string.Empty;
     public List<decimal>? DerivationPath { get; set; }
     public SignatureDto? Signature { get; set; }
-    public string? PublicKey { get; set; }
+    public string PublicKey { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -148,9 +148,9 @@ public class SignedMessageDto
 /// </summary>
 public class SignatureDto
 {
-    public string? FullSig { get; set; }
-    public string? R { get; set; }
-    public string? S { get; set; }
+    public string FullSig { get; set; } = string.Empty;
+    public string R { get; set; } = string.Empty;
+    public string S { get; set; } = string.Empty;
     public decimal? V { get; set; }
 }
 
@@ -159,11 +159,11 @@ public class SignatureDto
 /// </summary>
 public class TransactionResponseDestinationDto
 {
-    public string? Amount { get; set; }
-    public string? AmountUSD { get; set; }
-    public AmlScreeningResultDto? AmlScreeningResult { get; set; }
+    public string Amount { get; set; } = string.Empty;
+    public string AmountUSD { get; set; } = string.Empty;
+    public AmlScreeningResultDto AmlScreeningResult { get; set; } = new();
     public TransferPeerPathResponseDto? Destination { get; set; }
-    public AuthorizationInfoDto? AuthorizationInfo { get; set; }
+    public AuthorizationInfoDto AuthorizationInfo { get; set; } = new();
 }
 
 // Keep legacy types for request DTOs

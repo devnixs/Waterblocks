@@ -15,22 +15,22 @@ public class AssetDto
 public class VaultAssetDto
 {
     public string Id { get; set; } = string.Empty;
-    public string? Total { get; set; }
-    public string? Balance { get; set; } // Deprecated - replaced by "total"
-    public string? Available { get; set; }
-    public string? Pending { get; set; }
-    public string? Frozen { get; set; }
-    public string? LockedAmount { get; set; }
-    public string? Staked { get; set; }
-    public string? TotalStakedCPU { get; set; }
-    public string? TotalStakedNetwork { get; set; }
-    public string? SelfStakedCPU { get; set; }
-    public string? SelfStakedNetwork { get; set; }
-    public string? PendingRefundCPU { get; set; }
-    public string? PendingRefundNetwork { get; set; }
-    public string? BlockHeight { get; set; }
-    public string? BlockHash { get; set; }
-    public List<AllocatedBalanceDto>? AllocatedBalances { get; set; }
+    public string Total { get; set; } = string.Empty;
+    public string Balance { get; set; } = string.Empty; // Deprecated - replaced by "total"
+    public string Available { get; set; } = string.Empty;
+    public string Pending { get; set; } = string.Empty;
+    public string Frozen { get; set; } = string.Empty;
+    public string LockedAmount { get; set; } = string.Empty;
+    public string Staked { get; set; } = string.Empty;
+    public string TotalStakedCPU { get; set; } = string.Empty;
+    public string TotalStakedNetwork { get; set; } = string.Empty;
+    public string SelfStakedCPU { get; set; } = string.Empty;
+    public string SelfStakedNetwork { get; set; } = string.Empty;
+    public string PendingRefundCPU { get; set; } = string.Empty;
+    public string PendingRefundNetwork { get; set; } = string.Empty;
+    public string BlockHeight { get; set; } = string.Empty;
+    public string BlockHash { get; set; } = string.Empty;
+    public List<AllocatedBalanceDto> AllocatedBalances { get; set; } = new();
 }
 
 /// <summary>
@@ -55,14 +55,14 @@ public class AllocatedBalanceDto
 /// </summary>
 public class CreateVaultAssetResponseDto
 {
-    public string? Id { get; set; }
-    public string? Address { get; set; }
-    public string? LegacyAddress { get; set; }
-    public string? EnterpriseAddress { get; set; }
-    public string? Tag { get; set; }
-    public string? EosAccountName { get; set; }
-    public string? Status { get; set; }
-    public string? ActivationTxId { get; set; }
+    public string Id { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string LegacyAddress { get; set; } = string.Empty;
+    public string EnterpriseAddress { get; set; } = string.Empty;
+    public string Tag { get; set; } = string.Empty;
+    public string EosAccountName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string ActivationTxId { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -76,8 +76,8 @@ public class CreateVaultAssetRequestDto
 public class AddressDto
 {
     public string Address { get; set; } = string.Empty;
-    public string? Tag { get; set; }
-    public string? Type { get; set; }
+    public string Tag { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -85,16 +85,16 @@ public class AddressDto
 /// </summary>
 public class VaultWalletAddressDto
 {
-    public string? AssetId { get; set; }
-    public string? Address { get; set; }
-    public string? Description { get; set; }
-    public string? Tag { get; set; }
-    public string? Type { get; set; }
-    public string? CustomerRefId { get; set; }
-    public string? AddressFormat { get; set; } // SEGWIT, LEGACY, BASE, PAYMENT
-    public string? LegacyAddress { get; set; }
-    public string? EnterpriseAddress { get; set; }
-    public int? Bip44AddressIndex { get; set; }
+    public string AssetId { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Tag { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string CustomerRefId { get; set; } = string.Empty;
+    public string AddressFormat { get; set; } = string.Empty; // SEGWIT, LEGACY, BASE, PAYMENT
+    public string LegacyAddress { get; set; } = string.Empty;
+    public string EnterpriseAddress { get; set; } = string.Empty;
+    public int Bip44AddressIndex { get; set; }
 }
 
 /// <summary>
@@ -102,11 +102,11 @@ public class VaultWalletAddressDto
 /// </summary>
 public class CreateAddressResponseDto
 {
-    public string? Address { get; set; }
-    public string? LegacyAddress { get; set; }
-    public string? EnterpriseAddress { get; set; }
-    public string? Tag { get; set; }
-    public int? Bip44AddressIndex { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public string LegacyAddress { get; set; } = string.Empty;
+    public string EnterpriseAddress { get; set; } = string.Empty;
+    public string Tag { get; set; } = string.Empty;
+    public int Bip44AddressIndex { get; set; }
 }
 
 /// <summary>

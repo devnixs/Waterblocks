@@ -25,9 +25,9 @@ public sealed class AddressGenerator : IAddressGenerator
     {
         return assetId.ToUpperInvariant() switch
         {
-            "BTC" => $"bc1q{Guid.NewGuid():N}"[..42],
-            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => $"{assetId.ToLowerInvariant()}_{vaultAccountId[..Math.Min(8, vaultAccountId.Length)]}_{Guid.NewGuid():N}"
+            "BTC" => $"bc1q{Guid.NewGuid():N}"[..32],
+            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..32],
+            _ => $"{assetId.ToLowerInvariant()}_{vaultAccountId[..Math.Min(8, vaultAccountId.Length)]}_{Guid.NewGuid():N}",
         };
     }
 

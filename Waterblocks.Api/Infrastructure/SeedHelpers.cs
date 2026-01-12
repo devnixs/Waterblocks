@@ -32,7 +32,7 @@ internal static class SeedHelpers
                 Id = defaultWorkspaceId,
                 Name = defaultWorkspaceName,
                 CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                UpdatedAt = DateTimeOffset.UtcNow,
             };
             db.Workspaces.Add(workspace);
             db.SaveChanges();
@@ -47,7 +47,7 @@ internal static class SeedHelpers
                 Key = defaultApiKey,
                 WorkspaceId = workspace.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                UpdatedAt = DateTimeOffset.UtcNow,
             };
             db.ApiKeys.Add(apiKey);
             db.SaveChanges();

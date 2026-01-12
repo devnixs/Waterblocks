@@ -21,7 +21,7 @@ public enum BlockchainType
     /// <summary>
     /// Memo-based blockchains (XRP, XLM, etc.) - single address with memo/tag for routing.
     /// </summary>
-    MemoBased
+    MemoBased,
 }
 
 public class Asset

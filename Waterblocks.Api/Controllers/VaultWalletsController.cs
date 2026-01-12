@@ -106,7 +106,7 @@ public class VaultWalletsController : ControllerBase
             Frozen = 0,
             Staked = 0,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         _context.Wallets.Add(wallet);
@@ -118,7 +118,7 @@ public class VaultWalletsController : ControllerBase
             AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId),
             Type = "Permanent",
             WalletId = wallet.Id,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
         };
         _context.Addresses.Add(address);
         await _context.SaveChangesAsync();
@@ -177,15 +177,15 @@ public class VaultWalletsController : ControllerBase
             Frozen = wallet.Frozen.ToString("G29"),
             LockedAmount = wallet.LockedAmount.ToString("G29"),
             Staked = wallet.Staked.ToString("G29"),
-            TotalStakedCPU = null,
-            TotalStakedNetwork = null,
-            SelfStakedCPU = null,
-            SelfStakedNetwork = null,
-            PendingRefundCPU = null,
-            PendingRefundNetwork = null,
-            BlockHeight = wallet.BlockHeight,
-            BlockHash = wallet.BlockHash,
-            AllocatedBalances = null
+            TotalStakedCPU = string.Empty,
+            TotalStakedNetwork = string.Empty,
+            SelfStakedCPU = string.Empty,
+            SelfStakedNetwork = string.Empty,
+            PendingRefundCPU = string.Empty,
+            PendingRefundNetwork = string.Empty,
+            BlockHeight = wallet.BlockHeight ?? string.Empty,
+            BlockHash = wallet.BlockHash ?? string.Empty,
+            AllocatedBalances = new List<AllocatedBalanceDto>(),
         };
     }
 
@@ -196,13 +196,13 @@ public class VaultWalletsController : ControllerBase
         return new CreateVaultAssetResponseDto
         {
             Id = wallet.AssetId,
-            Address = primaryAddress?.AddressValue,
-            LegacyAddress = null,
-            EnterpriseAddress = null,
-            Tag = primaryAddress?.Tag,
-            EosAccountName = eosAccountName,
+            Address = primaryAddress?.AddressValue ?? string.Empty,
+            LegacyAddress = primaryAddress?.LegacyAddress ?? string.Empty,
+            EnterpriseAddress = primaryAddress?.EnterpriseAddress ?? string.Empty,
+            Tag = primaryAddress?.Tag ?? string.Empty,
+            EosAccountName = eosAccountName ?? string.Empty,
             Status = "READY",
-            ActivationTxId = null
+            ActivationTxId = string.Empty,
         };
     }
 

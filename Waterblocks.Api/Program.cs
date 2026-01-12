@@ -4,6 +4,7 @@ using Waterblocks.Api.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -12,7 +13,7 @@ Log.Logger = new LoggerConfiguration()
         .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
         .Build())
     .Enrich.FromLogContext()
-    .WriteTo.Console(new Serilog.Formatting.Compact.CompactJsonFormatter())
+    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);

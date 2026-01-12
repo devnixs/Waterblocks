@@ -114,7 +114,7 @@ public class FireblocksDbContext : DbContext
                 NativeAsset = "BTC",
                 BaseFee = 0.0001m, // Fee in BTC
                 FeeAssetId = "BTC",
-                IsActive = true
+                IsActive = true,
             },
             new Asset
             {
@@ -127,7 +127,7 @@ public class FireblocksDbContext : DbContext
                 NativeAsset = "ETH",
                 BaseFee = 0.002m, // Fee in ETH
                 FeeAssetId = "ETH",
-                IsActive = true
+                IsActive = true,
             },
             new Asset
             {
@@ -140,7 +140,7 @@ public class FireblocksDbContext : DbContext
                 NativeAsset = "ETH",
                 BaseFee = 0.005m, // Fee in ETH (gas for ERC20 transfer)
                 FeeAssetId = "ETH", // ERC20 fees are paid in ETH
-                IsActive = true
+                IsActive = true,
             },
             new Asset
             {
@@ -153,7 +153,7 @@ public class FireblocksDbContext : DbContext
                 NativeAsset = "ETH",
                 BaseFee = 0.005m, // Fee in ETH (gas for ERC20 transfer)
                 FeeAssetId = "ETH", // ERC20 fees are paid in ETH
-                IsActive = true
+                IsActive = true,
             }
         );
     }

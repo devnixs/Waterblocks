@@ -126,12 +126,12 @@ public class VaultAccountsController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(after))
         {
-            query = query.Where(v => string.Compare(v.Id, after, StringComparison.Ordinal) > 0);
+            query = query.Where(v => string.Compare(v.Id, after) > 0);
         }
 
         if (!string.IsNullOrWhiteSpace(before))
         {
-            query = query.Where(v => string.Compare(v.Id, before, StringComparison.Ordinal) < 0);
+            query = query.Where(v => string.Compare(v.Id, before) < 0);
         }
 
         var vaultAccounts = await query.Take(limit).ToListAsync();

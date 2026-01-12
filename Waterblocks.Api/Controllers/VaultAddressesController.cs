@@ -36,6 +36,19 @@ public class VaultAddressesController : ControllerBase
             throw new UnauthorizedAccessException("Workspace is required");
         }
 
+        var vaultExists = await _context.VaultAccounts
+            .AnyAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
+        if (!vaultExists)
+        {
+            throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
+        }
+
+        var assetExists = await _context.Assets.AnyAsync(a => a.AssetId == assetId);
+        if (!assetExists)
+        {
+            throw new KeyNotFoundException($"Asset {assetId} not found");
+        }
+
         var wallet = await _context.Wallets
             .Include(w => w.VaultAccount)
             .Include(w => w.Addresses)
@@ -43,21 +56,21 @@ public class VaultAddressesController : ControllerBase
 
         if (wallet == null)
         {
-            throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
+            return Ok(new List<VaultWalletAddressDto>());
         }
 
         var addresses = wallet.Addresses.Select(a => new VaultWalletAddressDto
         {
             AssetId = assetId,
-            Address = a.AddressValue,
-            Description = a.Description,
-            Tag = a.Tag,
-            Type = a.Type,
-            CustomerRefId = a.CustomerRefId,
-            AddressFormat = a.AddressFormat,
-            LegacyAddress = a.LegacyAddress,
-            EnterpriseAddress = a.EnterpriseAddress,
-            Bip44AddressIndex = a.Bip44AddressIndex,
+            Address = a.AddressValue ?? string.Empty,
+            Description = a.Description ?? string.Empty,
+            Tag = a.Tag ?? string.Empty,
+            Type = a.Type ?? string.Empty,
+            CustomerRefId = a.CustomerRefId ?? string.Empty,
+            AddressFormat = a.AddressFormat ?? "BASE",
+            LegacyAddress = a.LegacyAddress ?? string.Empty,
+            EnterpriseAddress = a.EnterpriseAddress ?? string.Empty,
+            Bip44AddressIndex = a.Bip44AddressIndex ?? 0,
         }).ToList();
 
         return Ok(addresses);
@@ -77,6 +90,19 @@ public class VaultAddressesController : ControllerBase
             throw new UnauthorizedAccessException("Workspace is required");
         }
 
+        var vaultExists = await _context.VaultAccounts
+            .AnyAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
+        if (!vaultExists)
+        {
+            throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
+        }
+
+        var assetExists = await _context.Assets.AnyAsync(a => a.AssetId == assetId);
+        if (!assetExists)
+        {
+            throw new KeyNotFoundException($"Asset {assetId} not found");
+        }
+
         var wallet = await _context.Wallets
             .Include(w => w.VaultAccount)
             .Include(w => w.Addresses)
@@ -84,7 +110,42 @@ public class VaultAddressesController : ControllerBase
 
         if (wallet == null)
         {
-            throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
+            return Ok(new PaginatedAddressResponseDto
+            {
+                Addresses = new List<VaultWalletAddressDto>(),
+                Paging = new PagingDto
+                {
+                    Before = string.Empty,
+                    After = string.Empty,
+                },
+            });
+        }
+
+        if (wallet.Addresses.Count == 0)
+        {
+            var generatedAddress = _addressGenerator.GenerateVaultAddress(assetId, 0);
+            var address = new Address
+            {
+                AddressValue = generatedAddress.AddressValue,
+                Tag = null,
+                Type = "Permanent",
+                Description = null,
+                CustomerRefId = null,
+                AddressFormat = generatedAddress.AddressFormat,
+                LegacyAddress = generatedAddress.LegacyAddress,
+                EnterpriseAddress = generatedAddress.EnterpriseAddress,
+                Bip44AddressIndex = 0,
+                WalletId = wallet.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+
+            wallet = await _context.Wallets
+                .Include(w => w.VaultAccount)
+                .Include(w => w.Addresses)
+                .FirstAsync(w => w.Id == wallet.Id);
         }
 
         var allAddresses = wallet.Addresses
@@ -119,25 +180,25 @@ public class VaultAddressesController : ControllerBase
             .Select(a => new VaultWalletAddressDto
             {
                 AssetId = assetId,
-                Address = a.AddressValue,
-                Description = a.Description,
-                Tag = a.Tag,
-                Type = a.Type,
-                CustomerRefId = a.CustomerRefId,
-                AddressFormat = a.AddressFormat,
-                LegacyAddress = a.LegacyAddress,
-                EnterpriseAddress = a.EnterpriseAddress,
-                Bip44AddressIndex = a.Bip44AddressIndex,
+                Address = a.AddressValue ?? string.Empty,
+                Description = a.Description ?? string.Empty,
+                Tag = a.Tag ?? string.Empty,
+                Type = a.Type ?? string.Empty,
+                CustomerRefId = a.CustomerRefId ?? string.Empty,
+                AddressFormat = a.AddressFormat ?? "BASE",
+                LegacyAddress = a.LegacyAddress ?? string.Empty,
+                EnterpriseAddress = a.EnterpriseAddress ?? string.Empty,
+                Bip44AddressIndex = a.Bip44AddressIndex ?? 0,
             }).ToList();
 
         // Calculate pagination cursors
         var paging = new PagingDto
         {
             Before = addresses.Count > 0
-                ? addresses.First().Bip44AddressIndex?.ToString() ?? string.Empty
+                ? addresses.First().Bip44AddressIndex.ToString()
                 : string.Empty,
             After = addresses.Count > 0 && addresses.Count == pageSize
-                ? addresses.Last().Bip44AddressIndex?.ToString() ?? string.Empty
+                ? addresses.Last().Bip44AddressIndex.ToString()
                 : string.Empty,
         };
 
@@ -200,11 +261,11 @@ public class VaultAddressesController : ControllerBase
 
         var response = new CreateAddressResponseDto
         {
-            Address = address.AddressValue,
-            LegacyAddress = address.LegacyAddress,
-            EnterpriseAddress = address.EnterpriseAddress,
-            Tag = address.Tag,
-            Bip44AddressIndex = address.Bip44AddressIndex,
+            Address = address.AddressValue ?? string.Empty,
+            LegacyAddress = address.LegacyAddress ?? string.Empty,
+            EnterpriseAddress = address.EnterpriseAddress ?? string.Empty,
+            Tag = address.Tag ?? string.Empty,
+            Bip44AddressIndex = address.Bip44AddressIndex ?? 0,
         };
 
         return Ok(response);

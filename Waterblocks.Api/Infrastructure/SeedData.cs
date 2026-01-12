@@ -27,7 +27,7 @@ public static class SeedData
         var json = File.ReadAllText(assetsPath);
         var allAssets = JsonSerializer.Deserialize<List<FireblocksAssetSeed>>(json, new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
         }) ?? new List<FireblocksAssetSeed>();
 
         var requiredIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
