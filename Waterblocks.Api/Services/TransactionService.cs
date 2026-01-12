@@ -131,6 +131,7 @@ public sealed class TransactionService : ITransactionService
             TreatAsGrossAmount = treatAsGrossAmount,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
+            Hash = Guid.NewGuid().ToString(),
         };
 
         var reserveResult = await _balanceService.ReserveFundsAsync(transaction);

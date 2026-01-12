@@ -59,9 +59,9 @@ public class TransferPeerPathResponseDto
     public string Type { get; set; } = string.Empty;
     public string? Id { get; set; }
     public string? Name { get; set; }
-    public string? SubType { get; set; }
-    public string? VirtualType { get; set; }
-    public string? VirtualId { get; set; }
+    public string SubType { get; set; } = "DEFAULT";
+    public string VirtualType { get; set; } = "UNKNOWN";
+    public string VirtualId { get; set; } = string.Empty;
 }
 
 /// <summary>

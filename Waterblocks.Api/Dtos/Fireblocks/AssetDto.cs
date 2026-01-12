@@ -28,7 +28,7 @@ public class VaultAssetDto
     public string SelfStakedNetwork { get; set; } = string.Empty;
     public string PendingRefundCPU { get; set; } = string.Empty;
     public string PendingRefundNetwork { get; set; } = string.Empty;
-    public string BlockHeight { get; set; } = string.Empty;
+    public string BlockHeight { get; set; } = "100";
     public string BlockHash { get; set; } = string.Empty;
     public List<AllocatedBalanceDto> AllocatedBalances { get; set; } = new();
 }

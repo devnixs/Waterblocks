@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -253,6 +254,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
             DestinationTag = request.DestinationTag,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
+            Hash = Guid.NewGuid().ToString(),
         };
 
         var derivedType = sourceInternal && !destinationInternal

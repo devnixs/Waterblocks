@@ -61,9 +61,9 @@ public sealed class AddressGenerator : IAddressGenerator
     {
         return assetId.ToUpperInvariant() switch
         {
-            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
-            "BTC" => $"1{Guid.NewGuid():N}"[..34],
-            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
+            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..32],
+            "BTC" => $"1{Guid.NewGuid():N}"[..32],
+            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..32],
             _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}",
         };
     }
@@ -72,7 +72,7 @@ public sealed class AddressGenerator : IAddressGenerator
     {
         if (assetId.ToUpperInvariant() == "BTC" && addressFormat == "SEGWIT")
         {
-            return $"1{Guid.NewGuid():N}"[..34];
+            return $"1{Guid.NewGuid():N}"[..32];
         }
         return null;
     }

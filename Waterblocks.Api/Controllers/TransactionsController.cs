@@ -203,6 +203,7 @@ public class TransactionsController : ControllerBase
             FeeCurrency = transaction.FeeCurrency,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
+            Hash = Guid.NewGuid().ToString(),
         };
 
         transaction.ReplacedByTxId = replacement.Id;
@@ -300,11 +301,18 @@ public class TransactionsController : ControllerBase
                 Type = transaction.SourceType,
                 Id = transaction.VaultAccountId,
                 Name = transaction.VaultAccount?.Name,
+                SubType = "DEFAULT",
+                VirtualType = "UNKNOWN",
+                VirtualId = string.Empty,
             },
             Destination = new TransferPeerPathResponseDto
             {
                 Type = transaction.DestinationType,
                 Id = transaction.DestinationVaultAccountId,
+                Name = transaction.DestinationVaultAccountId ?? string.Empty,
+                SubType = "DEFAULT",
+                VirtualType = "UNKNOWN",
+                VirtualId = string.Empty,
             },
             RequestedAmount = transaction.RequestedAmount.ToString("G29"),
             Amount = amountStr,
@@ -345,8 +353,8 @@ public class TransactionsController : ControllerBase
             Destinations = new List<TransactionResponseDestinationDto>(),
             BlockInfo = new BlockInfoDto
             {
-                BlockHeight = string.Empty,
-                BlockHash = string.Empty,
+                BlockHeight = "100",
+                BlockHash = "xxxyyy",
             },
             AuthorizationInfo = new AuthorizationInfoDto
             {

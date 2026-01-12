@@ -39,6 +39,7 @@ public static class SeedData
             "AXS",
             "BNB_BSC",
             "BNB_ERC20",
+            "BASECHAIN_ETH",
             "BONK_SOL",
             "EUROC_ETH_F5NG",
             "EURR_ETH_YSHA",

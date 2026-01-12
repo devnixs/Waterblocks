@@ -183,8 +183,8 @@ public class VaultWalletsController : ControllerBase
             SelfStakedNetwork = string.Empty,
             PendingRefundCPU = string.Empty,
             PendingRefundNetwork = string.Empty,
-            BlockHeight = wallet.BlockHeight ?? string.Empty,
-            BlockHash = wallet.BlockHash ?? string.Empty,
+            BlockHeight = wallet.BlockHeight ?? "100",
+            BlockHash = wallet.BlockHash ?? "xxyy",
             AllocatedBalances = new List<AllocatedBalanceDto>(),
         };
     }
