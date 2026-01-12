@@ -12,38 +12,40 @@ namespace Waterblocks.Api.Controllers.Admin;
 
 [ApiController]
 [Route("admin/transactions")]
-public class AdminTransactionsController : ControllerBase
+public class AdminTransactionsController : AdminControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminTransactionsController> _logger;
     private readonly IHubContext<AdminHub> _hub;
-    private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
+    private readonly IAddressGenerator _addressGenerator;
 
     public AdminTransactionsController(
         FireblocksDbContext context,
         ILogger<AdminTransactionsController> logger,
         IHubContext<AdminHub> hub,
         WorkspaceContext workspace,
-        IBalanceService balanceService)
+        IBalanceService balanceService,
+        IAddressGenerator addressGenerator)
+        : base(workspace)
     {
         _context = context;
         _logger = logger;
         _hub = hub;
-        _workspace = workspace;
         _balanceService = balanceService;
+        _addressGenerator = addressGenerator;
     }
 
     [HttpGet]
     public async Task<ActionResult<AdminResponse<List<AdminTransactionDto>>>> GetTransactions()
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<List<AdminTransactionDto>>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<List<AdminTransactionDto>>();
         }
 
         var transactions = await _context.Transactions
-            .Where(t => t.WorkspaceId == _workspace.WorkspaceId)
+            .Where(t => t.WorkspaceId == Workspace.WorkspaceId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
@@ -60,16 +62,16 @@ public class AdminTransactionsController : ControllerBase
         [FromQuery] string? transactionId = null,
         [FromQuery] string? hash = null)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<AdminTransactionsPageDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<AdminTransactionsPageDto>();
         }
 
         var safePageIndex = Math.Max(0, pageIndex);
         var safePageSize = Math.Clamp(pageSize, 1, 200);
 
         var query = _context.Transactions
-            .Where(t => t.WorkspaceId == _workspace.WorkspaceId);
+            .Where(t => t.WorkspaceId == Workspace.WorkspaceId);
 
         var normalizedAsset = assetId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedAsset))
@@ -117,13 +119,13 @@ public class AdminTransactionsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> GetTransaction(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<AdminTransactionDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<AdminTransactionDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
 
         if (transaction == null)
         {
@@ -140,9 +142,9 @@ public class AdminTransactionsController : ControllerBase
     public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> CreateTransaction(
         [FromBody] CreateAdminTransactionRequestDto request)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<AdminTransactionDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<AdminTransactionDto>();
         }
 
         // Validate asset exists
@@ -187,7 +189,7 @@ public class AdminTransactionsController : ControllerBase
             }
 
             var sourceVault = await _context.VaultAccounts.FindAsync(sourceVaultId);
-            if (sourceVault == null || sourceVault.WorkspaceId != _workspace.WorkspaceId)
+            if (sourceVault == null || sourceVault.WorkspaceId != Workspace.WorkspaceId)
             {
                 return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
                     $"Vault account {sourceVaultId} not found",
@@ -205,7 +207,7 @@ public class AdminTransactionsController : ControllerBase
             }
 
             var destinationVault = await _context.VaultAccounts.FindAsync(destinationVaultId);
-            if (destinationVault == null || destinationVault.WorkspaceId != _workspace.WorkspaceId)
+            if (destinationVault == null || destinationVault.WorkspaceId != Workspace.WorkspaceId)
             {
                 return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
                     $"Vault account {destinationVaultId} not found",
@@ -229,20 +231,20 @@ public class AdminTransactionsController : ControllerBase
         }
         else if (string.IsNullOrWhiteSpace(destinationAddress))
         {
-            destinationAddress = GenerateExternalAddress(request.AssetId);
+            destinationAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
         }
 
         var sourceAddress = request.SourceAddress?.Trim();
         if (!sourceInternal && string.IsNullOrWhiteSpace(sourceAddress))
         {
-            sourceAddress = GenerateExternalAddress(request.AssetId);
+            sourceAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
         }
 
         var transaction = new Transaction
         {
             Id = Guid.NewGuid().ToString(),
             VaultAccountId = transactionVaultId!,
-            WorkspaceId = _workspace.WorkspaceId,
+            WorkspaceId = Workspace.WorkspaceId,
             AssetId = request.AssetId,
             SourceType = sourceType,
             SourceAddress = sourceInternal ? null : sourceAddress,
@@ -299,8 +301,8 @@ public class AdminTransactionsController : ControllerBase
         await _context.SaveChangesAsync();
         var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
         var dto = MapToDto(transaction, vaultNameLookup);
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionUpserted", dto);
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionsUpdated");
+        await _hub.Clients.Group(Workspace.WorkspaceId).SendAsync("transactionUpserted", dto);
+        await _hub.Clients.Group(Workspace.WorkspaceId).SendAsync("transactionsUpdated");
 
         return Ok(AdminResponse<AdminTransactionDto>.Success(dto));
     }
@@ -321,13 +323,13 @@ public class AdminTransactionsController : ControllerBase
     [HttpPost("{id}/broadcast")]
     public async Task<ActionResult<AdminResponse<TransactionStateDto>>> BroadcastTransaction(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<TransactionStateDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<TransactionStateDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
         if (transaction == null)
         {
             return NotFound(AdminResponse<TransactionStateDto>.Failure(
@@ -347,13 +349,13 @@ public class AdminTransactionsController : ControllerBase
     [HttpPost("{id}/confirm")]
     public async Task<ActionResult<AdminResponse<TransactionStateDto>>> ConfirmTransaction(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<TransactionStateDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<TransactionStateDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
         if (transaction == null)
         {
             return NotFound(AdminResponse<TransactionStateDto>.Failure(
@@ -370,13 +372,13 @@ public class AdminTransactionsController : ControllerBase
     [HttpPost("{id}/complete")]
     public async Task<ActionResult<AdminResponse<TransactionStateDto>>> CompleteTransaction(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<TransactionStateDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<TransactionStateDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
         if (transaction == null)
         {
             return NotFound(AdminResponse<TransactionStateDto>.Failure(
@@ -402,13 +404,13 @@ public class AdminTransactionsController : ControllerBase
         string id,
         [FromBody] FailTransactionRequestDto? request = null)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<TransactionStateDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<TransactionStateDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
         if (transaction == null)
         {
             return NotFound(AdminResponse<TransactionStateDto>.Failure(
@@ -432,8 +434,8 @@ public class AdminTransactionsController : ControllerBase
 
         await _context.SaveChangesAsync();
         var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
             id, transaction.FailureReason);
@@ -469,13 +471,13 @@ public class AdminTransactionsController : ControllerBase
         string id,
         TransactionState newState)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
         {
-            return BadRequest(AdminResponse<TransactionStateDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+            return WorkspaceRequired<TransactionStateDto>();
         }
 
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == Workspace.WorkspaceId);
         if (transaction == null)
         {
             return NotFound(AdminResponse<TransactionStateDto>.Failure(
@@ -518,8 +520,8 @@ public class AdminTransactionsController : ControllerBase
         transaction.TransitionTo(newState);
         await _context.SaveChangesAsync();
         var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
+        await _hub.Clients.Group(Workspace.WorkspaceId!).SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
             id, transaction.State, newState);
@@ -619,12 +621,12 @@ public class AdminTransactionsController : ControllerBase
         var wallet = await _context.Wallets
             .Include(w => w.Addresses)
             .Include(w => w.VaultAccount)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == Workspace.WorkspaceId);
 
         if (wallet == null)
         {
             var vault = await _context.VaultAccounts
-                .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
+                .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == Workspace.WorkspaceId);
             if (vault == null)
             {
                 throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
@@ -647,7 +649,7 @@ public class AdminTransactionsController : ControllerBase
         {
             var address = new Address
             {
-                AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
+                AddressValue = _addressGenerator.GenerateAdminDepositAddress(assetId, vaultAccountId),
                 Type = "Permanent",
                 WalletId = wallet.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -660,35 +662,4 @@ public class AdminTransactionsController : ControllerBase
         return wallet;
     }
 
-    private static string GenerateDepositAddress(string assetId, string vaultAccountId)
-    {
-        return $"{assetId.ToLowerInvariant()}_{vaultAccountId[..8]}_{Guid.NewGuid():N}";
-    }
-
-    private static string GenerateExternalAddress(string assetId)
-    {
-        var addressFormat = DetermineAddressFormat(assetId);
-        return GenerateAddress(assetId, addressFormat);
-    }
-
-    private static string DetermineAddressFormat(string assetId)
-    {
-        return assetId.ToUpperInvariant() switch
-        {
-            "BTC" => "SEGWIT",
-            "ETH" or "USDT" or "USDC" => "BASE",
-            _ => "BASE",
-        };
-    }
-
-    private static string GenerateAddress(string assetId, string addressFormat)
-    {
-        return assetId.ToUpperInvariant() switch
-        {
-            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
-            "BTC" => $"1{Guid.NewGuid():N}"[..34],
-            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}",
-        };
-    }
 }

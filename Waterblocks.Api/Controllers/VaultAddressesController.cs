@@ -14,15 +14,18 @@ public class VaultAddressesController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultAddressesController> _logger;
     private readonly WorkspaceContext _workspace;
+    private readonly Waterblocks.Api.Services.IAddressGenerator _addressGenerator;
 
     public VaultAddressesController(
         FireblocksDbContext context,
         ILogger<VaultAddressesController> logger,
-        WorkspaceContext workspace)
+        WorkspaceContext workspace,
+        Waterblocks.Api.Services.IAddressGenerator addressGenerator)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
+        _addressGenerator = addressGenerator;
     }
 
     [HttpGet]
@@ -162,13 +165,7 @@ public class VaultAddressesController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        // Determine address format based on asset type
-        var addressFormat = DetermineAddressFormat(assetId);
-
-        // Generate address and legacy/enterprise variants
-        var addressValue = GenerateAddress(assetId, addressFormat);
-        var legacyAddress = GenerateLegacyAddress(assetId, addressFormat);
-        var enterpriseAddress = GenerateEnterpriseAddress(assetId);
+        var generatedAddress = _addressGenerator.GenerateVaultAddress(assetId, wallet.Addresses.Count);
 
         // Calculate BIP44 address index (count of existing addresses)
         var bip44AddressIndex = wallet.Addresses.Count;
@@ -176,14 +173,14 @@ public class VaultAddressesController : ControllerBase
 
         var address = new Address
         {
-            AddressValue = addressValue,
+            AddressValue = generatedAddress.AddressValue,
             Tag = null,
             Type = isFirstAddress ? "Permanent" : "DEPOSIT",
             Description = request?.Description,
             CustomerRefId = request?.CustomerRefId,
-            AddressFormat = addressFormat,
-            LegacyAddress = legacyAddress,
-            EnterpriseAddress = enterpriseAddress,
+            AddressFormat = generatedAddress.AddressFormat,
+            LegacyAddress = generatedAddress.LegacyAddress,
+            EnterpriseAddress = generatedAddress.EnterpriseAddress,
             Bip44AddressIndex = bip44AddressIndex,
             WalletId = wallet.Id,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -193,7 +190,7 @@ public class VaultAddressesController : ControllerBase
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created address {Address} for asset {AssetId} in vault {VaultAccountId}",
-            addressValue, assetId, vaultAccountId);
+            generatedAddress.AddressValue, assetId, vaultAccountId);
 
         var response = new CreateAddressResponseDto
         {
@@ -207,44 +204,4 @@ public class VaultAddressesController : ControllerBase
         return Ok(response);
     }
 
-    private string DetermineAddressFormat(string assetId)
-    {
-        return assetId.ToUpperInvariant() switch
-        {
-            "BTC" => "SEGWIT",
-            "ETH" or "USDT" or "USDC" => "BASE",
-            _ => "BASE",
-        };
-    }
-
-    private string GenerateAddress(string assetId, string addressFormat)
-    {
-        return assetId.ToUpperInvariant() switch
-        {
-            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
-            "BTC" => $"1{Guid.NewGuid():N}"[..34],
-            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}",
-        };
-    }
-
-    private string? GenerateLegacyAddress(string assetId, string addressFormat)
-    {
-        // Only generate legacy address for BTC when using SEGWIT
-        if (assetId.ToUpperInvariant() == "BTC" && addressFormat == "SEGWIT")
-        {
-            return $"1{Guid.NewGuid():N}"[..34];
-        }
-        return null;
-    }
-
-    private string? GenerateEnterpriseAddress(string assetId)
-    {
-        // Enterprise addresses are optional and only for certain assets
-        return assetId.ToUpperInvariant() switch
-        {
-            "ETH" or "USDT" or "USDC" => $"0xE{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => null,
-        };
-    }
 }

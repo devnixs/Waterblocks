@@ -32,6 +32,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
+builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressGenerator, Waterblocks.Api.Services.AddressGenerator>();
 builder.Services.AddScoped<Waterblocks.Api.Infrastructure.WorkspaceContext>();
 builder.Services.AddCors(options =>
 {

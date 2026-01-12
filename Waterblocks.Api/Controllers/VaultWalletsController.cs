@@ -14,15 +14,18 @@ public class VaultWalletsController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultWalletsController> _logger;
     private readonly WorkspaceContext _workspace;
+    private readonly Waterblocks.Api.Services.IAddressGenerator _addressGenerator;
 
     public VaultWalletsController(
         FireblocksDbContext context,
         ILogger<VaultWalletsController> logger,
-        WorkspaceContext workspace)
+        WorkspaceContext workspace,
+        Waterblocks.Api.Services.IAddressGenerator addressGenerator)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
+        _addressGenerator = addressGenerator;
     }
 
     [HttpGet]
@@ -112,7 +115,7 @@ public class VaultWalletsController : ControllerBase
         // Create initial address
         var address = new Address
         {
-            AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
+            AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId),
             Type = "Permanent",
             WalletId = wallet.Id,
             CreatedAt = DateTimeOffset.UtcNow
@@ -203,14 +206,4 @@ public class VaultWalletsController : ControllerBase
         };
     }
 
-    private static string GenerateDepositAddress(string assetId, string vaultAccountId)
-    {
-        // Generate different address formats based on asset type
-        return assetId.ToUpperInvariant() switch
-        {
-            "BTC" => $"bc1q{Guid.NewGuid():N}"[..42],
-            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => $"{assetId.ToLowerInvariant()}_{vaultAccountId[..Math.Min(8, vaultAccountId.Length)]}_{Guid.NewGuid():N}"
-        };
-    }
 }

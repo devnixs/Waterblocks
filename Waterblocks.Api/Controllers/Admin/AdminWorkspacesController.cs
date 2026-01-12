@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Dtos.Admin;
 using Waterblocks.Api.Models;
@@ -8,12 +9,16 @@ namespace Waterblocks.Api.Controllers.Admin;
 
 [ApiController]
 [Route("admin/workspaces")]
-public class AdminWorkspacesController : ControllerBase
+public class AdminWorkspacesController : AdminControllerBase
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminWorkspacesController> _logger;
 
-    public AdminWorkspacesController(FireblocksDbContext context, ILogger<AdminWorkspacesController> logger)
+    public AdminWorkspacesController(
+        FireblocksDbContext context,
+        ILogger<AdminWorkspacesController> logger,
+        WorkspaceContext workspace)
+        : base(workspace)
     {
         _context = context;
         _logger = logger;
