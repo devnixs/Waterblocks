@@ -54,11 +54,11 @@ public class FireblocksDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure Wallet
+        // Configure Wallet - allows multiple wallets per asset (UTXO model)
         modelBuilder.Entity<Wallet>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.VaultAccountId, e.AssetId }).IsUnique();
+            entity.HasIndex(e => new { e.VaultAccountId, e.AssetId }); // Non-unique to allow multiple wallets per asset
             entity.HasMany(e => e.Addresses)
                 .WithOne(a => a.Wallet)
                 .HasForeignKey(a => a.WalletId)
@@ -110,6 +110,7 @@ public class FireblocksDbContext : DbContext
                 Symbol = "BTC",
                 Decimals = 8,
                 Type = "BASE_ASSET",
+                BlockchainType = BlockchainType.AddressBased,
                 NativeAsset = "BTC",
                 IsActive = true
             },
@@ -120,6 +121,7 @@ public class FireblocksDbContext : DbContext
                 Symbol = "ETH",
                 Decimals = 18,
                 Type = "BASE_ASSET",
+                BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
                 IsActive = true
             },
@@ -130,6 +132,7 @@ public class FireblocksDbContext : DbContext
                 Symbol = "USDT",
                 Decimals = 6,
                 Type = "ERC20",
+                BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
                 IsActive = true
             },
@@ -140,6 +143,7 @@ public class FireblocksDbContext : DbContext
                 Symbol = "USDC",
                 Decimals = 6,
                 Type = "ERC20",
+                BlockchainType = BlockchainType.AccountBased,
                 NativeAsset = "ETH",
                 IsActive = true
             }

@@ -3,6 +3,7 @@ using System;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FireblocksReplacement.Api.Migrations
 {
     [DbContext(typeof(FireblocksDbContext))]
-    partial class FireblocksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112060157_AllowMultipleWalletsPerAsset")]
+    partial class AllowMultipleWalletsPerAsset
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,9 +146,6 @@ namespace FireblocksReplacement.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("BlockchainType")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ContractAddress")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -185,8 +185,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "BTC",
-                            BlockchainType = 1,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2400), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 8,
                             IsActive = true,
                             Name = "Bitcoin",
@@ -197,8 +196,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "ETH",
-                            BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 18,
                             IsActive = true,
                             Name = "Ethereum",
@@ -209,8 +207,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDT",
-                            BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 6,
                             IsActive = true,
                             Name = "Tether",
@@ -221,8 +218,7 @@ namespace FireblocksReplacement.Api.Migrations
                         new
                         {
                             AssetId = "USDC",
-                            BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9740), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 6,
                             IsActive = true,
                             Name = "USD Coin",

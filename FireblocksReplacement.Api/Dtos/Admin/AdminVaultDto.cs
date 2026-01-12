@@ -14,7 +14,9 @@ public class AdminVaultDto
 
 public class AdminWalletDto
 {
+    public int Id { get; set; }
     public string AssetId { get; set; } = string.Empty;
+    public string Type { get; set; } = "Permanent";
     public string Balance { get; set; } = "0";
     public string LockedAmount { get; set; } = "0";
     public string Pending { get; set; } = "0";

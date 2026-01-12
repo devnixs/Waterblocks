@@ -16,6 +16,10 @@ public class Wallet
     [MaxLength(50)]
     public string AssetId { get; set; } = string.Empty;
 
+    [Required]
+    [MaxLength(50)]
+    public string Type { get; set; } = "Permanent";
+
     [Column(TypeName = "decimal(36,18)")]
     public decimal Balance { get; set; } = 0;
 

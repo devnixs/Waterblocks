@@ -3,6 +3,7 @@ using System;
 using FireblocksReplacement.Api.Infrastructure.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FireblocksReplacement.Api.Migrations
 {
     [DbContext(typeof(FireblocksDbContext))]
-    partial class FireblocksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112060445_AddBlockchainTypeToAssets")]
+    partial class AddBlockchainTypeToAssets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

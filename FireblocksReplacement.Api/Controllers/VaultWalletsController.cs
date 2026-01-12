@@ -64,30 +64,39 @@ public class VaultWalletsController : ControllerBase
             throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
         }
 
-        // Verify asset exists
-        var assetExists = await _context.Assets.AnyAsync(a => a.AssetId == assetId);
-        if (!assetExists)
+        // Verify asset exists and get its blockchain type
+        var asset = await _context.Assets.FindAsync(assetId);
+        if (asset == null)
         {
             throw new KeyNotFoundException($"Asset {assetId} not found");
         }
 
-        // Check if wallet already exists
-        var existingWallet = await _context.Wallets
-            .Include(w => w.VaultAccount)
-            .Include(w => w.Addresses)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
-
-        if (existingWallet != null)
+        // For AccountBased and MemoBased assets, return existing wallet if one exists
+        if (asset.BlockchainType != BlockchainType.AddressBased)
         {
-            // Return existing wallet
-            return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName));
+            var existingWallet = await _context.Wallets
+                .Include(w => w.VaultAccount)
+                .Include(w => w.Addresses)
+                .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
+
+            if (existingWallet != null)
+            {
+                return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName));
+            }
         }
+
+        // Check if this is the first wallet for this asset (for AddressBased/UTXO assets)
+        var existingWalletCount = await _context.Wallets
+            .CountAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
+
+        var walletType = existingWalletCount == 0 ? "Permanent" : "UTXO";
 
         // Create new wallet
         var wallet = new Wallet
         {
             VaultAccountId = vaultAccountId,
             AssetId = assetId,
+            Type = walletType,
             Balance = 0,
             LockedAmount = 0,
             Pending = 0,
