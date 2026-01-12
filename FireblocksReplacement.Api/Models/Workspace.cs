@@ -12,9 +12,9 @@ public class Workspace
     [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public ICollection<VaultAccount> VaultAccounts { get; set; } = new List<VaultAccount>();
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();

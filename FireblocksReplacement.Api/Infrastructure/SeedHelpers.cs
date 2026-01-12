@@ -31,8 +31,8 @@ internal static class SeedHelpers
             {
                 Id = defaultWorkspaceId,
                 Name = defaultWorkspaceName,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
             db.Workspaces.Add(workspace);
             db.SaveChanges();
@@ -46,8 +46,8 @@ internal static class SeedHelpers
                 Name = "Default",
                 Key = defaultApiKey,
                 WorkspaceId = workspace.Id,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
             db.ApiKeys.Add(apiKey);
             db.SaveChanges();
@@ -58,7 +58,7 @@ internal static class SeedHelpers
             foreach (var vault in db.VaultAccounts.Where(v => string.IsNullOrEmpty(v.WorkspaceId)))
             {
                 vault.WorkspaceId = workspace.Id;
-                vault.UpdatedAt = DateTime.UtcNow;
+                vault.UpdatedAt = DateTimeOffset.UtcNow;
             }
             db.SaveChanges();
         }
@@ -68,7 +68,7 @@ internal static class SeedHelpers
             foreach (var tx in db.Transactions.Where(t => string.IsNullOrEmpty(t.WorkspaceId)))
             {
                 tx.WorkspaceId = workspace.Id;
-                tx.UpdatedAt = DateTime.UtcNow;
+                tx.UpdatedAt = DateTimeOffset.UtcNow;
             }
             db.SaveChanges();
         }

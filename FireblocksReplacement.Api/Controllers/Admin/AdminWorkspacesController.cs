@@ -44,8 +44,8 @@ public class AdminWorkspacesController : ControllerBase
         {
             Id = Guid.NewGuid().ToString(),
             Name = request.Name.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         var apiKey = new ApiKey
@@ -54,8 +54,8 @@ public class AdminWorkspacesController : ControllerBase
             Name = "Default",
             Key = Guid.NewGuid().ToString("N"),
             WorkspaceId = workspace.Id,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         _context.Workspaces.Add(workspace);

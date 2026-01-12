@@ -37,9 +37,9 @@ public class Wallet
     [MaxLength(100)]
     public string? BlockHash { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation properties
     [ForeignKey(nameof(VaultAccountId))]

@@ -23,9 +23,9 @@ public class VaultAccount
 
     public bool AutoFuel { get; set; } = false;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     [ForeignKey(nameof(WorkspaceId))]
     public Workspace Workspace { get; set; } = null!;

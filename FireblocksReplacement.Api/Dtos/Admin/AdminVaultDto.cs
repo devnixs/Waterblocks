@@ -8,8 +8,8 @@ public class AdminVaultDto
     public string? CustomerRefId { get; set; }
     public bool AutoFuel { get; set; }
     public List<AdminWalletDto> Wallets { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 public class AdminWalletDto

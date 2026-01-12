@@ -41,8 +41,8 @@ public class VaultAccountsController : ControllerBase
             AutoFuel = request.AutoFuel,
             HiddenOnUI = false,
             WorkspaceId = _workspace.WorkspaceId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         _context.VaultAccounts.Add(vaultAccount);
@@ -146,7 +146,7 @@ public class VaultAccountsController : ControllerBase
         }
 
         vaultAccount.Name = request.Name;
-        vaultAccount.UpdatedAt = DateTime.UtcNow;
+        vaultAccount.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -168,7 +168,7 @@ public class VaultAccountsController : ControllerBase
         }
 
         vaultAccount.HiddenOnUI = true;
-        vaultAccount.UpdatedAt = DateTime.UtcNow;
+        vaultAccount.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -190,7 +190,7 @@ public class VaultAccountsController : ControllerBase
         }
 
         vaultAccount.HiddenOnUI = false;
-        vaultAccount.UpdatedAt = DateTime.UtcNow;
+        vaultAccount.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
 

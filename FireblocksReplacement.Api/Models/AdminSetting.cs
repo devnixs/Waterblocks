@@ -11,5 +11,5 @@ public class AdminSetting
     [MaxLength(2000)]
     public string Value { get; set; } = string.Empty;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

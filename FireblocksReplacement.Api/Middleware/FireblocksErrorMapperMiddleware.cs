@@ -1,6 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
+using FireblocksReplacement.Api.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace FireblocksReplacement.Api.Middleware;
 
@@ -53,8 +56,14 @@ public class FireblocksErrorMapperMiddleware
 
     private (HttpStatusCode statusCode, decimal errorCode, string message) MapExceptionToFireblocksError(Exception exception)
     {
+        if (exception is DbUpdateException updateException && IsExternalTxIdUniqueViolation(updateException))
+        {
+            return (HttpStatusCode.Conflict, 1438, "External transaction id already exists");
+        }
+
         return exception switch
         {
+            DuplicateExternalTxIdException dup => (HttpStatusCode.Conflict, 1438, dup.Message),
             ArgumentNullException => (HttpStatusCode.BadRequest, 400, exception.Message),
             ArgumentException => (HttpStatusCode.BadRequest, 400, exception.Message),
             InvalidOperationException => (HttpStatusCode.BadRequest, 400, exception.Message),
@@ -62,5 +71,16 @@ public class FireblocksErrorMapperMiddleware
             KeyNotFoundException => (HttpStatusCode.NotFound, 404, "Resource not found"),
             _ => (HttpStatusCode.InternalServerError, 500, "An internal error occurred")
         };
+    }
+
+    private static bool IsExternalTxIdUniqueViolation(DbUpdateException exception)
+    {
+        if (exception.InnerException is PostgresException postgresException)
+        {
+            return postgresException.SqlState == PostgresErrorCodes.UniqueViolation
+                && postgresException.ConstraintName == "IX_Transactions_ExternalTxId";
+        }
+
+        return false;
     }
 }

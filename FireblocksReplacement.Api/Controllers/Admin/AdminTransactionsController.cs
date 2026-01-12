@@ -193,8 +193,8 @@ public class AdminTransactionsController : ControllerBase
             Amount = amount,
             DestinationAddress = destinationAddress,
             DestinationTag = request.DestinationTag,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         // Handle INCOMING vs OUTGOING
@@ -369,7 +369,7 @@ public class AdminTransactionsController : ControllerBase
 
         transaction.State = TransactionState.FAILED;
         transaction.FailureReason = request?.Reason ?? "NETWORK_ERROR";
-        transaction.UpdatedAt = DateTime.UtcNow;
+        transaction.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
         var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
@@ -577,8 +577,8 @@ public class AdminTransactionsController : ControllerBase
                 AssetId = assetId,
                 Balance = 0,
                 LockedAmount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
             _context.Wallets.Add(wallet);
             await _context.SaveChangesAsync();
@@ -589,9 +589,9 @@ public class AdminTransactionsController : ControllerBase
             var address = new Address
             {
                 AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
-                Type = "DEPOSIT",
+                Type = "Permanent",
                 WalletId = wallet.Id,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow
             };
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();

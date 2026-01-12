@@ -5,6 +5,7 @@ using FireblocksReplacement.Api.Infrastructure.Db;
 using FireblocksReplacement.Api.Models;
 using FireblocksReplacement.Api.Dtos.Fireblocks;
 using FireblocksReplacement.Api.Services;
+using FireblocksReplacement.Api.Infrastructure;
 
 namespace FireblocksReplacement.Api.Controllers;
 
@@ -77,6 +78,16 @@ public class TransactionsController : ControllerBase
             throw new ArgumentException("Invalid amount");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.ExternalTxId))
+        {
+            var exists = await _context.Transactions
+                .AnyAsync(t => t.ExternalTxId == request.ExternalTxId);
+            if (exists)
+            {
+                throw new DuplicateExternalTxIdException(request.ExternalTxId);
+            }
+        }
+
         var transaction = new Transaction
         {
             Id = Guid.NewGuid().ToString(),
@@ -96,8 +107,8 @@ public class TransactionsController : ControllerBase
             CustomerRefId = request.CustomerRefId,
             Operation = request.Operation ?? "TRANSFER",
             FeeCurrency = request.AssetId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         // Validate and reserve funds for outgoing transaction
@@ -285,8 +296,8 @@ public class TransactionsController : ControllerBase
             NetworkFee = transaction.NetworkFee * 1.2m, // Increase fee by 20%
             Operation = transaction.Operation,
             FeeCurrency = transaction.FeeCurrency,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         transaction.ReplacedByTxId = replacement.Id;
@@ -376,8 +387,8 @@ public class TransactionsController : ControllerBase
 
     private TransactionDto MapToDto(Transaction transaction)
     {
-        var createdAtUnix = (decimal)new DateTimeOffset(transaction.CreatedAt).ToUnixTimeMilliseconds();
-        var lastUpdatedUnix = (decimal)new DateTimeOffset(transaction.UpdatedAt).ToUnixTimeMilliseconds();
+        var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
+        var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
         var amountStr = transaction.Amount.ToString("G29");
         var networkFeeStr = transaction.NetworkFee.ToString("G29");
         var serviceFeeStr = transaction.ServiceFee.ToString("G29");

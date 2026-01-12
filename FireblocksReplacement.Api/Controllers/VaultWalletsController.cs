@@ -93,8 +93,8 @@ public class VaultWalletsController : ControllerBase
             Pending = 0,
             Frozen = 0,
             Staked = 0,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         _context.Wallets.Add(wallet);
@@ -104,9 +104,9 @@ public class VaultWalletsController : ControllerBase
         var address = new Address
         {
             AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
-            Type = "DEPOSIT",
+            Type = "Permanent",
             WalletId = wallet.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
         _context.Addresses.Add(address);
         await _context.SaveChangesAsync();
@@ -142,7 +142,7 @@ public class VaultWalletsController : ControllerBase
 
         // In a real implementation, this would recalculate balance from transactions
         // For now, just return current balance
-        wallet.UpdatedAt = DateTime.UtcNow;
+        wallet.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Refreshed balance for asset {AssetId} in vault {VaultAccountId}", assetId, vaultAccountId);

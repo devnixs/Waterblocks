@@ -49,7 +49,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Decimals = 8,
                 Type = "BASE_ASSET",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow
             });
         }
 
@@ -64,7 +64,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 Decimals = 18,
                 Type = "BASE_ASSET",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow
             });
         }
 

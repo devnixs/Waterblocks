@@ -91,7 +91,7 @@ public class BalanceService : IBalanceService
         }
 
         wallet.Pending += transaction.Amount;
-        wallet.UpdatedAt = DateTime.UtcNow;
+        wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
         _logger.LogInformation(
             "Reserved {Amount} {AssetId} for transaction {TxId}. New pending: {Pending}",
@@ -114,7 +114,7 @@ public class BalanceService : IBalanceService
             {
                 sourceWallet.Balance -= transaction.Amount;
                 sourceWallet.Pending -= transaction.Amount;
-                sourceWallet.UpdatedAt = DateTime.UtcNow;
+                sourceWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
                 _logger.LogInformation(
                     "Deducted {Amount} {AssetId} from vault {VaultId}. New balance: {Balance}",
@@ -133,7 +133,7 @@ public class BalanceService : IBalanceService
             if (destWallet != null)
             {
                 destWallet.Balance += transaction.Amount;
-                destWallet.UpdatedAt = DateTime.UtcNow;
+                destWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
                 _logger.LogInformation(
                     "Credited {Amount} {AssetId} to vault {VaultId}. New balance: {Balance}",
@@ -159,7 +159,7 @@ public class BalanceService : IBalanceService
         {
             wallet.Pending -= transaction.Amount;
             if (wallet.Pending < 0) wallet.Pending = 0; // Safety guard
-            wallet.UpdatedAt = DateTime.UtcNow;
+            wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
                 "Rolled back {Amount} {AssetId} pending for vault {VaultId}. New pending: {Pending}",
@@ -183,7 +183,7 @@ public class BalanceService : IBalanceService
         if (wallet != null)
         {
             wallet.Balance += transaction.Amount;
-            wallet.UpdatedAt = DateTime.UtcNow;
+            wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
                 "Credited incoming {Amount} {AssetId} to vault {VaultId}. New balance: {Balance}",
@@ -223,8 +223,8 @@ public class BalanceService : IBalanceService
                 Balance = 0,
                 Pending = 0,
                 LockedAmount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
 
             _context.Wallets.Add(wallet);

@@ -40,7 +40,7 @@ public class AdminSettingsController : ControllerBase
         }
 
         setting.Value = request.Enabled.ToString();
-        setting.UpdatedAt = DateTime.UtcNow;
+        setting.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
 
         return Ok(AdminResponse<AdminAutoTransitionSettingsDto>.Success(new AdminAutoTransitionSettingsDto

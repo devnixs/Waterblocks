@@ -157,7 +157,7 @@ static void SeedAssets(FireblocksDbContext db, Microsoft.Extensions.Logging.ILog
             asset = new FireblocksReplacement.Api.Models.Asset
             {
                 AssetId = seed.Id,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Assets.Add(asset);
         }

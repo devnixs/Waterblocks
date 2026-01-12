@@ -90,8 +90,8 @@ public class AdminVaultsController : ControllerBase
             AutoFuel = request.AutoFuel,
             HiddenOnUI = false,
             WorkspaceId = _workspace.WorkspaceId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         _context.VaultAccounts.Add(vault);
@@ -185,8 +185,8 @@ public class AdminVaultsController : ControllerBase
                 AssetId = request.AssetId,
                 Balance = 0,
                 LockedAmount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
             _context.Wallets.Add(wallet);
             await _context.SaveChangesAsync();
@@ -197,9 +197,9 @@ public class AdminVaultsController : ControllerBase
             var address = new Address
             {
                 AddressValue = GenerateDepositAddress(request.AssetId, vault.Id),
-                Type = "DEPOSIT",
+                Type = "Permanent",
                 WalletId = wallet.Id,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow
             };
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();

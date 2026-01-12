@@ -82,6 +82,9 @@ public class FireblocksDbContext : DbContext
         modelBuilder.Entity<Transaction>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ExternalTxId)
+                .IsUnique()
+                .HasFilter("\"ExternalTxId\" IS NOT NULL");
             entity.HasIndex(e => e.State);
             entity.HasIndex(e => e.Hash);
             entity.HasIndex(e => e.CreatedAt);

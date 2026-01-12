@@ -178,8 +178,8 @@ public class WorkspaceDto
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public List<ApiKeyDto> ApiKeys { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 public class ApiKeyDto
@@ -187,7 +187,7 @@ public class ApiKeyDto
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }
 
 public class VaultDto
@@ -198,8 +198,8 @@ public class VaultDto
     public string? CustomerRefId { get; set; }
     public bool AutoFuel { get; set; }
     public List<WalletDto> Wallets { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 public class WalletDto
@@ -236,8 +236,8 @@ public class TransactionDto
     public string? FailureReason { get; set; }
     public string? ReplacedByTxId { get; set; }
     public int Confirmations { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 public class TransactionStateDto

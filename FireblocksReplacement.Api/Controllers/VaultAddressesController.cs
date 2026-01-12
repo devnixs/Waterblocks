@@ -172,12 +172,13 @@ public class VaultAddressesController : ControllerBase
 
         // Calculate BIP44 address index (count of existing addresses)
         var bip44AddressIndex = wallet.Addresses.Count;
+        var isFirstAddress = bip44AddressIndex == 0;
 
         var address = new Address
         {
             AddressValue = addressValue,
             Tag = null,
-            Type = "DEPOSIT",
+            Type = isFirstAddress ? "Permanent" : "DEPOSIT",
             Description = request?.Description,
             CustomerRefId = request?.CustomerRefId,
             AddressFormat = addressFormat,
@@ -185,7 +186,7 @@ public class VaultAddressesController : ControllerBase
             EnterpriseAddress = enterpriseAddress,
             Bip44AddressIndex = bip44AddressIndex,
             WalletId = wallet.Id,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
         _context.Addresses.Add(address);

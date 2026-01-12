@@ -95,9 +95,9 @@ public class Transaction
     [MaxLength(20)]
     public string? FeeCurrency { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation properties
     [ForeignKey(nameof(VaultAccountId))]
@@ -110,7 +110,7 @@ public class Transaction
     {
         State.ValidateTransition(newState);
         State = newState;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Freeze()
@@ -120,7 +120,7 @@ public class Transaction
             throw new InvalidOperationException($"Cannot freeze transaction in terminal state {State}");
         }
         IsFrozen = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Unfreeze()
@@ -130,6 +130,6 @@ public class Transaction
             throw new InvalidOperationException($"Cannot unfreeze transaction in terminal state {State}");
         }
         IsFrozen = false;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }
