@@ -39,6 +39,7 @@ public sealed class AddressGenerator : IAddressGenerator
 
     public AddressGenerationResult GenerateVaultAddress(string assetId, int addressIndex)
     {
+        _ = addressIndex;
         var addressFormat = DetermineAddressFormat(assetId);
         var addressValue = GenerateAddress(assetId, addressFormat);
         var legacyAddress = GenerateLegacyAddress(assetId, addressFormat);

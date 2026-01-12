@@ -16,153 +16,25 @@ public class TransactionsController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<TransactionsController> _logger;
     private readonly WorkspaceContext _workspace;
-    private readonly IBalanceService _balanceService;
+    private readonly ITransactionService _transactionService;
 
     public TransactionsController(
         FireblocksDbContext context,
         ILogger<TransactionsController> logger,
         WorkspaceContext workspace,
-        IBalanceService balanceService)
+        ITransactionService transactionService)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
-        _balanceService = balanceService;
+        _transactionService = transactionService;
     }
 
     [HttpPost]
     public async Task<ActionResult<CreateTransactionResponseDto>> CreateTransaction([FromBody] CreateTransactionRequestDto request)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
-        {
-            throw new UnauthorizedAccessException("Workspace is required");
-        }
-
-        // Validate required fields
-        if (request.Source == null)
-        {
-            throw new ArgumentException("Source is required");
-        }
-
-        if (string.IsNullOrEmpty(request.AssetId))
-        {
-            throw new ArgumentException("AssetId is required");
-        }
-
-        // Validate source vault exists
-        var vaultAccountId = request.Source.Id;
-        var vaultAccount = await _context.VaultAccounts
-            .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
-        if (vaultAccount == null)
-        {
-            throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
-        }
-
-        // Validate asset exists
-        var asset = await _context.Assets.FindAsync(request.AssetId);
-        if (asset == null)
-        {
-            throw new KeyNotFoundException($"Asset {request.AssetId} not found");
-        }
-
-        // Validate destination address
-        var destinationAddress = request.Destination?.OneTimeAddress?.Address ?? string.Empty;
-        if (!string.IsNullOrEmpty(destinationAddress) && !ValidateAddressFormat(request.AssetId, destinationAddress))
-        {
-            throw new ArgumentException($"Invalid destination address format for asset {request.AssetId}");
-        }
-
-        // Parse amount
-        if (!decimal.TryParse(request.Amount, out var requestedAmount) || requestedAmount <= 0)
-        {
-            throw new ArgumentException("Invalid amount");
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.ExternalTxId))
-        {
-            var exists = await _context.Transactions
-                .AnyAsync(t => t.ExternalTxId == request.ExternalTxId);
-            if (exists)
-            {
-                throw new DuplicateExternalTxIdException(request.ExternalTxId);
-            }
-        }
-
-        // Calculate fee from asset configuration
-        var networkFee = asset.BaseFee;
-        var feeCurrency = asset.GetFeeAssetId();
-        var treatAsGrossAmount = request.TreatAsGrossAmount ?? false;
-
-        // Calculate actual transfer amount based on TreatAsGrossAmount
-        decimal transferAmount;
-        if (treatAsGrossAmount)
-        {
-            // Fee is deducted from the requested amount
-            // Only applies if fee is in same currency as transfer
-            if (feeCurrency == request.AssetId)
-            {
-                transferAmount = requestedAmount - networkFee;
-                if (transferAmount <= 0)
-                {
-                    throw new ArgumentException($"Amount ({requestedAmount}) must be greater than fee ({networkFee})");
-                }
-            }
-            else
-            {
-                // Fee is in different currency, transfer full amount
-                transferAmount = requestedAmount;
-            }
-        }
-        else
-        {
-            // Fee is added on top, transfer the full requested amount
-            transferAmount = requestedAmount;
-        }
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid().ToString(),
-            VaultAccountId = vaultAccountId,
-            WorkspaceId = _workspace.WorkspaceId,
-            AssetId = request.AssetId,
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = vaultAccountId,
-            Amount = transferAmount,
-            RequestedAmount = requestedAmount,
-            NetworkFee = networkFee,
-            Fee = networkFee,
-            DestinationAddress = destinationAddress,
-            DestinationTag = request.Destination?.OneTimeAddress?.Tag,
-            DestinationType = request.Destination?.Type ?? "ONE_TIME_ADDRESS",
-            State = TransactionState.SUBMITTED,
-            Note = request.Note,
-            ExternalTxId = request.ExternalTxId,
-            CustomerRefId = request.CustomerRefId,
-            Operation = request.Operation ?? "TRANSFER",
-            FeeCurrency = feeCurrency,
-            TreatAsGrossAmount = treatAsGrossAmount,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow,
-        };
-
-        // Validate and reserve funds for outgoing transaction
-        var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
-        if (!reserveResult.Success)
-        {
-            throw new InvalidOperationException(reserveResult.ErrorMessage);
-        }
-
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} (requested: {RequestedAmount}, fee: {Fee} {FeeCurrency}) from vault {VaultAccountId}",
-            transaction.Id, transferAmount, request.AssetId, requestedAmount, networkFee, feeCurrency, vaultAccountId);
-
-        return Ok(new CreateTransactionResponseDto
-        {
-            Id = transaction.Id,
-            Status = transaction.State.ToString(),
-        });
+        var response = await _transactionService.CreateTransactionAsync(request);
+        return Ok(response);
     }
 
     [HttpGet]
