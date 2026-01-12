@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import logo from './assets/logo.png';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -71,7 +72,10 @@ function AppContent() {
   return (
     <div className="app">
       <header className="header">
-        <h1>Waterblocks Admin</h1>
+        <h1 className="brand">
+          <img src={logo} alt="Waterblocks" />
+          <span>Waterblocks Admin</span>
+        </h1>
         <nav className="nav">
           <Link
             to="/transactions"
