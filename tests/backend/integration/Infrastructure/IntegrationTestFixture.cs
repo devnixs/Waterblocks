@@ -14,8 +14,10 @@ public class IntegrationTestFixture : IAsyncLifetime
     private TestWebApplicationFactory? _factory;
 
     public AdminApiClient AdminClient { get; private set; } = null!;
+    public FireblocksApiClient FireblocksClient { get; private set; } = null!;
     public HttpClient HttpClient { get; private set; } = null!;
     public string WorkspaceId { get; private set; } = string.Empty;
+    public string ApiKey { get; private set; } = string.Empty;
 
     public async Task InitializeAsync()
     {
@@ -28,6 +30,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Create HTTP client
         HttpClient = _factory.CreateClient();
         AdminClient = new AdminApiClient(HttpClient);
+        FireblocksClient = new FireblocksApiClient(HttpClient);
 
         // Seed required data (assets) and create a default workspace
         await SeedRequiredDataAsync();
@@ -78,13 +81,52 @@ public class IntegrationTestFixture : IAsyncLifetime
 
         await db.SaveChangesAsync();
 
-        // Create default workspace
+        // Create default workspace (which also creates an API key)
         var workspaceResponse = await AdminClient.CreateWorkspaceAsync("TestWorkspace");
         if (workspaceResponse.Data != null)
         {
             WorkspaceId = workspaceResponse.Data.Id;
+            ApiKey = workspaceResponse.Data.ApiKeys.FirstOrDefault()?.Key ?? string.Empty;
             AdminClient.SetWorkspace(WorkspaceId);
+            FireblocksClient.SetApiKey(ApiKey);
         }
+    }
+
+    /// <summary>
+    /// Creates a new workspace and returns its details including API key.
+    /// Useful for multi-workspace tests.
+    /// </summary>
+    public async Task<(string WorkspaceId, string ApiKey)> CreateWorkspaceAsync(string name)
+    {
+        var response = await AdminClient.CreateWorkspaceAsync(name);
+        if (response.Data == null)
+        {
+            throw new InvalidOperationException($"Failed to create workspace: {response.Error?.Message}");
+        }
+
+        var workspaceId = response.Data.Id;
+        var apiKey = response.Data.ApiKeys.FirstOrDefault()?.Key ?? string.Empty;
+        return (workspaceId, apiKey);
+    }
+
+    /// <summary>
+    /// Creates a new HttpClient with a specific API key for Fireblocks API testing.
+    /// </summary>
+    public FireblocksApiClient CreateFireblocksClientWithApiKey(string apiKey)
+    {
+        var client = new FireblocksApiClient(_factory!.CreateClient());
+        client.SetApiKey(apiKey);
+        return client;
+    }
+
+    /// <summary>
+    /// Creates a new AdminApiClient for a specific workspace.
+    /// </summary>
+    public AdminApiClient CreateAdminClientForWorkspace(string workspaceId)
+    {
+        var client = new AdminApiClient(_factory!.CreateClient());
+        client.SetWorkspace(workspaceId);
+        return client;
     }
 
     public async Task DisposeAsync()
