@@ -168,7 +168,9 @@ public class TransactionsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<TransactionDto>>> GetTransactions(
         [FromQuery] string? status = null,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 200,
+        [FromQuery] string? before = null,
+        [FromQuery] string? after = null)
     {
         if (string.IsNullOrEmpty(_workspace.WorkspaceId))
         {
@@ -183,6 +185,28 @@ public class TransactionsController : ControllerBase
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
         {
             query = query.Where(t => t.State == stateFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(before))
+        {
+            if (!long.TryParse(before, out var beforeMs))
+            {
+                return BadRequest($"Invalid before parameter: {before}");
+            }
+
+            var beforeDate = DateTimeOffset.FromUnixTimeMilliseconds(beforeMs);
+            query = query.Where(t => t.CreatedAt < beforeDate);
+        }
+
+        if (!string.IsNullOrWhiteSpace(after))
+        {
+            if (!long.TryParse(after, out var afterMs))
+            {
+                return BadRequest($"Invalid after parameter: {after}");
+            }
+
+            var afterDate = DateTimeOffset.FromUnixTimeMilliseconds(afterMs);
+            query = query.Where(t => t.CreatedAt > afterDate);
         }
 
         var transactions = await query

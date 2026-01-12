@@ -1,16 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTransactions, useTransitionTransaction, useCreateTransaction, useVaults, useAssets } from '../api/queries';
+import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, useVaults, useAssets } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { AdminTransaction } from '../types/admin';
 
 export default function TransactionsPage() {
-  const { data: transactions, isLoading, error } = useTransactions();
-  const { data: vaults } = useVaults();
-  const { data: assets } = useAssets();
-  const transition = useTransitionTransaction();
-  const createTransaction = useCreateTransaction();
-  const { showToast } = useToast();
   const [selectedTx, setSelectedTx] = useState<AdminTransaction | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
@@ -29,6 +23,36 @@ export default function TransactionsPage() {
   const [destinationVaultId, setDestinationVaultId] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
+  const { data: transactionsPage, isLoading, error } = useTransactionsPaged({
+    pageIndex,
+    pageSize,
+    assetId: filterAsset || undefined,
+    transactionId: filterId || undefined,
+    hash: filterHash || undefined,
+  });
+  const { data: vaults } = useVaults();
+  const { data: assets } = useAssets();
+  const transition = useTransitionTransaction();
+  const createTransaction = useCreateTransaction();
+  const { showToast } = useToast();
+
+  const getRandomHex = (length: number) => {
+    const bytes = new Uint8Array(Math.ceil(length / 2));
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, length);
+  };
+
+  const generateExternalAddress = (asset: string) => {
+    const normalized = asset.trim().toUpperCase();
+    if (normalized === 'BTC') {
+      return `bc1q${getRandomHex(38)}`;
+    }
+    if (normalized === 'ETH' || normalized === 'USDT' || normalized === 'USDC') {
+      return `0x${getRandomHex(40)}`;
+    }
+    const prefix = asset.trim() ? asset.trim().toLowerCase() : 'asset';
+    return `${prefix}_${getRandomHex(32)}`;
+  };
 
   const formatVaultLabel = (id?: string, name?: string) => {
     if (!id) return '—';
@@ -36,41 +60,43 @@ export default function TransactionsPage() {
     return `${id.slice(0, 8)}...`;
   };
 
-  const displayedTransactions = useMemo(() => {
-    const normalizedAsset = filterAsset.trim().toLowerCase();
-    const normalizedId = filterId.trim().toLowerCase();
-    const normalizedHash = filterHash.trim().toLowerCase();
-
-    const filtered = (transactions || []).filter((tx) => {
-      const assetMatch = !normalizedAsset || tx.assetId.toLowerCase().includes(normalizedAsset);
-      const idMatch = !normalizedId || tx.id.toLowerCase().includes(normalizedId);
-      const hashMatch = !normalizedHash || (tx.hash || '').toLowerCase().includes(normalizedHash);
-      return assetMatch && idMatch && hashMatch;
-    });
-
-    return filtered
-      .slice()
-      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-  }, [transactions, filterAsset, filterId, filterHash]);
-
-  const totalPages = Math.max(1, Math.ceil(displayedTransactions.length / pageSize));
-  const pagedTransactions = useMemo(() => {
-    const start = pageIndex * pageSize;
-    return displayedTransactions.slice(start, start + pageSize);
-  }, [displayedTransactions, pageIndex, pageSize]);
+  const pagedTransactions = useMemo(() => transactionsPage?.items || [], [transactionsPage]);
+  const totalCount = transactionsPage?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   // Reset selection when transactions change
   useEffect(() => {
-    if (displayedTransactions.length > 0 && selectedIndex >= displayedTransactions.length) {
-      setSelectedIndex(displayedTransactions.length - 1);
-    } else if (displayedTransactions.length === 0) {
+    if (pagedTransactions.length > 0 && selectedIndex >= pagedTransactions.length) {
+      setSelectedIndex(pagedTransactions.length - 1);
+    } else if (pagedTransactions.length === 0) {
       setSelectedIndex(-1);
     }
-  }, [displayedTransactions, selectedIndex]);
+  }, [pagedTransactions, selectedIndex]);
 
   useEffect(() => {
     setPageIndex(0);
   }, [filterAsset, filterId, filterHash, pageSize]);
+
+  useEffect(() => {
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(Math.max(0, totalPages - 1));
+    }
+  }, [pageIndex, totalPages]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setSelectedIndex(-1);
+  }, [pageIndex, filterAsset, filterId, filterHash, pageSize]);
+
+  // Sync selectedTx with latest data from transactions array (for WebSocket updates)
+  useEffect(() => {
+    if (selectedTx && pagedTransactions.length > 0) {
+      const updated = pagedTransactions.find(tx => tx.id === selectedTx.id);
+      if (updated) {
+        setSelectedTx(updated);
+      }
+    }
+  }, [pagedTransactions, selectedTx]);
 
   // Keyboard shortcuts for list navigation
   useKeyboardShortcuts(
@@ -232,6 +258,18 @@ export default function TransactionsPage() {
     }
   }, [assets, assetId]);
 
+  useEffect(() => {
+    if (sourceType === 'EXTERNAL' && assetId && !sourceAddress.trim()) {
+      setSourceAddress(generateExternalAddress(assetId));
+    }
+  }, [sourceType, assetId, sourceAddress]);
+
+  useEffect(() => {
+    if (destinationType === 'EXTERNAL' && assetId && !destinationAddress.trim()) {
+      setDestinationAddress(generateExternalAddress(assetId));
+    }
+  }, [destinationType, assetId, destinationAddress]);
+
   if (isLoading) return <div className="p-8 text-center text-muted">Loading transactions...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
@@ -274,27 +312,33 @@ export default function TransactionsPage() {
       showToast({ title: 'Source vault is required', type: 'error' });
       return;
     }
-    if (sourceType === 'EXTERNAL' && !sourceAddress.trim()) {
-      showToast({ title: 'Source address is required', type: 'error' });
-      return;
-    }
     if (destinationType === 'INTERNAL' && !destinationVaultId) {
       showToast({ title: 'Destination vault is required', type: 'error' });
       return;
     }
-    if (destinationType === 'EXTERNAL' && !destinationAddress.trim()) {
-      showToast({ title: 'Destination address is required', type: 'error' });
-      return;
+
+    const resolvedSourceAddress = sourceType === 'EXTERNAL'
+      ? (sourceAddress.trim() || generateExternalAddress(assetId))
+      : undefined;
+    const resolvedDestinationAddress = destinationType === 'EXTERNAL'
+      ? (destinationAddress.trim() || generateExternalAddress(assetId))
+      : undefined;
+
+    if (sourceType === 'EXTERNAL' && resolvedSourceAddress && sourceAddress.trim() !== resolvedSourceAddress) {
+      setSourceAddress(resolvedSourceAddress);
+    }
+    if (destinationType === 'EXTERNAL' && resolvedDestinationAddress && destinationAddress.trim() !== resolvedDestinationAddress) {
+      setDestinationAddress(resolvedDestinationAddress);
     }
 
     const result = await createTransaction.mutateAsync({
       assetId: assetId,
       amount: amount.trim(),
       sourceType,
-      sourceAddress: sourceType === 'EXTERNAL' ? sourceAddress.trim() : undefined,
+      sourceAddress: resolvedSourceAddress,
       sourceVaultAccountId: sourceType === 'INTERNAL' ? sourceVaultId : undefined,
       destinationType,
-      destinationAddress: destinationType === 'EXTERNAL' ? destinationAddress.trim() : undefined,
+      destinationAddress: resolvedDestinationAddress,
       destinationVaultAccountId: destinationType === 'INTERNAL' ? destinationVaultId : undefined,
     });
 
@@ -311,7 +355,7 @@ export default function TransactionsPage() {
   };
 
   const handleBulkAction = async (action: string) => {
-    const selectedTxs = transactions?.filter((tx) => selectedIds.has(tx.id)) || [];
+    const selectedTxs = pagedTransactions.filter((tx) => selectedIds.has(tx.id));
     const validTxs = selectedTxs.filter((tx) => getAvailableActions(tx.state).includes(action));
 
     if (validTxs.length === 0) {
@@ -326,7 +370,7 @@ export default function TransactionsPage() {
     if (!showBulkConfirm) return;
 
     const { action } = showBulkConfirm;
-    const selectedTxs = transactions?.filter((tx) => selectedIds.has(tx.id)) || [];
+    const selectedTxs = pagedTransactions.filter((tx) => selectedIds.has(tx.id));
     const validTxs = selectedTxs.filter((tx) => getAvailableActions(tx.state).includes(action));
 
     let successCount = 0;
@@ -387,7 +431,7 @@ export default function TransactionsPage() {
     <div>
       <div className="flex-between mb-4">
         <h2>
-          Transactions <span className="text-muted text-sm">({displayedTransactions.length})</span>
+          Transactions <span className="text-muted text-sm">({totalCount})</span>
         </h2>
         <div className="flex-gap-4">
           <button
@@ -645,7 +689,7 @@ export default function TransactionsPage() {
               <th>State</th>
               <th>Asset</th>
               <th>Amount</th>
-              <th>Vault</th>
+              <th>Source</th>
               <th>Destination</th>
               <th>Created</th>
               <th className="text-right">Actions</th>

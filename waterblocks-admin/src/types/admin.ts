@@ -34,6 +34,13 @@ export interface AdminTransaction {
   updatedAt: string;
 }
 
+export interface AdminTransactionsPage {
+  items: AdminTransaction[];
+  totalCount: number;
+  pageIndex: number;
+  pageSize: number;
+}
+
 export type TransactionState =
   | 'SUBMITTED'
   | 'PENDING_SIGNATURE'

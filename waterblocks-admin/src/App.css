@@ -179,6 +179,7 @@ textarea:focus {
   color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
 }
 
 .toggle input {
@@ -213,6 +214,10 @@ textarea:focus {
 
 .toggle input:checked+.toggle-track::after {
   transform: translateX(16px);
+}
+
+.toggle-label {
+  white-space: nowrap;
 }
 
 /* --- Realtime Status Badge --- */

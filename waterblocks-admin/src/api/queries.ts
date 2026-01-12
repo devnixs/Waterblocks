@@ -30,6 +30,33 @@ export function useTransactions() {
   });
 }
 
+export function useTransactionsPaged(params: {
+  pageIndex: number;
+  pageSize: number;
+  assetId?: string;
+  transactionId?: string;
+  hash?: string;
+}) {
+  const workspaceId = getWorkspaceId();
+  return useQuery({
+    queryKey: [
+      'transactionsPaged',
+      workspaceId,
+      params.pageIndex,
+      params.pageSize,
+      params.assetId || '',
+      params.transactionId || '',
+      params.hash || '',
+    ],
+    queryFn: async () => {
+      const response = await adminApi.getTransactionsPaged(params);
+      if (response.error) throw new Error(response.error.message);
+      return response.data;
+    },
+    enabled: !!workspaceId,
+  });
+}
+
 export function useTransaction(id: string) {
   const workspaceId = getWorkspaceId();
   return useQuery({
@@ -49,6 +76,7 @@ export function useCreateTransaction() {
     mutationFn: (request: CreateTransactionRequest) => adminApi.createTransaction(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionsPaged'] });
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
     },
   });
@@ -74,6 +102,7 @@ export function useTransitionTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionsPaged'] });
       queryClient.invalidateQueries({ queryKey: ['transaction'] });
     },
   });

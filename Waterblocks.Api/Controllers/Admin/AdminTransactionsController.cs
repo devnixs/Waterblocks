@@ -52,6 +52,68 @@ public class AdminTransactionsController : ControllerBase
         return Ok(AdminResponse<List<AdminTransactionDto>>.Success(dtos));
     }
 
+    [HttpGet("paged")]
+    public async Task<ActionResult<AdminResponse<AdminTransactionsPageDto>>> GetTransactionsPaged(
+        [FromQuery] int pageIndex = 0,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] string? assetId = null,
+        [FromQuery] string? transactionId = null,
+        [FromQuery] string? hash = null)
+    {
+        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        {
+            return BadRequest(AdminResponse<AdminTransactionsPageDto>.Failure("Workspace is required", "WORKSPACE_REQUIRED"));
+        }
+
+        var safePageIndex = Math.Max(0, pageIndex);
+        var safePageSize = Math.Clamp(pageSize, 1, 200);
+
+        var query = _context.Transactions
+            .Where(t => t.WorkspaceId == _workspace.WorkspaceId);
+
+        var normalizedAsset = assetId?.Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedAsset))
+        {
+            var assetLower = normalizedAsset.ToLowerInvariant();
+            query = query.Where(t => t.AssetId.ToLower().Contains(assetLower));
+        }
+
+        var normalizedId = transactionId?.Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedId))
+        {
+            var idLower = normalizedId.ToLowerInvariant();
+            query = query.Where(t => t.Id.ToLower().Contains(idLower));
+        }
+
+        var normalizedHash = hash?.Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedHash))
+        {
+            var hashLower = normalizedHash.ToLowerInvariant();
+            query = query.Where(t => t.Hash != null && t.Hash.ToLower().Contains(hashLower));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var transactions = await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip(safePageIndex * safePageSize)
+            .Take(safePageSize)
+            .ToListAsync();
+
+        var vaultNameLookup = await BuildVaultNameLookupAsync(transactions);
+        var dtos = transactions.Select(t => MapToDto(t, vaultNameLookup)).ToList();
+
+        var page = new AdminTransactionsPageDto
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageIndex = safePageIndex,
+            PageSize = safePageSize,
+        };
+
+        return Ok(AdminResponse<AdminTransactionsPageDto>.Success(page));
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> GetTransaction(string id)
     {
@@ -159,7 +221,7 @@ public class AdminTransactionsController : ControllerBase
                 "VAULT_REQUIRED"));
         }
 
-        var destinationAddress = request.DestinationAddress ?? "";
+        var destinationAddress = request.DestinationAddress?.Trim() ?? "";
         if (destinationInternal)
         {
             var destinationWallet = await EnsureWalletWithDepositAddress(destinationVaultId!, request.AssetId);
@@ -167,16 +229,13 @@ public class AdminTransactionsController : ControllerBase
         }
         else if (string.IsNullOrWhiteSpace(destinationAddress))
         {
-            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
-                "Destination address is required for EXTERNAL destination",
-                "DESTINATION_ADDRESS_REQUIRED"));
+            destinationAddress = GenerateExternalAddress(request.AssetId);
         }
 
-        if (!sourceInternal && string.IsNullOrWhiteSpace(request.SourceAddress))
+        var sourceAddress = request.SourceAddress?.Trim();
+        if (!sourceInternal && string.IsNullOrWhiteSpace(sourceAddress))
         {
-            return BadRequest(AdminResponse<AdminTransactionDto>.Failure(
-                "Source address is required for EXTERNAL source",
-                "SOURCE_ADDRESS_REQUIRED"));
+            sourceAddress = GenerateExternalAddress(request.AssetId);
         }
 
         var transaction = new Transaction
@@ -186,7 +245,7 @@ public class AdminTransactionsController : ControllerBase
             WorkspaceId = _workspace.WorkspaceId,
             AssetId = request.AssetId,
             SourceType = sourceType,
-            SourceAddress = sourceInternal ? null : request.SourceAddress,
+            SourceAddress = sourceInternal ? null : sourceAddress,
             SourceVaultAccountId = sourceInternal ? sourceVaultId : null,
             DestinationType = destinationType,
             DestinationVaultAccountId = destinationInternal ? destinationVaultId : null,
@@ -604,5 +663,32 @@ public class AdminTransactionsController : ControllerBase
     private static string GenerateDepositAddress(string assetId, string vaultAccountId)
     {
         return $"{assetId.ToLowerInvariant()}_{vaultAccountId[..8]}_{Guid.NewGuid():N}";
+    }
+
+    private static string GenerateExternalAddress(string assetId)
+    {
+        var addressFormat = DetermineAddressFormat(assetId);
+        return GenerateAddress(assetId, addressFormat);
+    }
+
+    private static string DetermineAddressFormat(string assetId)
+    {
+        return assetId.ToUpperInvariant() switch
+        {
+            "BTC" => "SEGWIT",
+            "ETH" or "USDT" or "USDC" => "BASE",
+            _ => "BASE",
+        };
+    }
+
+    private static string GenerateAddress(string assetId, string addressFormat)
+    {
+        return assetId.ToUpperInvariant() switch
+        {
+            "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
+            "BTC" => $"1{Guid.NewGuid():N}"[..34],
+            "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
+            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}",
+        };
     }
 }

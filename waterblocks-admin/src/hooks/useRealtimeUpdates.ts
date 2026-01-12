@@ -33,6 +33,7 @@ export function useRealtimeUpdates(workspaceId?: string) {
     connection.on('transactionUpserted', (transaction: AdminTransaction) => {
       queryClient.setQueryData<AdminTransaction[]>(['transactions', workspaceId], (prev) => upsertById(prev, transaction));
       queryClient.setQueryData<AdminTransaction>(['transaction', workspaceId, transaction.id], transaction);
+      queryClient.invalidateQueries({ queryKey: ['transactionsPaged', workspaceId] });
     });
 
     connection.on('vaultUpserted', (vault: AdminVault) => {
@@ -43,6 +44,7 @@ export function useRealtimeUpdates(workspaceId?: string) {
     connection.on('transactionsUpdated', () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', workspaceId] });
       queryClient.invalidateQueries({ queryKey: ['transaction', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['transactionsPaged', workspaceId] });
     });
 
     connection.on('vaultsUpdated', () => {

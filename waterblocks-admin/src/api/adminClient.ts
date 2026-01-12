@@ -1,6 +1,7 @@
 import type {
   AdminResponse,
   AdminTransaction,
+  AdminTransactionsPage,
   AdminVault,
   CreateTransactionRequest,
   FailTransactionRequest,
@@ -50,6 +51,24 @@ export const adminApi = {
   // Transactions
   async getTransactions(): Promise<AdminResponse<AdminTransaction[]>> {
     return fetchApi('/admin/transactions');
+  },
+
+  async getTransactionsPaged(params: {
+    pageIndex: number;
+    pageSize: number;
+    assetId?: string;
+    transactionId?: string;
+    hash?: string;
+  }): Promise<AdminResponse<AdminTransactionsPage>> {
+    const search = new URLSearchParams({
+      pageIndex: String(params.pageIndex),
+      pageSize: String(params.pageSize),
+    });
+    if (params.assetId) search.set('assetId', params.assetId);
+    if (params.transactionId) search.set('transactionId', params.transactionId);
+    if (params.hash) search.set('hash', params.hash);
+
+    return fetchApi(`/admin/transactions/paged?${search.toString()}`);
   },
 
   async getTransaction(id: string): Promise<AdminResponse<AdminTransaction>> {

@@ -27,6 +27,14 @@ public class AdminTransactionDto
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
+public class AdminTransactionsPageDto
+{
+    public List<AdminTransactionDto> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageIndex { get; set; }
+    public int PageSize { get; set; }
+}
+
 public class CreateAdminTransactionRequestDto
 {
     public string? Type { get; set; } = "OUTGOING"; // optional, derived from source/destination
