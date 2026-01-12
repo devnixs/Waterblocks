@@ -148,4 +148,9 @@ public class IntegrationTestFixture : IAsyncLifetime
         var scope = _factory!.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<FireblocksDbContext>();
     }
+
+    public T GetRequiredService<T>() where T : notnull
+    {
+        return _factory!.Services.GetRequiredService<T>();
+    }
 }

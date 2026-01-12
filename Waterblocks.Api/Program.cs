@@ -37,6 +37,7 @@ builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionService, Wa
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminVaultService, Waterblocks.Api.Services.AdminVaultService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionService, Waterblocks.Api.Services.TransactionService>();
 builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressGenerator, Waterblocks.Api.Services.AddressGenerator>();
+builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressValidationService, Waterblocks.Api.Services.AddressValidationService>();
 builder.Services.AddScoped<Waterblocks.Api.Infrastructure.WorkspaceContext>();
 builder.Services.AddCors(options =>
 {
