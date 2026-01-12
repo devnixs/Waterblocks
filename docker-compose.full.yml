@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: fireblocksreplacement-postgres
+    container_name: waterblocks-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-fireblocksreplacement}
+      POSTGRES_DB: ${POSTGRES_DB:-waterblocks}
     ports:
       - "5432:5432"
     volumes:
@@ -20,12 +20,12 @@ services:
 
   api:
     build:
-      context: ./FireblocksReplacement.Api
+      context: ./Waterblocks.Api
       dockerfile: Dockerfile
-    container_name: fireblocksreplacement-api
+    container_name: waterblocks-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-fireblocksreplacement};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-waterblocks};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
     ports:
       - "5671:8080"
     depends_on:
@@ -35,9 +35,9 @@ services:
 
   admin:
     build:
-      context: ./fireblocksreplacement-admin
+      context: ./waterblocks-admin
       dockerfile: Dockerfile
-    container_name: fireblocksreplacement-admin
+    container_name: waterblocks-admin
     ports:
       - "5173:80"
     depends_on:

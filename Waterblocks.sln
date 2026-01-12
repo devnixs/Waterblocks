@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FireblocksReplacement.Api", "FireblocksReplacement.Api\FireblocksReplacement.Api.csproj", "{AFA25472-B7C0-451B-B818-FA1AAC406D87}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waterblocks.Api", "Waterblocks.Api\Waterblocks.Api.csproj", "{AFA25472-B7C0-451B-B818-FA1AAC406D87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FireblocksReplacement.IntegrationTests", "tests\backend\integration\FireblocksReplacement.IntegrationTests.csproj", "{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waterblocks.IntegrationTests", "tests\backend\integration\Waterblocks.IntegrationTests.csproj", "{A1846571-D5A7-4B6D-8B92-86A4AF7E4BA6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

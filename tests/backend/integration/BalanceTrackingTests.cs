@@ -1,8 +1,8 @@
 using FluentAssertions;
-using FireblocksReplacement.IntegrationTests.Infrastructure;
+using Waterblocks.IntegrationTests.Infrastructure;
 using Xunit;
 
-namespace FireblocksReplacement.IntegrationTests;
+namespace Waterblocks.IntegrationTests;
 
 /// <summary>
 /// Integration tests for vault balance tracking functionality.

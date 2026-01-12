@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using FireblocksReplacement.Api.Infrastructure.Db;
+using Waterblocks.Api.Infrastructure.Db;
 using Xunit;
 
-namespace FireblocksReplacement.IntegrationTests.Infrastructure;
+namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Base fixture for integration tests.
@@ -41,14 +41,14 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Seed BTC asset if not exists
         if (!db.Assets.Any(a => a.AssetId == "BTC"))
         {
-            db.Assets.Add(new FireblocksReplacement.Api.Models.Asset
+            db.Assets.Add(new Waterblocks.Api.Models.Asset
             {
                 AssetId = "BTC",
                 Name = "Bitcoin",
                 Symbol = "BTC",
                 Decimals = 8,
                 Type = "BASE_ASSET",
-                BlockchainType = FireblocksReplacement.Api.Models.BlockchainType.AddressBased,
+                BlockchainType = Waterblocks.Api.Models.BlockchainType.AddressBased,
                 NativeAsset = "BTC",
                 BaseFee = 0.0001m,
                 FeeAssetId = "BTC",
@@ -60,14 +60,14 @@ public class IntegrationTestFixture : IAsyncLifetime
         // Seed ETH asset if not exists
         if (!db.Assets.Any(a => a.AssetId == "ETH"))
         {
-            db.Assets.Add(new FireblocksReplacement.Api.Models.Asset
+            db.Assets.Add(new Waterblocks.Api.Models.Asset
             {
                 AssetId = "ETH",
                 Name = "Ethereum",
                 Symbol = "ETH",
                 Decimals = 18,
                 Type = "BASE_ASSET",
-                BlockchainType = FireblocksReplacement.Api.Models.BlockchainType.AccountBased,
+                BlockchainType = Waterblocks.Api.Models.BlockchainType.AccountBased,
                 NativeAsset = "ETH",
                 BaseFee = 0.002m,
                 FeeAssetId = "ETH",

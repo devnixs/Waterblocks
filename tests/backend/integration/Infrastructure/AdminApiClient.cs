@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FireblocksReplacement.IntegrationTests.Infrastructure;
+namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Client for interacting with the Admin API during tests.

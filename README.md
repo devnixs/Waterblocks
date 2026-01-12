@@ -1,4 +1,4 @@
-# FireblocksReplacement
+# Waterblocks
 
 Drop-in replacement for the Fireblocks API designed for testing crypto-trading platforms. It simulates blockchain operations against an in-database ledger and ships with an admin UI + admin API for deterministic testing.
 
@@ -49,19 +49,19 @@ Windows PowerShell equivalents:
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
-- Admin UI reads `VITE_API_BASE_URL` from `fireblocksreplacement-admin/.env` (defaults to `http://localhost:5671`).
+- Admin UI reads `VITE_API_BASE_URL` from `waterblocks-admin/.env` (defaults to `http://localhost:5671`).
 
 ## Development (local)
 Backend:
 ```bash
 dotnet build
 
-dotnet run --project FireblocksReplacement.Api
+dotnet run --project Waterblocks.Api
 ```
 
 Frontend:
 ```bash
-cd fireblocksreplacement-admin
+cd waterblocks-admin
 npm install
 npm run dev
 ```

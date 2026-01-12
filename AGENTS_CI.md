@@ -10,6 +10,6 @@ Work summary:
 
 Files touched:
 - `.github/workflows/ci.yml`
-- `fireblocksreplacement-admin/Dockerfile`
-- `fireblocksreplacement-admin/.dockerignore`
-- `fireblocksreplacement-admin/nginx.conf`
+- `waterblocks-admin/Dockerfile`
+- `waterblocks-admin/.dockerignore`
+- `waterblocks-admin/nginx.conf`

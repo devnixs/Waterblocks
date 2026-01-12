@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using FireblocksReplacement.Api.Infrastructure.Db;
+using Waterblocks.Api.Infrastructure.Db;
 
-namespace FireblocksReplacement.IntegrationTests.Infrastructure;
+namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Manages a test database with a random name for isolation.

@@ -14,4 +14,4 @@ Files touched:
 - `run-compose.sh`
 - `run-compose.ps1`
 - `docker-compose.yml`
-- `fireblocksreplacement-admin/.env`
+- `waterblocks-admin/.env`

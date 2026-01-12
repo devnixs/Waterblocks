@@ -17,14 +17,14 @@ Work summary:
 - Added auto-transition toggle in the header.
 
 Files touched:
-- `fireblocksreplacement-admin/src/api/adminClient.ts`
-- `fireblocksreplacement-admin/src/api/queries.ts`
-- `fireblocksreplacement-admin/src/pages/TransactionsPage.tsx`
-- `fireblocksreplacement-admin/src/pages/VaultsPage.tsx`
-- `fireblocksreplacement-admin/src/types/admin.ts`
-- `fireblocksreplacement-admin/src/App.css`
-- `fireblocksreplacement-admin/src/components/ToastProvider.tsx`
-- `fireblocksreplacement-admin/src/hooks/useRealtimeUpdates.ts`
-- `fireblocksreplacement-admin/src/App.tsx`
-- `fireblocksreplacement-admin/package.json`
-- `fireblocksreplacement-admin/package-lock.json`
+- `waterblocks-admin/src/api/adminClient.ts`
+- `waterblocks-admin/src/api/queries.ts`
+- `waterblocks-admin/src/pages/TransactionsPage.tsx`
+- `waterblocks-admin/src/pages/VaultsPage.tsx`
+- `waterblocks-admin/src/types/admin.ts`
+- `waterblocks-admin/src/App.css`
+- `waterblocks-admin/src/components/ToastProvider.tsx`
+- `waterblocks-admin/src/hooks/useRealtimeUpdates.ts`
+- `waterblocks-admin/src/App.tsx`
+- `waterblocks-admin/package.json`
+- `waterblocks-admin/package-lock.json`

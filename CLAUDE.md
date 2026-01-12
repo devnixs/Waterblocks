@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FireblocksReplacement is a drop-in replacement for the Fireblocks API designed for testing crypto-trading platforms. It simulates blockchain operations using a fake in-database blockchain for E2E testing without real blockchain interaction.
+Waterblocks is a drop-in replacement for the Fireblocks API designed for testing crypto-trading platforms. It simulates blockchain operations using a fake in-database blockchain for E2E testing without real blockchain interaction.
 
 The system provides:
 1. **Fireblocks-compatible API** (22 endpoints) - Identical contract to production Fireblocks
@@ -21,14 +21,14 @@ The system provides:
 
 ### Project Structure (Planned)
 ```
-FireblocksReplacement.Api/         # Backend API project
+Waterblocks.Api/         # Backend API project
   Controllers/                     # Separate controllers for Fireblocks and Admin APIs
   Services/                        # Business logic layer
   Repositories/                    # Data access layer
   Models/                          # EF Core entities
   Dtos/                           # Data transfer objects
 
-fireblocksreplacement-admin/       # Frontend admin UI (Vite React)
+waterblocks-admin/       # Frontend admin UI (Vite React)
   src/
     components/                    # Reusable UI components
     pages/                         # Top-level page components
@@ -53,21 +53,21 @@ tests/                            # All tests (not co-located)
 dotnet build
 
 # Run the API locally
-dotnet run --project FireblocksReplacement.Api
+dotnet run --project Waterblocks.Api
 
 # Run tests
 dotnet test
 
 # Create EF Core migration
-dotnet ef migrations add <MigrationName> --project FireblocksReplacement.Api
+dotnet ef migrations add <MigrationName> --project Waterblocks.Api
 
 # Apply migrations
-dotnet ef database update --project FireblocksReplacement.Api
+dotnet ef database update --project Waterblocks.Api
 ```
 
 ### Frontend Commands
 ```bash
-cd fireblocksreplacement-admin
+cd waterblocks-admin
 
 # Install dependencies
 npm install

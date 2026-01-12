@@ -1,4 +1,4 @@
-FireblocksReplacement is a drop-in replacement for the Fireblocks API, designed specifically for testing crypto-trading platforms. It simulates blockchain operations using a fake, in-database blockchain, enabling comprehensive E2E and integration testing without interacting with real blockchain networks or risking real assets.
+Waterblocks is a drop-in replacement for the Fireblocks API, designed specifically for testing crypto-trading platforms. It simulates blockchain operations using a fake, in-database blockchain, enabling comprehensive E2E and integration testing without interacting with real blockchain networks or risking real assets.
 It will also be used in non-production environments to test transactions without having to use real assets.
 
 

@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using FireblocksReplacement.Api.Infrastructure.Db;
+using Waterblocks.Api.Infrastructure.Db;
 
-namespace FireblocksReplacement.IntegrationTests.Infrastructure;
+namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Custom WebApplicationFactory that configures the API to use a test database.
