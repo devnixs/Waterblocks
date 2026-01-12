@@ -67,6 +67,7 @@ public class VaultAddressesController : ControllerBase
     public async Task<ActionResult<PaginatedAddressResponseDto>> GetAddressesPaginated(
         string vaultAccountId,
         string assetId,
+        [FromQuery(Name = "count")] int? count = null,
         [FromQuery] int limit = 100,
         [FromQuery] string? before = null,
         [FromQuery] string? after = null)
@@ -86,32 +87,35 @@ public class VaultAddressesController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        // Simple pagination without actual cursor implementation
-        var allAddresses = wallet.Addresses.OrderBy(a => a.Id).ToList();
+        var allAddresses = wallet.Addresses
+            .OrderBy(a => a.Bip44AddressIndex ?? int.MaxValue)
+            .ThenBy(a => a.Id)
+            .ToList();
 
         // Apply cursor-based pagination
         IEnumerable<Address> filteredAddresses = allAddresses;
 
         if (!string.IsNullOrEmpty(after))
         {
-            // Parse the after cursor (using address ID as cursor)
-            if (int.TryParse(after, out var afterId))
+            // Parse the after cursor (using BIP44 index as cursor)
+            if (int.TryParse(after, out var afterIndex))
             {
-                filteredAddresses = filteredAddresses.Where(a => a.Id > afterId);
+                filteredAddresses = filteredAddresses.Where(a => (a.Bip44AddressIndex ?? int.MaxValue) > afterIndex);
             }
         }
 
         if (!string.IsNullOrEmpty(before))
         {
-            // Parse the before cursor (using address ID as cursor)
-            if (int.TryParse(before, out var beforeId))
+            // Parse the before cursor (using BIP44 index as cursor)
+            if (int.TryParse(before, out var beforeIndex))
             {
-                filteredAddresses = filteredAddresses.Where(a => a.Id < beforeId);
+                filteredAddresses = filteredAddresses.Where(a => (a.Bip44AddressIndex ?? int.MaxValue) < beforeIndex);
             }
         }
 
+        var pageSize = count ?? limit;
         var addresses = filteredAddresses
-            .Take(limit)
+            .Take(pageSize)
             .Select(a => new VaultWalletAddressDto
             {
                 AssetId = assetId,
@@ -129,10 +133,12 @@ public class VaultAddressesController : ControllerBase
         // Calculate pagination cursors
         var paging = new PagingDto
         {
-            Before = addresses.Count > 0 ? addresses.First().Bip44AddressIndex?.ToString() : null,
-            After = addresses.Count > 0 && addresses.Count == limit
-                ? addresses.Last().Bip44AddressIndex?.ToString()
-                : null,
+            Before = addresses.Count > 0
+                ? addresses.First().Bip44AddressIndex?.ToString() ?? string.Empty
+                : string.Empty,
+            After = addresses.Count > 0 && addresses.Count == pageSize
+                ? addresses.Last().Bip44AddressIndex?.ToString() ?? string.Empty
+                : string.Empty,
         };
 
         var response = new PaginatedAddressResponseDto

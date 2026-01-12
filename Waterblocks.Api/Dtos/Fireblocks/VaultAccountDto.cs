@@ -25,6 +25,7 @@ public class PagingDto
 public class CreateVaultAccountRequestDto
 {
     public string Name { get; set; } = string.Empty;
+    public bool? HiddenOnUI { get; set; }
     public string? CustomerRefId { get; set; }
     public bool AutoFuel { get; set; } = false;
 }

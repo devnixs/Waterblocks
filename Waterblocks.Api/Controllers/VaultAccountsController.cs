@@ -39,7 +39,7 @@ public class VaultAccountsController : ControllerBase
             Name = request.Name,
             CustomerRefId = request.CustomerRefId,
             AutoFuel = request.AutoFuel,
-            HiddenOnUI = false,
+            HiddenOnUI = request.HiddenOnUI ?? false,
             WorkspaceId = _workspace.WorkspaceId,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -74,6 +74,7 @@ public class VaultAccountsController : ControllerBase
     public async Task<ActionResult<VaultAccountsPagedResponseDto>> GetVaultAccountsPaged(
         [FromQuery] string? namePrefix,
         [FromQuery] string? nameSuffix,
+        [FromQuery] string? minAmountThreshold,
         [FromQuery] string? assetId,
         [FromQuery] int limit = 100,
         [FromQuery] string? before = null,
@@ -104,13 +105,47 @@ public class VaultAccountsController : ControllerBase
             query = query.Where(v => v.Wallets.Any(w => w.AssetId == assetId));
         }
 
-        // Simple pagination without actual cursor implementation for now
+        if (!string.IsNullOrWhiteSpace(minAmountThreshold))
+        {
+            if (!decimal.TryParse(minAmountThreshold, out var minAmount))
+            {
+                return BadRequest($"Invalid minAmountThreshold parameter: {minAmountThreshold}");
+            }
+
+            if (!string.IsNullOrEmpty(assetId))
+            {
+                query = query.Where(v => v.Wallets.Any(w => w.AssetId == assetId && w.Balance >= minAmount));
+            }
+            else
+            {
+                query = query.Where(v => v.Wallets.Any(w => w.Balance >= minAmount));
+            }
+        }
+
+        query = query.OrderBy(v => v.Id);
+
+        if (!string.IsNullOrWhiteSpace(after))
+        {
+            query = query.Where(v => string.Compare(v.Id, after, StringComparison.Ordinal) > 0);
+        }
+
+        if (!string.IsNullOrWhiteSpace(before))
+        {
+            query = query.Where(v => string.Compare(v.Id, before, StringComparison.Ordinal) < 0);
+        }
+
         var vaultAccounts = await query.Take(limit).ToListAsync();
 
         var response = new VaultAccountsPagedResponseDto
         {
             Accounts = vaultAccounts.Select(MapToDto).ToList(),
-            Paging = new PagingDto(),
+            Paging = new PagingDto
+            {
+                Before = vaultAccounts.Count > 0 ? vaultAccounts.First().Id : string.Empty,
+                After = vaultAccounts.Count > 0 && vaultAccounts.Count == limit
+                    ? vaultAccounts.Last().Id
+                    : string.Empty,
+            },
         };
 
         return Ok(response);
@@ -206,7 +241,7 @@ public class VaultAccountsController : ControllerBase
             Id = vaultAccount.Id,
             Name = vaultAccount.Name,
             HiddenOnUI = vaultAccount.HiddenOnUI,
-            CustomerRefId = vaultAccount.CustomerRefId,
+            CustomerRefId = vaultAccount.CustomerRefId ?? string.Empty,
             AutoFuel = vaultAccount.AutoFuel,
             Assets = vaultAccount.Wallets.Select(w => new VaultAssetDto
             {

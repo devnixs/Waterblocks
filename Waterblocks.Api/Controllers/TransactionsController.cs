@@ -5,7 +5,6 @@ using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
 using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Services;
-using Waterblocks.Api.Infrastructure;
 
 namespace Waterblocks.Api.Controllers;
 
@@ -123,13 +122,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/cancel")]
     public async Task<ActionResult<CancelTransactionResponseDto>> CancelTransaction(string txId)
     {
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
+        var transaction = await FindTransactionByIdOrExternalIdAsync(txId);
 
         if (transaction.State.IsTerminal())
         {
@@ -148,13 +141,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/freeze")]
     public async Task<ActionResult<FreezeTransactionResponseDto>> FreezeTransaction(string txId)
     {
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
+        var transaction = await FindTransactionByIdOrExternalIdAsync(txId);
 
         transaction.Freeze();
         await _context.SaveChangesAsync();
@@ -167,13 +154,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/unfreeze")]
     public async Task<ActionResult<FreezeTransactionResponseDto>> UnfreezeTransaction(string txId)
     {
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
+        var transaction = await FindTransactionByIdOrExternalIdAsync(txId);
 
         transaction.Unfreeze();
         await _context.SaveChangesAsync();
@@ -186,13 +167,7 @@ public class TransactionsController : ControllerBase
     [HttpPost("{txId}/drop")]
     public async Task<ActionResult<DropTransactionResponseDto>> DropTransaction(string txId, [FromBody] CreateTransactionRequestDto? replacementRequest = null)
     {
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
+        var transaction = await FindTransactionByIdOrExternalIdAsync(txId);
 
         // Only ETH transactions can be dropped
         if (transaction.AssetId != "ETH")
@@ -390,5 +365,20 @@ public class TransactionsController : ControllerBase
             "ETH" or "USDT" or "USDC" => address.StartsWith("0x") && address.Length == 42,
             _ => !string.IsNullOrWhiteSpace(address),
         };
+    }
+
+    private async Task<Transaction> FindTransactionByIdOrExternalIdAsync(string txId)
+    {
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t =>
+                t.WorkspaceId == _workspace.WorkspaceId
+                && (t.Id == txId || t.ExternalTxId == txId));
+
+        if (transaction == null)
+        {
+            throw new KeyNotFoundException($"Transaction {txId} not found");
+        }
+
+        return transaction;
     }
 }
