@@ -45,7 +45,7 @@ public class AdminWorkspacesController : ControllerBase
             Id = Guid.NewGuid().ToString(),
             Name = request.Name.Trim(),
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         var apiKey = new ApiKey
@@ -55,7 +55,7 @@ public class AdminWorkspacesController : ControllerBase
             Key = Guid.NewGuid().ToString("N"),
             WorkspaceId = workspace.Id,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         _context.Workspaces.Add(workspace);
@@ -99,10 +99,10 @@ public class AdminWorkspacesController : ControllerBase
                 Id = k.Id,
                 Name = k.Name,
                 Key = k.Key,
-                CreatedAt = k.CreatedAt
+                CreatedAt = k.CreatedAt,
             }).ToList(),
             CreatedAt = workspace.CreatedAt,
-            UpdatedAt = workspace.UpdatedAt
+            UpdatedAt = workspace.UpdatedAt,
         };
     }
 }

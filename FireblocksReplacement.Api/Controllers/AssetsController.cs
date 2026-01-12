@@ -30,7 +30,7 @@ public class AssetsController : ControllerBase
             Name = a.Name,
             Symbol = a.Symbol,
             Decimals = a.Decimals,
-            Type = a.Type
+            Type = a.Type,
         }).ToList();
 
         return Ok(dtos);
@@ -46,7 +46,7 @@ public class AssetsController : ControllerBase
                 Id = g.Key,
                 Balance = g.Sum(w => w.Balance).ToString("F18"),
                 LockedAmount = g.Sum(w => w.LockedAmount).ToString("F18"),
-                Available = g.Sum(w => w.Balance - w.LockedAmount).ToString("F18")
+                Available = g.Sum(w => w.Balance - w.LockedAmount).ToString("F18"),
             })
             .ToListAsync();
 
@@ -69,7 +69,7 @@ public class AssetsController : ControllerBase
             Name = asset.Name,
             Symbol = asset.Symbol,
             Decimals = asset.Decimals,
-            Type = asset.Type
+            Type = asset.Type,
         };
 
         return Ok(dto);

@@ -12,7 +12,7 @@ public enum TransactionState
     FAILED,
     REJECTED,
     CANCELLED,
-    TIMEOUT
+    TIMEOUT,
 }
 
 public static class TransactionStateExtensions
@@ -23,7 +23,7 @@ public static class TransactionStateExtensions
         TransactionState.FAILED,
         TransactionState.REJECTED,
         TransactionState.CANCELLED,
-        TransactionState.TIMEOUT
+        TransactionState.TIMEOUT,
     };
 
     public static bool IsTerminal(this TransactionState state)
@@ -74,7 +74,7 @@ public static class TransactionStateExtensions
             (TransactionState.CONFIRMING, TransactionState.FAILED) => true,
             (TransactionState.CONFIRMING, TransactionState.TIMEOUT) => true,
 
-            _ => false
+            _ => false,
         };
     }
 

@@ -10,7 +10,7 @@ public class AdminResponse<T>
         return new AdminResponse<T>
         {
             Data = data,
-            Error = null
+            Error = null,
         };
     }
 
@@ -22,8 +22,8 @@ public class AdminResponse<T>
             Error = new AdminError
             {
                 Message = message,
-                Code = code
-            }
+                Code = code,
+            },
         };
     }
 }

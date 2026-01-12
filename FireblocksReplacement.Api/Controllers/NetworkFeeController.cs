@@ -35,7 +35,7 @@ public class NetworkFeeController : ControllerBase
                 GasPrice = "20000000000",
                 NetworkFee = "0.00042",
                 BaseFee = "15000000000",
-                PriorityFee = "1000000000"
+                PriorityFee = "1000000000",
             },
             Medium = new FeeEstimateDto
             {
@@ -43,7 +43,7 @@ public class NetworkFeeController : ControllerBase
                 GasPrice = "30000000000",
                 NetworkFee = "0.00063",
                 BaseFee = "15000000000",
-                PriorityFee = "2000000000"
+                PriorityFee = "2000000000",
             },
             High = new FeeEstimateDto
             {
@@ -51,8 +51,8 @@ public class NetworkFeeController : ControllerBase
                 GasPrice = "50000000000",
                 NetworkFee = "0.00105",
                 BaseFee = "15000000000",
-                PriorityFee = "5000000000"
-            }
+                PriorityFee = "5000000000",
+            },
         };
 
         return Ok(response);

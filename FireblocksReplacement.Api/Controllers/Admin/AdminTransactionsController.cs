@@ -194,7 +194,7 @@ public class AdminTransactionsController : ControllerBase
             DestinationAddress = destinationAddress,
             DestinationTag = request.DestinationTag,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         // Handle INCOMING vs OUTGOING
@@ -382,7 +382,7 @@ public class AdminTransactionsController : ControllerBase
         var result = new TransactionStateDto
         {
             Id = transaction.Id,
-            State = transaction.State.ToString()
+            State = transaction.State.ToString(),
         };
 
         return Ok(AdminResponse<TransactionStateDto>.Success(result));
@@ -433,7 +433,7 @@ public class AdminTransactionsController : ControllerBase
             var existingResult = new TransactionStateDto
             {
                 Id = transaction.Id,
-                State = transaction.State.ToString()
+                State = transaction.State.ToString(),
             };
 
             return Ok(AdminResponse<TransactionStateDto>.Success(existingResult));
@@ -468,7 +468,7 @@ public class AdminTransactionsController : ControllerBase
         var result = new TransactionStateDto
         {
             Id = transaction.Id,
-            State = transaction.State.ToString()
+            State = transaction.State.ToString(),
         };
 
         return Ok(AdminResponse<TransactionStateDto>.Success(result));
@@ -500,7 +500,7 @@ public class AdminTransactionsController : ControllerBase
             ReplacedByTxId = transaction.ReplacedByTxId,
             Confirmations = transaction.Confirmations,
             CreatedAt = transaction.CreatedAt,
-            UpdatedAt = transaction.UpdatedAt
+            UpdatedAt = transaction.UpdatedAt,
         };
     }
 
@@ -578,7 +578,7 @@ public class AdminTransactionsController : ControllerBase
                 Balance = 0,
                 LockedAmount = 0,
                 CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                UpdatedAt = DateTimeOffset.UtcNow,
             };
             _context.Wallets.Add(wallet);
             await _context.SaveChangesAsync();
@@ -591,7 +591,7 @@ public class AdminTransactionsController : ControllerBase
                 AddressValue = GenerateDepositAddress(assetId, vaultAccountId),
                 Type = "Permanent",
                 WalletId = wallet.Id,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
             };
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();

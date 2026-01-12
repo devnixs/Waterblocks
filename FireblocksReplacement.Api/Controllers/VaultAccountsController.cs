@@ -42,7 +42,7 @@ public class VaultAccountsController : ControllerBase
             HiddenOnUI = false,
             WorkspaceId = _workspace.WorkspaceId,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         _context.VaultAccounts.Add(vaultAccount);
@@ -110,7 +110,7 @@ public class VaultAccountsController : ControllerBase
         var response = new VaultAccountsPagedResponseDto
         {
             Accounts = vaultAccounts.Select(MapToDto).ToList(),
-            Paging = new PagingDto()
+            Paging = new PagingDto(),
         };
 
         return Ok(response);
@@ -213,8 +213,8 @@ public class VaultAccountsController : ControllerBase
                 Id = w.AssetId,
                 Balance = w.Balance.ToString("F18"),
                 LockedAmount = w.LockedAmount.ToString("F18"),
-                Available = (w.Balance - w.LockedAmount).ToString("F18")
-            }).ToList()
+                Available = (w.Balance - w.LockedAmount).ToString("F18"),
+            }).ToList(),
         };
     }
 }

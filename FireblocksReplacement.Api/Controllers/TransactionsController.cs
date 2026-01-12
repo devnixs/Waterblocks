@@ -142,7 +142,7 @@ public class TransactionsController : ControllerBase
             FeeCurrency = feeCurrency,
             TreatAsGrossAmount = treatAsGrossAmount,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         // Validate and reserve funds for outgoing transaction
@@ -161,7 +161,7 @@ public class TransactionsController : ControllerBase
         return Ok(new CreateTransactionResponseDto
         {
             Id = transaction.Id,
-            Status = transaction.State.ToString()
+            Status = transaction.State.ToString(),
         });
     }
 
@@ -331,7 +331,7 @@ public class TransactionsController : ControllerBase
             Operation = transaction.Operation,
             FeeCurrency = transaction.FeeCurrency,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         transaction.ReplacedByTxId = replacement.Id;
@@ -345,7 +345,7 @@ public class TransactionsController : ControllerBase
         return Ok(new DropTransactionResponseDto
         {
             Success = true,
-            Transactions = new List<string> { replacement.Id }
+            Transactions = new List<string> { replacement.Id },
         });
     }
 
@@ -370,18 +370,18 @@ public class TransactionsController : ControllerBase
             Low = new FeeEstimateDto
             {
                 NetworkFee = lowFee,
-                BaseFee = lowFee
+                BaseFee = lowFee,
             },
             Medium = new FeeEstimateDto
             {
                 NetworkFee = mediumFee,
-                BaseFee = mediumFee
+                BaseFee = mediumFee,
             },
             High = new FeeEstimateDto
             {
                 NetworkFee = highFee,
-                BaseFee = highFee
-            }
+                BaseFee = highFee,
+            },
         };
 
         return Ok(response);
@@ -403,7 +403,7 @@ public class TransactionsController : ControllerBase
         {
             IsValid = isValid,
             IsActive = isValid,
-            RequiresTag = requiresTag
+            RequiresTag = requiresTag,
         };
 
         _logger.LogInformation("Validated address {Address} for asset {AssetId}: {IsValid}",
@@ -428,12 +428,12 @@ public class TransactionsController : ControllerBase
             {
                 Type = transaction.SourceType,
                 Id = transaction.VaultAccountId,
-                Name = transaction.VaultAccount?.Name
+                Name = transaction.VaultAccount?.Name,
             },
             Destination = new TransferPeerPathResponseDto
             {
                 Type = transaction.DestinationType,
-                Id = transaction.DestinationVaultAccountId
+                Id = transaction.DestinationVaultAccountId,
             },
             RequestedAmount = transaction.RequestedAmount.ToString("G29"),
             Amount = amountStr,
@@ -471,7 +471,7 @@ public class TransactionsController : ControllerBase
             BlockInfo = new BlockInfoDto
             {
                 BlockHeight = null,
-                BlockHash = null
+                BlockHash = null,
             },
             AuthorizationInfo = null,
             AmountInfo = new AmountInfoDto
@@ -479,10 +479,10 @@ public class TransactionsController : ControllerBase
                 Amount = amountStr,
                 RequestedAmount = transaction.RequestedAmount.ToString("G29"),
                 NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString("G29"),
-                AmountUSD = null
+                AmountUSD = null,
             },
             Index = null,
-            BlockchainIndex = null
+            BlockchainIndex = null,
         };
     }
 
@@ -492,7 +492,7 @@ public class TransactionsController : ControllerBase
         {
             "BTC" => address.StartsWith("bc1") || address.StartsWith("1") || address.StartsWith("3"),
             "ETH" or "USDT" or "USDC" => address.StartsWith("0x") && address.Length == 42,
-            _ => !string.IsNullOrWhiteSpace(address)
+            _ => !string.IsNullOrWhiteSpace(address),
         };
     }
 }

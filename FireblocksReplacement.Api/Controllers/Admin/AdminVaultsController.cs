@@ -91,7 +91,7 @@ public class AdminVaultsController : ControllerBase
             HiddenOnUI = false,
             WorkspaceId = _workspace.WorkspaceId,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
 
         _context.VaultAccounts.Add(vault);
@@ -138,7 +138,7 @@ public class AdminVaultsController : ControllerBase
             .Select(w => new FrozenBalanceDto
             {
                 AssetId = w.AssetId,
-                Amount = w.LockedAmount.ToString("F18")
+                Amount = w.LockedAmount.ToString("F18"),
             })
             .ToList();
 
@@ -192,7 +192,7 @@ public class AdminVaultsController : ControllerBase
                     Pending = existingWallet.Pending.ToString("F18"),
                     Available = (existingWallet.Balance - existingWallet.Pending).ToString("F18"),
                     AddressCount = existingWallet.Addresses.Count,
-                    DepositAddress = existingWallet.Addresses.FirstOrDefault()?.AddressValue
+                    DepositAddress = existingWallet.Addresses.FirstOrDefault()?.AddressValue,
                 };
                 return Ok(AdminResponse<AdminWalletDto>.Success(existingDto));
             }
@@ -211,7 +211,7 @@ public class AdminVaultsController : ControllerBase
             Balance = 0,
             LockedAmount = 0,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
         _context.Wallets.Add(wallet);
         await _context.SaveChangesAsync();
@@ -223,7 +223,7 @@ public class AdminVaultsController : ControllerBase
                 AddressValue = GenerateDepositAddress(request.AssetId, vault.Id),
                 Type = "Permanent",
                 WalletId = wallet.Id,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
             };
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
@@ -240,7 +240,7 @@ public class AdminVaultsController : ControllerBase
             Pending = wallet.Pending.ToString("F18"),
             Available = (wallet.Balance - wallet.Pending).ToString("F18"),
             AddressCount = wallet.Addresses.Count,
-            DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue
+            DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue,
         };
 
         var updatedVault = await _context.VaultAccounts
@@ -272,10 +272,10 @@ public class AdminVaultsController : ControllerBase
                 Pending = w.Pending.ToString("F18"),
                 Available = (w.Balance - w.Pending).ToString("F18"),
                 AddressCount = w.Addresses.Count,
-                DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue
+                DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue,
             }).ToList(),
             CreatedAt = vault.CreatedAt,
-            UpdatedAt = vault.UpdatedAt
+            UpdatedAt = vault.UpdatedAt,
         };
     }
 

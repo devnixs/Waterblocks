@@ -45,7 +45,7 @@ public class BalanceResult
     {
         Success = false,
         ErrorMessage = message,
-        ErrorCode = code
+        ErrorCode = code,
     };
 }
 
@@ -353,7 +353,7 @@ public class BalanceService : IBalanceService
                 Pending = 0,
                 LockedAmount = 0,
                 CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                UpdatedAt = DateTimeOffset.UtcNow,
             };
 
             _context.Wallets.Add(wallet);

@@ -16,7 +16,7 @@ public class AutoTransitionService : BackgroundService
         TransactionState.PENDING_AUTHORIZATION,
         TransactionState.QUEUED,
         TransactionState.BROADCASTING,
-        TransactionState.CONFIRMING
+        TransactionState.CONFIRMING,
     };
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AutoTransitionService> _logger;
@@ -132,7 +132,7 @@ public class AutoTransitionService : BackgroundService
             TransactionState.QUEUED => TransactionState.BROADCASTING,
             TransactionState.BROADCASTING => TransactionState.CONFIRMING,
             TransactionState.CONFIRMING => TransactionState.COMPLETED,
-            _ => null
+            _ => null,
         };
     }
 
@@ -162,7 +162,7 @@ public class AutoTransitionService : BackgroundService
             ReplacedByTxId = transaction.ReplacedByTxId,
             Confirmations = transaction.Confirmations,
             CreatedAt = transaction.CreatedAt,
-            UpdatedAt = transaction.UpdatedAt
+            UpdatedAt = transaction.UpdatedAt,
         };
     }
 

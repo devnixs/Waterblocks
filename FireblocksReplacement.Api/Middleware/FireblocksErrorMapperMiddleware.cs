@@ -42,12 +42,12 @@ public class FireblocksErrorMapperMiddleware
         var errorResponse = new ErrorResponse
         {
             Message = message,
-            Code = errorCode
+            Code = errorCode,
         };
 
         var options = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         var json = JsonSerializer.Serialize(errorResponse, options);
@@ -69,7 +69,7 @@ public class FireblocksErrorMapperMiddleware
             InvalidOperationException => (HttpStatusCode.BadRequest, 400, exception.Message),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, 401, "Unauthorized"),
             KeyNotFoundException => (HttpStatusCode.NotFound, 404, "Resource not found"),
-            _ => (HttpStatusCode.InternalServerError, 500, "An internal error occurred")
+            _ => (HttpStatusCode.InternalServerError, 500, "An internal error occurred"),
         };
     }
 

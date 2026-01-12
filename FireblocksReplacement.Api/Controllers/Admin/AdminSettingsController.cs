@@ -24,7 +24,7 @@ public class AdminSettingsController : ControllerBase
         var enabled = setting != null && bool.TryParse(setting.Value, out var value) && value;
         return Ok(AdminResponse<AdminAutoTransitionSettingsDto>.Success(new AdminAutoTransitionSettingsDto
         {
-            Enabled = enabled
+            Enabled = enabled,
         }));
     }
 
@@ -45,7 +45,7 @@ public class AdminSettingsController : ControllerBase
 
         return Ok(AdminResponse<AdminAutoTransitionSettingsDto>.Success(new AdminAutoTransitionSettingsDto
         {
-            Enabled = request.Enabled
+            Enabled = request.Enabled,
         }));
     }
 }

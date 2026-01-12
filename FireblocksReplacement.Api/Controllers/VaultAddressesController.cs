@@ -54,7 +54,7 @@ public class VaultAddressesController : ControllerBase
             AddressFormat = a.AddressFormat,
             LegacyAddress = a.LegacyAddress,
             EnterpriseAddress = a.EnterpriseAddress,
-            Bip44AddressIndex = a.Bip44AddressIndex
+            Bip44AddressIndex = a.Bip44AddressIndex,
         }).ToList();
 
         return Ok(addresses);
@@ -120,7 +120,7 @@ public class VaultAddressesController : ControllerBase
                 AddressFormat = a.AddressFormat,
                 LegacyAddress = a.LegacyAddress,
                 EnterpriseAddress = a.EnterpriseAddress,
-                Bip44AddressIndex = a.Bip44AddressIndex
+                Bip44AddressIndex = a.Bip44AddressIndex,
             }).ToList();
 
         // Calculate pagination cursors
@@ -129,13 +129,13 @@ public class VaultAddressesController : ControllerBase
             Before = addresses.Count > 0 ? addresses.First().Bip44AddressIndex?.ToString() : null,
             After = addresses.Count > 0 && addresses.Count == limit
                 ? addresses.Last().Bip44AddressIndex?.ToString()
-                : null
+                : null,
         };
 
         var response = new PaginatedAddressResponseDto
         {
             Addresses = addresses,
-            Paging = paging
+            Paging = paging,
         };
 
         return Ok(response);
@@ -186,7 +186,7 @@ public class VaultAddressesController : ControllerBase
             EnterpriseAddress = enterpriseAddress,
             Bip44AddressIndex = bip44AddressIndex,
             WalletId = wallet.Id,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
         };
 
         _context.Addresses.Add(address);
@@ -201,7 +201,7 @@ public class VaultAddressesController : ControllerBase
             LegacyAddress = address.LegacyAddress,
             EnterpriseAddress = address.EnterpriseAddress,
             Tag = address.Tag,
-            Bip44AddressIndex = address.Bip44AddressIndex
+            Bip44AddressIndex = address.Bip44AddressIndex,
         };
 
         return Ok(response);
@@ -213,7 +213,7 @@ public class VaultAddressesController : ControllerBase
         {
             "BTC" => "SEGWIT",
             "ETH" or "USDT" or "USDC" => "BASE",
-            _ => "BASE"
+            _ => "BASE",
         };
     }
 
@@ -224,7 +224,7 @@ public class VaultAddressesController : ControllerBase
             "BTC" when addressFormat == "SEGWIT" => $"bc1q{Guid.NewGuid():N}"[..42],
             "BTC" => $"1{Guid.NewGuid():N}"[..34],
             "ETH" or "USDT" or "USDC" => $"0x{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}"
+            _ => $"{assetId.ToLowerInvariant()}_{Guid.NewGuid():N}",
         };
     }
 
@@ -244,7 +244,7 @@ public class VaultAddressesController : ControllerBase
         return assetId.ToUpperInvariant() switch
         {
             "ETH" or "USDT" or "USDC" => $"0xE{Guid.NewGuid():N}{Guid.NewGuid():N}"[..42],
-            _ => null
+            _ => null,
         };
     }
 }
