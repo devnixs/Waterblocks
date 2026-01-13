@@ -1,3 +1,5 @@
+using CardanoSharp.Wallet.Models.Addresses;
+
 namespace Waterblocks.Api.Services;
 
 public interface IAddressValidationService
@@ -162,6 +164,16 @@ public sealed class AddressValidationService : IAddressValidationService
 
     private static bool ValidateCardanoAddress(string address)
     {
+        try
+        {
+            var bytes = new Address(address).GetBytes();
+            return bytes.Length > 0;
+        }
+        catch
+        {
+            // Fall through to basic heuristics for any unsupported formats.
+        }
+
         // Shelley addresses (Bech32)
         if (address.StartsWith("addr1"))
         {

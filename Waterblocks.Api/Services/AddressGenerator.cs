@@ -1,6 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using CardanoSharp.Wallet;
+using CardanoSharp.Wallet.Enums;
 using CardanoSharp.Wallet.Models.Addresses;
+using CardanoSharp.Wallet.Models.Keys;
 using NBitcoin;
 using Nethereum.Util;
 
@@ -324,7 +327,16 @@ public sealed class AddressGenerator : IAddressGenerator
     // Cardano Shelley - addr1 + bech32 chars (typically 98+ chars, we use 54 for data part)
     private static string GenerateCardanoAddress()
     {
-        return "addr1" + GenerateRandomString(Bech32Chars, 54);
+        var rng = RandomNumberGenerator.Create();
+        var keyBytes = new byte[32];
+        var chainCode = new byte[32];
+        rng.GetBytes(keyBytes);
+        rng.GetBytes(chainCode);
+
+        var publicKey = new PublicKey(keyBytes, chainCode);
+        var addressService = new AddressService();
+        var address = addressService.GetEnterpriseAddress(publicKey, NetworkType.Mainnet);
+        return address.ToString();
     }
 
     // Cosmos-based chains - {prefix}1 + bech32 chars
