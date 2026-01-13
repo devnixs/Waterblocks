@@ -1,3 +1,6 @@
+using CardanoSharp.Wallet.Models.Addresses;
+using NBitcoin;
+using Nethereum.Util;
 using Waterblocks.Api.Services;
 using Waterblocks.IntegrationTests.Infrastructure;
 using Xunit;
@@ -42,5 +45,34 @@ public class AddressGenerationTests : IClassFixture<IntegrationTestFixture>
 
         var adminAddress = _generator.GenerateAdminDepositAddress(assetId, "vault-1234");
         Assert.True(_validator.ValidateAddress(assetId, adminAddress));
+    }
+
+    [Theory]
+    [InlineData("ETH")]
+    [InlineData("USDC")]
+    [InlineData("BNB_BSC")]
+    [InlineData("MATIC_POLYGON")]
+    public void GeneratesChecksumEvmAddresses(string assetId)
+    {
+        var address = _generator.GenerateExternalAddress(assetId);
+        var normalized = AddressUtil.Current.ConvertToChecksumAddress(address);
+        Assert.Equal(normalized, address);
+    }
+
+    [Fact]
+    public void GeneratesNormalizedCardanoAddress()
+    {
+        var address = _generator.GenerateExternalAddress("ADA");
+        var bytes = new Address(address).GetBytes();
+        var normalized = new Address(bytes).ToString();
+        Assert.Equal(normalized, address);
+    }
+
+    [Fact]
+    public void GeneratesValidBitcoinMainnetAddress()
+    {
+        var address = _generator.GenerateExternalAddress("BTC");
+        var parsed = BitcoinAddress.Create(address, Network.Main);
+        Assert.Equal(address, parsed.ToString());
     }
 }

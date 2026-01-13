@@ -1,5 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using CardanoSharp.Wallet.Models.Addresses;
+using NBitcoin;
+using Nethereum.Util;
 
 namespace Waterblocks.Api.Services;
 
@@ -24,6 +27,21 @@ public sealed class AddressGenerator : IAddressGenerator
     private const string HexChars = "0123456789abcdef";
     private const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     private const string Bech32Chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    private static readonly HashSet<string> EvmAssets = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ETH",
+        "USDT",
+        "USDC",
+        "USDT_ERC20",
+        "USDC_ERC20",
+        "MATIC",
+        "MATIC_POLYGON",
+        "BNB",
+        "BNB_BSC",
+        "AVAX",
+        "AVAX_C",
+        "BASECHAIN_ETH",
+    };
     private readonly IAddressValidationService _validator;
 
     public AddressGenerator(IAddressValidationService validator)
@@ -146,11 +164,11 @@ public sealed class AddressGenerator : IAddressGenerator
             var address = GenerateAddress(assetId, addressFormat);
             if (_validator.ValidateAddress(assetId, address))
             {
-                return address;
+                return NormalizeAddress(assetId, address);
             }
         }
 
-        return GenerateAddress(assetId, addressFormat);
+        return NormalizeAddress(assetId, GenerateAddress(assetId, addressFormat));
     }
 
     private static string? GenerateLegacyAddress(string assetId, string addressFormat)
@@ -175,12 +193,12 @@ public sealed class AddressGenerator : IAddressGenerator
         {
             if (!string.IsNullOrEmpty(legacy) && _validator.ValidateAddress(assetId, legacy))
             {
-                return legacy;
+                return NormalizeAddress(assetId, legacy);
             }
             legacy = GenerateLegacyAddress(assetId, addressFormat);
         }
 
-        return legacy;
+        return string.IsNullOrEmpty(legacy) ? legacy : NormalizeAddress(assetId, legacy);
     }
 
     private static string? GenerateEnterpriseAddress(string assetId)
@@ -204,24 +222,55 @@ public sealed class AddressGenerator : IAddressGenerator
         {
             if (!string.IsNullOrEmpty(enterprise) && _validator.ValidateAddress(assetId, enterprise))
             {
-                return enterprise;
+                return NormalizeAddress(assetId, enterprise);
             }
             enterprise = GenerateEnterpriseAddress(assetId);
         }
 
-        return enterprise;
+        return string.IsNullOrEmpty(enterprise) ? enterprise : NormalizeAddress(assetId, enterprise);
+    }
+
+    private static string NormalizeAddress(string assetId, string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return address;
+        }
+
+        var upperAsset = assetId.ToUpperInvariant();
+        try
+        {
+            if (EvmAssets.Contains(upperAsset))
+            {
+                return AddressUtil.Current.ConvertToChecksumAddress(address);
+            }
+
+            if (upperAsset == "ADA")
+            {
+                var bytes = new Address(address).GetBytes();
+                return new Address(bytes).ToString();
+            }
+        }
+        catch
+        {
+            return address;
+        }
+
+        return address;
     }
 
     // Bitcoin SegWit (Bech32) - bc1q + 39 bech32 chars = 42 total
     private static string GenerateBtcSegwitAddress()
     {
-        return "bc1q" + GenerateRandomString(Bech32Chars, 38);
+        var key = new Key();
+        return key.GetAddress(ScriptPubKeyType.Segwit, Network.Main).ToString();
     }
 
     // Bitcoin Legacy P2PKH - 1 + 33 base58 chars = 34 total
     private static string GenerateBtcLegacyAddress()
     {
-        return "1" + GenerateRandomString(Base58Chars, 33);
+        var key = new Key();
+        return key.GetAddress(ScriptPubKeyType.Legacy, Network.Main).ToString();
     }
 
     // Bitcoin P2SH - 3 + 33 base58 chars = 34 total
