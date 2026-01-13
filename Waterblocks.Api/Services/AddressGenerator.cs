@@ -173,7 +173,7 @@ public sealed class AddressGenerator : IAddressGenerator
 
         for (var i = 0; i < MaxGenerationAttempts; i++)
         {
-            if (_validator.ValidateAddress(assetId, legacy))
+            if (!string.IsNullOrEmpty(legacy) && _validator.ValidateAddress(assetId, legacy))
             {
                 return legacy;
             }
@@ -202,7 +202,7 @@ public sealed class AddressGenerator : IAddressGenerator
 
         for (var i = 0; i < MaxGenerationAttempts; i++)
         {
-            if (_validator.ValidateAddress(assetId, enterprise))
+            if (!string.IsNullOrEmpty(enterprise) && _validator.ValidateAddress(assetId, enterprise))
             {
                 return enterprise;
             }

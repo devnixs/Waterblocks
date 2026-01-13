@@ -14,6 +14,7 @@ import type {
   Asset,
   AdminWorkspace,
   CreateWorkspaceRequest,
+  AdminGeneratedAddress,
 } from '../types/admin';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5671';
@@ -188,6 +189,11 @@ export const adminApi = {
 
     const data = await response.json();
     return { data, error: null };
+  },
+
+  async generateAddress(assetId: string): Promise<AdminResponse<AdminGeneratedAddress>> {
+    const search = new URLSearchParams({ assetId });
+    return fetchApi(`/admin/addresses/generate?${search.toString()}`);
   },
 
   // Workspaces

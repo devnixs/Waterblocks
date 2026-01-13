@@ -85,7 +85,13 @@ public class TransactionsController : ControllerBase
             .Take(limit)
             .ToListAsync();
 
-        var dtos = transactions.Select(MapToDto).ToList();
+        var workspaceVaultIds = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Select(v => v.Id)
+            .ToListAsync();
+        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
+
+        var dtos = transactions.Select(t => MapToDto(t, workspaceVaultIdSet)).ToList();
         return Ok(dtos);
     }
 
@@ -101,7 +107,13 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Transaction {txId} not found");
         }
 
-        return Ok(MapToDto(transaction));
+        var workspaceVaultIds = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Select(v => v.Id)
+            .ToListAsync();
+        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
+
+        return Ok(MapToDto(transaction, workspaceVaultIdSet));
     }
 
     [HttpGet("external_tx_id/{externalTxId}")]
@@ -116,7 +128,13 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Transaction with external ID {externalTxId} not found");
         }
 
-        return Ok(MapToDto(transaction));
+        var workspaceVaultIds = await _context.VaultAccounts
+            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Select(v => v.Id)
+            .ToListAsync();
+        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
+
+        return Ok(MapToDto(transaction, workspaceVaultIdSet));
     }
 
     [HttpPost("{txId}/cancel")]
@@ -284,13 +302,19 @@ public class TransactionsController : ControllerBase
         return Ok(response);
     }
 
-    private TransactionDto MapToDto(Transaction transaction)
+    private TransactionDto MapToDto(Transaction transaction, ISet<string> workspaceVaultIds)
     {
         var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
         var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
         var amountStr = transaction.Amount.ToString("G29");
         var networkFeeStr = transaction.NetworkFee.ToString("G29");
         var serviceFeeStr = transaction.ServiceFee.ToString("G29");
+        var sourceType = workspaceVaultIds.Contains(transaction.SourceVaultAccountId ?? string.Empty)
+            ? "VAULT_ACCOUNT"
+            : "ONE_TIME_ADDRESS";
+        var destinationType = workspaceVaultIds.Contains(transaction.DestinationVaultAccountId ?? string.Empty)
+            ? "VAULT_ACCOUNT"
+            : "ONE_TIME_ADDRESS";
 
         return new TransactionDto
         {
@@ -298,7 +322,7 @@ public class TransactionsController : ControllerBase
             AssetId = transaction.AssetId,
             Source = new TransferPeerPathResponseDto
             {
-                Type = transaction.SourceType,
+                Type = sourceType,
                 Id = transaction.VaultAccountId,
                 Name = transaction.VaultAccount?.Name,
                 SubType = "DEFAULT",
@@ -307,7 +331,7 @@ public class TransactionsController : ControllerBase
             },
             Destination = new TransferPeerPathResponseDto
             {
-                Type = transaction.DestinationType,
+                Type = destinationType,
                 Id = transaction.DestinationVaultAccountId,
                 Name = transaction.DestinationVaultAccountId ?? string.Empty,
                 SubType = "DEFAULT",
@@ -326,8 +350,8 @@ public class TransactionsController : ControllerBase
             TxHash = transaction.Hash ?? string.Empty,
             Tag = transaction.DestinationTag ?? string.Empty,
             SubStatus = transaction.SubStatus,
-            DestinationAddress = transaction.DestinationAddress ?? string.Empty,
-            SourceAddress = transaction.SourceAddress ?? string.Empty,
+            DestinationAddress = destinationType == "VAULT_ACCOUNT" ? string.Empty : (transaction.DestinationAddress ?? string.Empty),
+            SourceAddress = sourceType == "VAULT_ACCOUNT" ? string.Empty : (transaction.SourceAddress ?? string.Empty),
             DestinationAddressDescription = string.Empty,
             DestinationTag = transaction.DestinationTag ?? string.Empty,
             SignedBy = new List<string>(),

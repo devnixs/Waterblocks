@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, useVaults, useAssets } from '../api/queries';
+import { adminApi } from '../api/adminClient';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { AdminTransaction } from '../types/admin';
@@ -36,22 +37,14 @@ export default function TransactionsPage() {
   const createTransaction = useCreateTransaction();
   const { showToast } = useToast();
 
-  const getRandomHex = (length: number) => {
-    const bytes = new Uint8Array(Math.ceil(length / 2));
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, length);
-  };
-
-  const generateExternalAddress = (asset: string) => {
-    const normalized = asset.trim().toUpperCase();
-    if (normalized === 'BTC') {
-      return `bc1q${getRandomHex(38)}`;
+  const generateExternalAddress = async (asset: string) => {
+    const result = await adminApi.generateAddress(asset);
+    if (result.error || !result.data?.address) {
+      const message = result.error?.message || 'Failed to generate address';
+      showToast({ title: message, type: 'error', duration: 5000 });
+      return '';
     }
-    if (normalized === 'ETH' || normalized === 'USDT' || normalized === 'USDC') {
-      return `0x${getRandomHex(40)}`;
-    }
-    const prefix = asset.trim() ? asset.trim().toLowerCase() : 'asset';
-    return `${prefix}_${getRandomHex(32)}`;
+    return result.data.address;
   };
 
   const formatVaultLabel = (id?: string, name?: string) => {
@@ -259,16 +252,38 @@ export default function TransactionsPage() {
   }, [assets, assetId]);
 
   useEffect(() => {
-    if (sourceType === 'EXTERNAL' && assetId && !sourceAddress.trim()) {
-      setSourceAddress(generateExternalAddress(assetId));
-    }
-  }, [sourceType, assetId, sourceAddress]);
+    let canceled = false;
+
+    const updateAddress = async () => {
+      if (sourceType !== 'EXTERNAL' || !assetId) return;
+      const generated = await generateExternalAddress(assetId);
+      if (!canceled && generated) {
+        setSourceAddress(generated);
+      }
+    };
+
+    updateAddress();
+    return () => {
+      canceled = true;
+    };
+  }, [sourceType, assetId]);
 
   useEffect(() => {
-    if (destinationType === 'EXTERNAL' && assetId && !destinationAddress.trim()) {
-      setDestinationAddress(generateExternalAddress(assetId));
-    }
-  }, [destinationType, assetId, destinationAddress]);
+    let canceled = false;
+
+    const updateAddress = async () => {
+      if (destinationType !== 'EXTERNAL' || !assetId) return;
+      const generated = await generateExternalAddress(assetId);
+      if (!canceled && generated) {
+        setDestinationAddress(generated);
+      }
+    };
+
+    updateAddress();
+    return () => {
+      canceled = true;
+    };
+  }, [destinationType, assetId]);
 
   if (isLoading) return <div className="p-8 text-center text-muted">Loading transactions...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
@@ -317,18 +332,33 @@ export default function TransactionsPage() {
       return;
     }
 
+    const resolveExternalAddress = async (
+      current: string,
+      update: (value: string) => void
+    ) => {
+      if (current.trim()) {
+        return current.trim();
+      }
+
+      const generated = await generateExternalAddress(assetId);
+      if (generated) {
+        update(generated);
+      }
+      return generated;
+    };
+
     const resolvedSourceAddress = sourceType === 'EXTERNAL'
-      ? (sourceAddress.trim() || generateExternalAddress(assetId))
+      ? await resolveExternalAddress(sourceAddress, setSourceAddress)
       : undefined;
     const resolvedDestinationAddress = destinationType === 'EXTERNAL'
-      ? (destinationAddress.trim() || generateExternalAddress(assetId))
+      ? await resolveExternalAddress(destinationAddress, setDestinationAddress)
       : undefined;
 
-    if (sourceType === 'EXTERNAL' && resolvedSourceAddress && sourceAddress.trim() !== resolvedSourceAddress) {
-      setSourceAddress(resolvedSourceAddress);
+    if (sourceType === 'EXTERNAL' && !resolvedSourceAddress) {
+      return;
     }
-    if (destinationType === 'EXTERNAL' && resolvedDestinationAddress && destinationAddress.trim() !== resolvedDestinationAddress) {
-      setDestinationAddress(resolvedDestinationAddress);
+    if (destinationType === 'EXTERNAL' && !resolvedDestinationAddress) {
+      return;
     }
 
     const result = await createTransaction.mutateAsync({

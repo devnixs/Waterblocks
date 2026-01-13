@@ -140,3 +140,7 @@ export interface AdminWorkspace {
 export interface CreateWorkspaceRequest {
   name: string;
 }
+
+export interface AdminGeneratedAddress {
+  address: string;
+}
