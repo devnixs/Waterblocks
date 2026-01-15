@@ -264,7 +264,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var dto = MapToDto(transaction, responseAddressLookup);
         await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionUpserted", dto);
         await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
 
         return Success(dto);
     }
@@ -373,7 +373,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
             id, transaction.FailureReason);
@@ -454,7 +454,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
             transaction.Id, transaction.State, newState);
@@ -640,5 +640,6 @@ public sealed class AdminTransactionService : IAdminTransactionService
         return new AdminServiceResult<T>(AdminResponse<T>.Failure("Workspace is required", "WORKSPACE_REQUIRED"), StatusCodes.Status400BadRequest);
     }
 }
+
 
 

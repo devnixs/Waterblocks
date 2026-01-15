@@ -39,12 +39,16 @@ export default function TransactionsPage() {
     transactionId: filterId || undefined,
     hash: filterHash || undefined,
   });
+  
   const { data: vaults } = useVaults();
   const { data: assets } = useAssets();
+  
   const transition = useTransitionTransaction();
+  
   const createTransaction = useCreateTransaction();
+  
   const { showToast } = useToast();
-
+  
   const generateExternalAddress = async (asset: string) => {
     const result = await adminApi.generateAddress(asset);
     if (result.error || !result.data?.address) {
@@ -55,11 +59,42 @@ export default function TransactionsPage() {
     return result.data.address;
   };
 
+  
   const resolveVaultAddress = (vaultId: string, asset: string) => {
     if (!vaultId || !asset) return '';
     const vault = (vaults || []).find((item) => item.id === vaultId);
     const wallet = vault?.wallets.find((item) => item.assetId === asset);
     return wallet?.depositAddress || '';
+  };
+
+  
+  const ensureVaultAddress = async (vaultId: string, asset: string, label: string) => {
+    if (!vaultId || !asset) return '';
+    const resolved = resolveVaultAddress(vaultId, asset);
+    if (resolved) return resolved;
+
+    const response = await adminApi.createWallet(vaultId, { assetId: asset });
+    if (response.error) {
+      showToast({
+        title: `${label} wallet could not be created`,
+        description: response.error.message,
+        type: 'error',
+        duration: 5000,
+      });
+      return '';
+    }
+
+    const address = response.data?.depositAddress || '';
+    if (!address) {
+      showToast({
+        title: `${label} address is unavailable`,
+        description: `No deposit address returned for ${asset}.`,
+        type: 'error',
+        duration: 5000,
+      });
+    }
+
+    return address;
   };
 
   const pagedTransactions = useMemo(() => transactionsPage?.items || [], [transactionsPage]);
@@ -263,7 +298,7 @@ export default function TransactionsPage() {
       if (!assetId) return;
 
       if (sourceType === 'INTERNAL') {
-        const resolved = resolveVaultAddress(sourceVaultId, assetId);
+        const resolved = await ensureVaultAddress(sourceVaultId, assetId, 'Source');
         if (!canceled) {
           setSourceAddress(resolved);
         }
@@ -289,7 +324,7 @@ export default function TransactionsPage() {
       if (!assetId) return;
 
       if (destinationType === 'INTERNAL') {
-        const resolved = resolveVaultAddress(destinationVaultId, assetId);
+        const resolved = await ensureVaultAddress(destinationVaultId, assetId, 'Destination');
         if (!canceled) {
           setDestinationAddress(resolved);
         }
@@ -582,3 +617,12 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
