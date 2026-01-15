@@ -632,10 +632,10 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             "Transaction should be visible from receiver's workspace (cross-workspace)");
 
         // Verify different perspectives
-        var ws1Tx = txFromWorkspace1.First(t => t.Id == txId);
+        var ws1Tx = txFromWorkspace1!.First(t => t.Id == txId);
         ws1Tx.Source!.Type.Should().Be("VAULT_ACCOUNT", "Sender sees source as their vault");
 
-        var ws2Tx = txFromWorkspace2.First(t => t.DestinationAddress == receiverAddress);
+        var ws2Tx = txFromWorkspace2!.First(t => t.DestinationAddress == receiverAddress);
         ws2Tx.Destination!.Type.Should().Be("VAULT_ACCOUNT", "Receiver sees destination as their vault");
         ws2Tx.Id.Should().NotBe(txId, "receiver should see a distinct composite transaction ID");
     }
@@ -690,6 +690,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
 
         // Act: Get the transaction details from receiver's perspective
         var receiverTransactions = await fireblocksClient2.GetTransactionsAsync();
+        receiverTransactions.Should().NotBeNull();
         var receiverCompositeId = receiverTransactions!.First(t => t.DestinationAddress == receiverAddress).Id;
         var txFromReceiver = await fireblocksClient2.GetTransactionAsync(receiverCompositeId);
 
