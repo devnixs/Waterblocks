@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AdminTransaction, AdminVault } from '../types/admin';
@@ -17,6 +17,9 @@ function upsertById<T extends { id: string }>(items: T[] | undefined, next: T): 
 export function useRealtimeUpdates(workspaceId?: string) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<'connecting' | 'connected' | 'reconnecting' | 'disconnected'>('connecting');
+  const retryTimeoutRef = useRef<number | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const stoppedRef = useRef(false);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -52,22 +55,54 @@ export function useRealtimeUpdates(workspaceId?: string) {
       queryClient.invalidateQueries({ queryKey: ['vault', workspaceId] });
     });
 
+    const scheduleReconnect = () => {
+      if (stoppedRef.current) return;
+      setStatus('reconnecting');
+      const attempt = reconnectAttemptRef.current;
+      const delay = Math.min(30000, 1000 * Math.pow(2, attempt));
+      reconnectAttemptRef.current += 1;
+      if (retryTimeoutRef.current) {
+        window.clearTimeout(retryTimeoutRef.current);
+      }
+      retryTimeoutRef.current = window.setTimeout(() => {
+        startConnection().catch(() => undefined);
+      }, delay);
+    };
+
+    const startConnection = async () => {
+      try {
+        setStatus('connecting');
+        await connection.start();
+        if (!stoppedRef.current) {
+          reconnectAttemptRef.current = 0;
+          setStatus('connected');
+        }
+      } catch (err) {
+        if (!stoppedRef.current) {
+          console.warn('SignalR connection failed', err);
+          scheduleReconnect();
+        }
+      }
+    };
+
     connection.onreconnecting(() => setStatus('reconnecting'));
     connection.onreconnected(() => setStatus('connected'));
-    connection.onclose(() => setStatus('disconnected'));
-
-    let isMounted = true;
-    connection.start().then(() => {
-      if (isMounted) setStatus('connected');
-    }).catch((err) => {
-      if (isMounted) {
+    connection.onclose(() => {
+      if (!stoppedRef.current) {
         setStatus('disconnected');
-        console.warn('SignalR connection failed', err);
+        scheduleReconnect();
       }
     });
 
+    stoppedRef.current = false;
+    startConnection().catch(() => undefined);
+
     return () => {
-      isMounted = false;
+      stoppedRef.current = true;
+      if (retryTimeoutRef.current) {
+        window.clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
       connection.stop().catch(() => undefined);
     };
   }, [queryClient, workspaceId]);

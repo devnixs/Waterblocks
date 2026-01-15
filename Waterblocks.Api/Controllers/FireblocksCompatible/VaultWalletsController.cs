@@ -74,32 +74,51 @@ public class VaultWalletsController : ControllerBase
             throw new KeyNotFoundException($"Asset {assetId} not found");
         }
 
-        // For AccountBased and MemoBased assets, return existing wallet if one exists
-        if (asset.BlockchainType != BlockchainType.AddressBased)
-        {
-            var existingWallet = await _context.Wallets
-                .Include(w => w.VaultAccount)
-                .Include(w => w.Addresses)
-                .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
+        // Check if wallet already exists
+        var existingWallet = await _context.Wallets
+            .Include(w => w.VaultAccount)
+            .Include(w => w.Addresses)
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
 
-            if (existingWallet != null)
+        if (existingWallet != null)
+        {
+            // For AccountBased and MemoBased assets, return the existing wallet as-is
+            if (asset.BlockchainType != BlockchainType.AddressBased)
             {
                 return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName));
             }
+
+            // For AddressBased/UTXO assets (like BTC), create a new address on the existing wallet
+            // This keeps all addresses under one wallet with a shared balance
+            var newAddress = new Address
+            {
+                AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId),
+                Type = "Permanent",
+                WalletId = existingWallet.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            _context.Addresses.Add(newAddress);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Created new address {Address} for AddressBased asset {AssetId} in vault {VaultAccountId}",
+                newAddress.AddressValue, assetId, vaultAccountId);
+
+            // Reload with all addresses
+            existingWallet = await _context.Wallets
+                .Include(w => w.VaultAccount)
+                .Include(w => w.Addresses)
+                .FirstAsync(w => w.Id == existingWallet.Id);
+
+            return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName, newAddress));
         }
 
-        // Check if this is the first wallet for this asset (for AddressBased/UTXO assets)
-        var existingWalletCount = await _context.Wallets
-            .CountAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId);
-
-        var walletType = existingWalletCount == 0 ? "Permanent" : "UTXO";
-
-        // Create new wallet
+        // No existing wallet - create new one
         var wallet = new Wallet
         {
             VaultAccountId = vaultAccountId,
             AssetId = assetId,
-            Type = walletType,
+            Type = "Permanent",
             Balance = 0,
             LockedAmount = 0,
             Pending = 0,
@@ -189,17 +208,22 @@ public class VaultWalletsController : ControllerBase
         };
     }
 
-    private CreateVaultAssetResponseDto MapToCreateVaultAssetResponseDto(Wallet wallet, string? eosAccountName)
+    private CreateVaultAssetResponseDto MapToCreateVaultAssetResponseDto(
+        Wallet wallet,
+        string? eosAccountName,
+        Address? specificAddress = null)
     {
-        var primaryAddress = wallet.Addresses.FirstOrDefault();
+        // Use specific address if provided (e.g., newly created address for UTXO asset)
+        // Otherwise, use the first address in the wallet
+        var addressToReturn = specificAddress ?? wallet.Addresses.FirstOrDefault();
 
         return new CreateVaultAssetResponseDto
         {
             Id = wallet.AssetId,
-            Address = primaryAddress?.AddressValue ?? string.Empty,
-            LegacyAddress = primaryAddress?.LegacyAddress ?? string.Empty,
-            EnterpriseAddress = primaryAddress?.EnterpriseAddress ?? string.Empty,
-            Tag = primaryAddress?.Tag ?? string.Empty,
+            Address = addressToReturn?.AddressValue ?? string.Empty,
+            LegacyAddress = addressToReturn?.LegacyAddress ?? string.Empty,
+            EnterpriseAddress = addressToReturn?.EnterpriseAddress ?? string.Empty,
+            Tag = addressToReturn?.Tag ?? string.Empty,
             EosAccountName = eosAccountName ?? string.Empty,
             Status = "READY",
             ActivationTxId = string.Empty,

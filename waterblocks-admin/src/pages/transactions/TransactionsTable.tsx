@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { AdminTransaction } from '../../types/admin';
 
 type TransactionsTableProps = {
@@ -23,10 +24,24 @@ export function TransactionsTable({
     return '-';
   };
 
-  const formatExternalAddress = (address?: string) => {
+  const formatAddress = (address?: string) => {
     if (!address) return '-';
-    if (address.length <= 12) return address;
-    return `${address.substring(0, 12)}...`;
+    if (address.length <= 16) return address;
+    return `${address.substring(0, 12)}...${address.substring(address.length - 4)}`;
+  };
+
+  const buildVaultLink = (label: string, vaultName?: string, vaultId?: string) => {
+    if (!vaultName && !vaultId) return <span>{label}</span>;
+    const query = vaultId ? `vaultId=${encodeURIComponent(vaultId)}` : `vaultName=${encodeURIComponent(vaultName ?? '')}`;
+    return (
+      <Link
+        to={`/vaults?${query}`}
+        onClick={(event) => event.stopPropagation()}
+        className="text-primary hover:underline"
+      >
+        {label}
+      </Link>
+    );
   };
 
   return (
@@ -79,14 +94,39 @@ export function TransactionsTable({
               <td className="font-medium">{tx.assetId}</td>
               <td className="text-mono">{parseFloat(tx.amount).toFixed(4)}</td>
               <td className="text-mono text-sm text-muted">
-                {tx.sourceType === 'INTERNAL'
-                  ? formatInternalLabel(tx.sourceVaultAccountName, tx.vaultAccountId)
-                  : formatExternalAddress(tx.sourceAddress)}
+                {tx.sourceType === 'INTERNAL' ? (
+                  <div className="flex flex-col gap-1">
+                    <span>
+                      {buildVaultLink(
+                        formatInternalLabel(tx.sourceVaultAccountName, tx.vaultAccountId),
+                        tx.sourceVaultAccountName,
+                        tx.sourceVaultAccountName ? undefined : tx.vaultAccountId,
+                      )}
+                    </span>
+                    <span className="text-xs text-muted" title={tx.sourceAddress}>
+                      {formatAddress(tx.sourceAddress)}
+                    </span>
+                  </div>
+                ) : (
+                  <span title={tx.sourceAddress}>{formatAddress(tx.sourceAddress)}</span>
+                )}
               </td>
               <td className="text-mono text-sm text-muted">
-                {tx.destinationType === 'INTERNAL'
-                  ? formatInternalLabel(tx.destinationVaultAccountName)
-                  : formatExternalAddress(tx.destinationAddress)}
+                {tx.destinationType === 'INTERNAL' ? (
+                  <div className="flex flex-col gap-1">
+                    <span>
+                      {buildVaultLink(
+                        formatInternalLabel(tx.destinationVaultAccountName),
+                        tx.destinationVaultAccountName,
+                      )}
+                    </span>
+                    <span className="text-xs text-muted" title={tx.destinationAddress}>
+                      {formatAddress(tx.destinationAddress)}
+                    </span>
+                  </div>
+                ) : (
+                  <span title={tx.destinationAddress}>{formatAddress(tx.destinationAddress)}</span>
+                )}
               </td>
               <td className="text-sm text-muted">{new Date(tx.createdAt).toLocaleString()}</td>
               <td className="text-right">

@@ -4,6 +4,7 @@ using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
 using Waterblocks.Api.Dtos.Fireblocks;
+using Waterblocks.Api.Services;
 
 namespace Waterblocks.Api.Controllers;
 
@@ -14,15 +15,18 @@ public class VaultAccountsController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultAccountsController> _logger;
     private readonly WorkspaceContext _workspace;
+    private readonly IRealtimeNotifier _realtimeNotifier;
 
     public VaultAccountsController(
         FireblocksDbContext context,
         ILogger<VaultAccountsController> logger,
-        WorkspaceContext workspace)
+        WorkspaceContext workspace,
+        IRealtimeNotifier realtimeNotifier)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
+        _realtimeNotifier = realtimeNotifier;
     }
 
     [HttpPost]
@@ -47,6 +51,8 @@ public class VaultAccountsController : ControllerBase
 
         _context.VaultAccounts.Add(vaultAccount);
         await _context.SaveChangesAsync();
+
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
 
         _logger.LogInformation("Created vault account {VaultAccountId} with name {Name}", vaultAccount.Id, vaultAccount.Name);
 
@@ -185,6 +191,8 @@ public class VaultAccountsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
+
         _logger.LogInformation("Updated vault account {VaultAccountId}", vaultAccountId);
 
         return Ok(MapToDto(vaultAccount));
@@ -207,6 +215,8 @@ public class VaultAccountsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
+
         _logger.LogInformation("Hid vault account {VaultAccountId}", vaultAccountId);
 
         return Ok(MapToDto(vaultAccount));
@@ -228,6 +238,8 @@ public class VaultAccountsController : ControllerBase
         vaultAccount.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
 
         _logger.LogInformation("Unhid vault account {VaultAccountId}", vaultAccountId);
 
@@ -253,3 +265,6 @@ public class VaultAccountsController : ControllerBase
         };
     }
 }
+
+
+

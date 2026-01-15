@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet, useAssets, useUpdateVault, useDeleteVault } from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import type { AdminVault } from '../types/admin';
@@ -14,6 +15,7 @@ export default function VaultsPage() {
   const updateVault = useUpdateVault();
   const deleteVault = useDeleteVault();
   const { showToast } = useToast();
+  const [searchParams] = useSearchParams();
   const [selectedVault, setSelectedVault] = useState<AdminVault | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [vaultName, setVaultName] = useState('');
@@ -28,6 +30,21 @@ export default function VaultsPage() {
       setSelectedVault(updated);
     }
   }, [vaults, selectedVault]);
+
+  useEffect(() => {
+    if (!vaults || vaults.length === 0) return;
+    const vaultId = searchParams.get('vaultId');
+    const vaultNameParam = searchParams.get('vaultName');
+    if (!vaultId && !vaultNameParam) return;
+
+    const match = vaultId
+      ? vaults.find((vault) => vault.id === vaultId)
+      : vaults.find((vault) => vault.name === vaultNameParam);
+
+    if (match && match.id !== selectedVault?.id) {
+      setSelectedVault(match);
+    }
+  }, [vaults, searchParams, selectedVault]);
 
   useEffect(() => {
     if (!assets || assets.length === 0) return;

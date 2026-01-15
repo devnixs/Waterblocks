@@ -110,6 +110,7 @@ public class AutoTransitionService : BackgroundService
                     foreach (var workspaceId in updatedWorkspaces)
                     {
                         await _hub.Clients.Group(workspaceId).SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
+                        await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated", cancellationToken: stoppingToken);
                     }
                 }
             }
@@ -241,3 +242,5 @@ public class AutoTransitionService : BackgroundService
         return lookup;
     }
 }
+
+

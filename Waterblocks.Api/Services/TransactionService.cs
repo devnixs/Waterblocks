@@ -18,19 +18,22 @@ public sealed class TransactionService : ITransactionService
     private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
     private readonly IAddressGenerator _addressGenerator;
+    private readonly IRealtimeNotifier _realtimeNotifier;
 
     public TransactionService(
         FireblocksDbContext context,
         ILogger<TransactionService> logger,
         WorkspaceContext workspace,
         IBalanceService balanceService,
-        IAddressGenerator addressGenerator)
+        IAddressGenerator addressGenerator,
+        IRealtimeNotifier realtimeNotifier)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _balanceService = balanceService;
         _addressGenerator = addressGenerator;
+        _realtimeNotifier = realtimeNotifier;
     }
 
     public async Task<CreateTransactionResponseDto> CreateTransactionAsync(CreateTransactionRequestDto request)
@@ -247,6 +250,9 @@ public sealed class TransactionService : ITransactionService
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
+        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
+
         _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} (requested: {RequestedAmount}, fee: {Fee} {FeeCurrency}) from vault {VaultAccountId}",
             transaction.Id, transferAmount, request.AssetId, requestedAmount, networkFee, feeCurrency, vaultAccountId);
 
@@ -267,3 +273,10 @@ public sealed class TransactionService : ITransactionService
         };
     }
 }
+
+
+
+
+
+
+

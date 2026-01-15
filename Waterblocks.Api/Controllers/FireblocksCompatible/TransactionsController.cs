@@ -17,17 +17,20 @@ public class TransactionsController : ControllerBase
     private readonly ILogger<TransactionsController> _logger;
     private readonly WorkspaceContext _workspace;
     private readonly ITransactionService _transactionService;
+    private readonly IRealtimeNotifier _realtimeNotifier;
 
     public TransactionsController(
         FireblocksDbContext context,
         ILogger<TransactionsController> logger,
         WorkspaceContext workspace,
-        ITransactionService transactionService)
+        ITransactionService transactionService,
+        IRealtimeNotifier realtimeNotifier)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _transactionService = transactionService;
+        _realtimeNotifier = realtimeNotifier;
     }
 
     [HttpPost]
@@ -137,6 +140,8 @@ public class TransactionsController : ControllerBase
         transaction.SubStatus = "CANCELLED_BY_USER";
         await _context.SaveChangesAsync();
 
+        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+
         _logger.LogInformation("Cancelled transaction {TransactionId}", txId);
 
         return Ok(new CancelTransactionResponseDto { Success = true });
@@ -150,6 +155,8 @@ public class TransactionsController : ControllerBase
         transaction.Freeze();
         await _context.SaveChangesAsync();
 
+        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+
         _logger.LogInformation("Froze transaction {TransactionId}", txId);
 
         return Ok(new FreezeTransactionResponseDto { Success = true });
@@ -162,6 +169,8 @@ public class TransactionsController : ControllerBase
 
         transaction.Unfreeze();
         await _context.SaveChangesAsync();
+
+        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
 
         _logger.LogInformation("Unfroze transaction {TransactionId}", txId);
 
@@ -214,6 +223,8 @@ public class TransactionsController : ControllerBase
 
         _context.Transactions.Add(replacement);
         await _context.SaveChangesAsync();
+
+        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
 
         _logger.LogInformation("Dropped transaction {TransactionId} and created replacement {ReplacementId}",
             txId, replacement.Id);
@@ -492,3 +503,5 @@ public class TransactionsController : ControllerBase
         return transaction;
     }
 }
+
+

@@ -33,6 +33,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IRealtimeNotifier, Waterblocks.Api.Services.RealtimeNotifier>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionService, Waterblocks.Api.Services.AdminTransactionService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminVaultService, Waterblocks.Api.Services.AdminVaultService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionService, Waterblocks.Api.Services.TransactionService>();
