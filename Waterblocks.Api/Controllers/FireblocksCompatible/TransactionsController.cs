@@ -52,9 +52,12 @@ public class TransactionsController : ControllerBase
             throw new UnauthorizedAccessException("Workspace is required");
         }
 
+        // Filter by address ownership instead of WorkspaceId for cross-workspace support
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
         var query = _context.Transactions
-            .Where(t => t.WorkspaceId == _workspace.WorkspaceId)
             .Include(t => t.VaultAccount)
+            .Where(t => workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress))
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
@@ -97,9 +100,18 @@ public class TransactionsController : ControllerBase
     [HttpGet("{txId}")]
     public async Task<ActionResult<TransactionDto>> GetTransaction(string txId)
     {
+        if (!TransactionCompositeId.TryUnwrap(txId, _workspace.WorkspaceId, out var rawId))
+        {
+            throw new KeyNotFoundException($"Transaction {txId} not found");
+        }
+
+        // Filter by address ownership instead of WorkspaceId for cross-workspace support
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
         var transaction = await _context.Transactions
             .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.Id == txId && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.Id == rawId &&
+                (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
 
         if (transaction == null)
         {
@@ -113,9 +125,13 @@ public class TransactionsController : ControllerBase
     [HttpGet("external_tx_id/{externalTxId}")]
     public async Task<ActionResult<TransactionDto>> GetTransactionByExternalId(string externalTxId)
     {
+        // Filter by address ownership instead of WorkspaceId for cross-workspace support
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
         var transaction = await _context.Transactions
             .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId && t.WorkspaceId == _workspace.WorkspaceId);
+            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId &&
+                (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
 
         if (transaction == null)
         {
@@ -232,7 +248,7 @@ public class TransactionsController : ControllerBase
         return Ok(new DropTransactionResponseDto
         {
             Success = true,
-            Transactions = new List<string> { replacement.Id },
+            Transactions = new List<string> { TransactionCompositeId.Build(_workspace.WorkspaceId, replacement.Id) },
         });
     }
 
@@ -336,7 +352,7 @@ public class TransactionsController : ControllerBase
 
         return new TransactionDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
             AssetId = transaction.AssetId,
             Source = new TransferPeerPathResponseDto
             {
@@ -490,10 +506,18 @@ public class TransactionsController : ControllerBase
 
     private async Task<Transaction> FindTransactionByIdOrExternalIdAsync(string txId)
     {
+        if (!TransactionCompositeId.TryUnwrap(txId, _workspace.WorkspaceId, out var rawId))
+        {
+            throw new KeyNotFoundException($"Transaction {txId} not found");
+        }
+
+        // Filter by address ownership instead of WorkspaceId for cross-workspace support
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
         var transaction = await _context.Transactions
             .FirstOrDefaultAsync(t =>
-                t.WorkspaceId == _workspace.WorkspaceId
-                && (t.Id == txId || t.ExternalTxId == txId));
+                (t.Id == rawId || t.ExternalTxId == rawId)
+                && (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
 
         if (transaction == null)
         {
@@ -501,6 +525,18 @@ public class TransactionsController : ControllerBase
         }
 
         return transaction;
+    }
+
+    private async Task<HashSet<string>> GetWorkspaceAddressesAsync()
+    {
+        var addresses = await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
+            .Select(a => a.AddressValue)
+            .ToListAsync();
+
+        return addresses.ToHashSet();
     }
 }
 

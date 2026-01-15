@@ -13,9 +13,13 @@ public class Transaction
     [MaxLength(50)]
     public string VaultAccountId { get; set; } = string.Empty;
 
-    [Required]
+    /// <summary>
+    /// Optional workspace ID. Transactions can be cross-workspace, so this is kept
+    /// for backwards compatibility but is not used for filtering.
+    /// The workspace view of a transaction is determined by address ownership.
+    /// </summary>
     [MaxLength(50)]
-    public string WorkspaceId { get; set; } = string.Empty;
+    public string? WorkspaceId { get; set; }
 
     [Required]
     [MaxLength(50)]
@@ -96,9 +100,6 @@ public class Transaction
     // Navigation properties
     [ForeignKey(nameof(VaultAccountId))]
     public VaultAccount VaultAccount { get; set; } = null!;
-
-    [ForeignKey(nameof(WorkspaceId))]
-    public Workspace Workspace { get; set; } = null!;
 
     public void TransitionTo(TransactionState newState)
     {

@@ -358,17 +358,81 @@ public class WorkspaceIsolationTests : IAsyncLifetime
 
     #region Cross-Workspace Transaction Tests
 
+    [Fact]
+    public async Task Cross_Workspace_Transaction_Has_Distinct_Composite_Ids_Per_Workspace()
+    {
+        // Arrange: Create two workspaces
+        var (workspace1Id, workspace1ApiKey) = await _fixture.CreateWorkspaceAsync("CompositeSenderWorkspace");
+        var (workspace2Id, workspace2ApiKey) = await _fixture.CreateWorkspaceAsync("CompositeReceiverWorkspace");
+
+        var fireblocksClient1 = _fixture.CreateFireblocksClientWithApiKey(workspace1ApiKey);
+        var fireblocksClient2 = _fixture.CreateFireblocksClientWithApiKey(workspace2ApiKey);
+        var adminClient1 = _fixture.CreateAdminClientForWorkspace(workspace1Id);
+        var adminClient2 = _fixture.CreateAdminClientForWorkspace(workspace2Id);
+
+        // Create vaults in each workspace
+        var senderVault = await fireblocksClient1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "CompositeSenderVault" });
+        var receiverVault = await fireblocksClient2.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "CompositeReceiverVault" });
+
+        // Create wallets and get deposit addresses
+        var senderWalletResponse = await adminClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderDepositAddress = senderWalletResponse.Data!.DepositAddress;
+
+        await adminClient2.CreateWalletAsync(receiverVault!.Id, "BTC");
+        var receiverVaultDetails = await adminClient2.GetVaultAsync(receiverVault!.Id);
+        var receiverDepositAddress = receiverVaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
+
+        // Fund the sender vault
+        await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = "external-funder",
+            DestinationAddress = senderDepositAddress,
+            Amount = "10"
+        });
+
+        // Create cross-workspace transaction
+        var crossWorkspaceTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = senderDepositAddress,
+            DestinationAddress = receiverDepositAddress,
+            Amount = "1"
+        });
+        crossWorkspaceTx.IsSuccess.Should().BeTrue();
+
+        var senderCompositeId = crossWorkspaceTx.Data!.Id;
+
+        // Act: List transactions from each workspace
+        var workspace1Transactions = await adminClient1.GetTransactionsAsync();
+        var workspace2Transactions = await adminClient2.GetTransactionsAsync();
+
+        // Assert: both workspaces should see the same transaction with different composite IDs
+        var ws1Tx = workspace1Transactions.Data!.First(t => t.Id == senderCompositeId);
+        var ws2Tx = workspace2Transactions.Data!.First(t => t.DestinationVaultAccountName == "CompositeReceiverVault"
+                                                            && t.DestinationAddress == receiverDepositAddress);
+
+        ws1Tx.Id.Should().StartWith(workspace1Id + "::");
+        ws2Tx.Id.Should().StartWith(workspace2Id + "::");
+        ws1Tx.Id.Should().NotBe(ws2Tx.Id, "each workspace should receive a distinct composite ID");
+
+        // And both composite IDs should be resolvable by their respective workspace
+        var senderTxById = await adminClient1.GetTransactionAsync(ws1Tx.Id);
+        var receiverTxById = await adminClient2.GetTransactionAsync(ws2Tx.Id);
+        senderTxById.IsSuccess.Should().BeTrue();
+        receiverTxById.IsSuccess.Should().BeTrue();
+    }
+
+
     /// <summary>
-    /// Tests that cross-workspace transactions are properly isolated.
-    /// When Vault A in Workspace 1 sends to Vault B in Workspace 2:
-    /// - Workspace 1 sees: outgoing transaction (Vault A -> external)
-    /// - Workspace 2 sees: incoming transaction (external -> Vault B)
-    ///
-    /// This is simulated by creating paired transactions - an outgoing in workspace 1
-    /// and an incoming in workspace 2 using the same destination address.
+    /// Tests that a single transaction is visible from BOTH workspaces when it involves
+    /// addresses owned by each workspace. The same transaction appears with different
+    /// source/destination types based on the viewer's perspective:
+    /// - Workspace 1 (sender) sees: source=INTERNAL (their vault), destination=EXTERNAL
+    /// - Workspace 2 (receiver) sees: source=EXTERNAL, destination=INTERNAL (their vault)
     /// </summary>
     [Fact]
-    public async Task Cross_Workspace_Transaction_Creates_Paired_Transactions_In_Each_Workspace()
+    public async Task Cross_Workspace_Transaction_Visible_From_Both_Workspaces_With_Different_Perspective()
     {
         // Arrange: Create two workspaces
         var (workspace1Id, workspace1ApiKey) = await _fixture.CreateWorkspaceAsync("SenderWorkspace");
@@ -398,70 +462,118 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             .First(w => w.AssetId == "BTC").DepositAddress;
 
         // Fund the sender vault
-        var fundingTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = senderDepositAddress,
             Amount = "10"
         });
-        fundingTx.IsSuccess.Should().BeTrue();
 
-        // Simulate cross-workspace transfer by creating paired transactions:
-        // 1. Outgoing transaction in workspace 1 (sender -> external address)
-        var outgoingTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        // Create cross-workspace transaction: sender vault -> receiver vault
+        var crossWorkspaceTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
             SourceAddress = senderDepositAddress,
             DestinationAddress = receiverDepositAddress,
             Amount = "1"
         });
-        outgoingTx.IsSuccess.Should().BeTrue("Outgoing transaction should be created");
+        crossWorkspaceTx.IsSuccess.Should().BeTrue("Cross-workspace transaction should be created");
+        var txId = crossWorkspaceTx.Data!.Id;
 
-        // Complete the outgoing transaction
-        await adminClient1.CompleteTransactionFullCycleAsync(outgoingTx.Data!.Id);
-
-        // 2. Incoming transaction in workspace 2 (external -> receiver vault)
-        var incomingTx = await adminClient2.CreateTransactionAsync(new CreateTransactionRequest
-        {
-            AssetId = "BTC",
-            SourceAddress = "external-sender",  // Would be sender's address in real scenario
-            DestinationAddress = receiverDepositAddress,
-            Amount = "1"
-        });
-        incomingTx.IsSuccess.Should().BeTrue("Incoming transaction should be created");
+        // Complete the transaction
+        await adminClient1.CompleteTransactionFullCycleAsync(txId);
 
         // Act: Query transactions from each workspace
         var workspace1Transactions = await adminClient1.GetTransactionsAsync();
         var workspace2Transactions = await adminClient2.GetTransactionsAsync();
 
-        // Assert: Workspace 1 sees outgoing transaction
+        // Assert: BOTH workspaces should see the same transaction (with different composite IDs)
         workspace1Transactions.IsSuccess.Should().BeTrue();
-        workspace1Transactions.Data.Should().Contain(t => t.Id == outgoingTx.Data!.Id,
-            "Workspace 1 should see the outgoing transaction");
-        workspace1Transactions.Data.Should().NotContain(t => t.Id == incomingTx.Data!.Id,
-            "Workspace 1 should NOT see the incoming transaction from workspace 2");
+        workspace1Transactions.Data.Should().Contain(t => t.Id == txId,
+            "Workspace 1 (sender) should see the cross-workspace transaction");
 
-        var ws1OutgoingTx = workspace1Transactions.Data!.First(t => t.Id == outgoingTx.Data!.Id);
-        ws1OutgoingTx.SourceType.Should().Be("INTERNAL", "Source should be internal (vault)");
-        ws1OutgoingTx.DestinationType.Should().Be("EXTERNAL", "Destination should be external");
-        ws1OutgoingTx.SourceVaultAccountName.Should().Be("SenderVault");
-
-        // Assert: Workspace 2 sees incoming transaction
         workspace2Transactions.IsSuccess.Should().BeTrue();
-        workspace2Transactions.Data.Should().Contain(t => t.Id == incomingTx.Data!.Id,
-            "Workspace 2 should see the incoming transaction");
-        workspace2Transactions.Data.Should().NotContain(t => t.Id == outgoingTx.Data!.Id,
-            "Workspace 2 should NOT see the outgoing transaction from workspace 1");
+        workspace2Transactions.Data.Should().Contain(t => t.DestinationVaultAccountName == "ReceiverVault",
+            "Workspace 2 (receiver) should see the cross-workspace transaction");
 
-        var ws2IncomingTx = workspace2Transactions.Data!.First(t => t.Id == incomingTx.Data!.Id);
-        ws2IncomingTx.SourceType.Should().Be("EXTERNAL", "Source should be external");
-        ws2IncomingTx.DestinationType.Should().Be("INTERNAL", "Destination should be internal (vault)");
-        ws2IncomingTx.DestinationVaultAccountName.Should().Be("ReceiverVault");
+        // Verify workspace 1's perspective (sender)
+        var ws1Tx = workspace1Transactions.Data!.First(t => t.Id == txId);
+        ws1Tx.SourceType.Should().Be("INTERNAL", "From sender's perspective, source should be INTERNAL (their vault)");
+        ws1Tx.DestinationType.Should().Be("EXTERNAL", "From sender's perspective, destination should be EXTERNAL");
+        ws1Tx.SourceVaultAccountName.Should().Be("SenderVault");
+
+        // Verify workspace 2's perspective (receiver)
+        var ws2Tx = workspace2Transactions.Data!.First(t => t.DestinationVaultAccountName == "ReceiverVault");
+        ws2Tx.Id.Should().NotBe(txId, "each workspace should get a distinct composite transaction ID");
+        ws2Tx.SourceType.Should().Be("EXTERNAL", "From receiver's perspective, source should be EXTERNAL");
+        ws2Tx.DestinationType.Should().Be("INTERNAL", "From receiver's perspective, destination should be INTERNAL (their vault)");
+        ws2Tx.DestinationVaultAccountName.Should().Be("ReceiverVault");
     }
 
+    /// <summary>
+    /// Tests that a cross-workspace transaction is NOT visible from a third workspace
+    /// that doesn't own either the source or destination address.
+    /// </summary>
     [Fact]
-    public async Task Cross_Workspace_Transactions_Via_Fireblocks_Api_Are_Isolated()
+    public async Task Cross_Workspace_Transaction_Not_Visible_From_Unrelated_Workspace()
+    {
+        // Arrange: Create three workspaces
+        var (workspace1Id, workspace1ApiKey) = await _fixture.CreateWorkspaceAsync("SenderWorkspace3");
+        var (workspace2Id, workspace2ApiKey) = await _fixture.CreateWorkspaceAsync("ReceiverWorkspace3");
+        var (workspace3Id, workspace3ApiKey) = await _fixture.CreateWorkspaceAsync("UnrelatedWorkspace3");
+
+        var fireblocksClient1 = _fixture.CreateFireblocksClientWithApiKey(workspace1ApiKey);
+        var fireblocksClient2 = _fixture.CreateFireblocksClientWithApiKey(workspace2ApiKey);
+        var adminClient1 = _fixture.CreateAdminClientForWorkspace(workspace1Id);
+        var adminClient2 = _fixture.CreateAdminClientForWorkspace(workspace2Id);
+        var adminClient3 = _fixture.CreateAdminClientForWorkspace(workspace3Id);
+
+        // Create vaults in workspaces 1 and 2
+        var senderVault = await fireblocksClient1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "SenderVault3" });
+        var receiverVault = await fireblocksClient2.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "ReceiverVault3" });
+
+        // Create wallets
+        var senderWalletResponse = await adminClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderDepositAddress = senderWalletResponse.Data!.DepositAddress;
+        var receiverWalletResponse = await adminClient2.CreateWalletAsync(receiverVault!.Id, "BTC");
+        var receiverVaultDetails = await adminClient2.GetVaultAsync(receiverVault!.Id);
+        var receiverDepositAddress = receiverVaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
+
+        // Fund the sender vault
+        await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = "external-funder",
+            DestinationAddress = senderDepositAddress,
+            Amount = "10"
+        });
+
+        // Create cross-workspace transaction
+        var crossWorkspaceTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = senderDepositAddress,
+            DestinationAddress = receiverDepositAddress,
+            Amount = "1"
+        });
+        var txId = crossWorkspaceTx.Data!.Id;
+
+        // Act: Query transactions from workspace 3 (the unrelated workspace)
+        var workspace3Transactions = await adminClient3.GetTransactionsAsync();
+
+        // Assert: Workspace 3 should NOT see the transaction
+        workspace3Transactions.IsSuccess.Should().BeTrue();
+        workspace3Transactions.Data.Should().NotContain(t => t.DestinationVaultAccountName == "ReceiverVault3",
+            "Unrelated workspace should NOT see transactions between other workspaces");
+    }
+
+    /// <summary>
+    /// Tests that the Fireblocks API also shows cross-workspace transactions
+    /// to both workspaces based on address ownership.
+    /// </summary>
+    [Fact]
+    public async Task Cross_Workspace_Transaction_Via_Fireblocks_Api_Visible_From_Both_Workspaces()
     {
         // Arrange: Create two workspaces
         var (workspace1Id, workspace1ApiKey) = await _fixture.CreateWorkspaceAsync("FbSenderWorkspace");
@@ -491,7 +603,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var receiverWallet = await fireblocksClient2.CreateWalletAsync(receiverVault!.Id, "BTC");
         var receiverAddress = receiverWallet!.Address;
 
-        // Create outgoing transaction via Fireblocks API (to external address)
+        // Create outgoing transaction via Fireblocks API
         var txResponse = await fireblocksClient1.CreateTransactionAsync(new FireblocksCreateTransactionRequest
         {
             AssetId = "BTC",
@@ -504,26 +616,32 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Amount = "0.5"
         });
         txResponse.Should().NotBeNull();
+        var txId = txResponse!.Id;
 
         // Act: Query transactions from both workspaces via Fireblocks API
         var txFromWorkspace1 = await fireblocksClient1.GetTransactionsAsync();
         var txFromWorkspace2 = await fireblocksClient2.GetTransactionsAsync();
 
-        // Assert: Transaction is only visible from workspace 1 (the sender's workspace)
+        // Assert: Transaction should be visible from BOTH workspaces
         txFromWorkspace1.Should().NotBeNull();
-        txFromWorkspace1!.Should().Contain(t => t.Id == txResponse!.Id,
-            "Outgoing transaction should be visible from sender's workspace");
+        txFromWorkspace1!.Should().Contain(t => t.Id == txId,
+            "Transaction should be visible from sender's workspace");
 
         txFromWorkspace2.Should().NotBeNull();
-        txFromWorkspace2!.Should().NotContain(t => t.Id == txResponse!.Id,
-            "Transaction should NOT be visible from receiver's workspace until an incoming tx is created");
+        txFromWorkspace2!.Should().Contain(t => t.DestinationAddress == receiverAddress,
+            "Transaction should be visible from receiver's workspace (cross-workspace)");
 
-        // The receiver workspace would see an incoming transaction only if the blockchain
-        // simulator detects the transfer and creates one, or if it's manually created
+        // Verify different perspectives
+        var ws1Tx = txFromWorkspace1.First(t => t.Id == txId);
+        ws1Tx.Source!.Type.Should().Be("VAULT_ACCOUNT", "Sender sees source as their vault");
+
+        var ws2Tx = txFromWorkspace2.First(t => t.DestinationAddress == receiverAddress);
+        ws2Tx.Destination!.Type.Should().Be("VAULT_ACCOUNT", "Receiver sees destination as their vault");
+        ws2Tx.Id.Should().NotBe(txId, "receiver should see a distinct composite transaction ID");
     }
 
     [Fact]
-    public async Task Fireblocks_Api_Transaction_To_Other_Workspace_Vault_Address_Shows_As_External()
+    public async Task Fireblocks_Api_Transaction_Shows_Correct_Perspective_Per_Workspace()
     {
         // Arrange: Create two workspaces
         var (workspace1Id, workspace1ApiKey) = await _fixture.CreateWorkspaceAsync("OutWorkspace");
@@ -565,16 +683,30 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             },
             Amount = "0.25"
         });
+        var txId = txResponse!.Id;
 
-        // Act: Get the transaction details
-        var tx = await fireblocksClient1.GetTransactionAsync(txResponse!.Id);
+        // Act: Get the transaction details from sender's perspective
+        var txFromSender = await fireblocksClient1.GetTransactionAsync(txId);
 
-        // Assert: The destination should be ONE_TIME_ADDRESS (external), not VAULT_ACCOUNT
-        tx.Should().NotBeNull();
-        tx!.Destination.Should().NotBeNull();
-        tx.Destination!.Type.Should().Be("ONE_TIME_ADDRESS",
-            "Destination should be external even though the address belongs to a vault in another workspace");
-        tx.DestinationAddress.Should().Be(receiverAddress,
+        // Act: Get the transaction details from receiver's perspective
+        var receiverTransactions = await fireblocksClient2.GetTransactionsAsync();
+        var receiverCompositeId = receiverTransactions!.First(t => t.DestinationAddress == receiverAddress).Id;
+        var txFromReceiver = await fireblocksClient2.GetTransactionAsync(receiverCompositeId);
+
+        // Assert: Sender's perspective
+        txFromSender.Should().NotBeNull();
+        txFromSender!.Source!.Type.Should().Be("VAULT_ACCOUNT",
+            "Sender should see source as VAULT_ACCOUNT (their vault)");
+        txFromSender.Destination!.Type.Should().Be("ONE_TIME_ADDRESS",
+            "Sender should see destination as ONE_TIME_ADDRESS (external to them)");
+
+        // Assert: Receiver's perspective
+        txFromReceiver.Should().NotBeNull();
+        txFromReceiver!.Source!.Type.Should().Be("ONE_TIME_ADDRESS",
+            "Receiver should see source as ONE_TIME_ADDRESS (external to them)");
+        txFromReceiver.Destination!.Type.Should().Be("VAULT_ACCOUNT",
+            "Receiver should see destination as VAULT_ACCOUNT (their vault)");
+        txFromReceiver.DestinationAddress.Should().Be(receiverAddress,
             "Destination address should be the receiver vault's deposit address");
     }
 

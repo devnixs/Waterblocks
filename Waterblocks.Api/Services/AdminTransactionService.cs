@@ -59,8 +59,13 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<List<AdminTransactionDto>>();
         }
 
+        // Get all addresses belonging to vaults in the current workspace
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
+        // Find transactions where source OR destination address belongs to this workspace
         var transactions = await _context.Transactions
-            .Where(t => t.WorkspaceId == _workspace.WorkspaceId)
+            .Where(t => workspaceAddresses.Contains(t.SourceAddress) ||
+                        workspaceAddresses.Contains(t.DestinationAddress))
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
@@ -84,8 +89,13 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var safePageIndex = Math.Max(0, pageIndex);
         var safePageSize = Math.Clamp(pageSize, 1, 200);
 
+        // Get all addresses belonging to vaults in the current workspace
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+
+        // Find transactions where source OR destination address belongs to this workspace
         var query = _context.Transactions
-            .Where(t => t.WorkspaceId == _workspace.WorkspaceId);
+            .Where(t => workspaceAddresses.Contains(t.SourceAddress) ||
+                        workspaceAddresses.Contains(t.DestinationAddress));
 
         var normalizedAsset = assetId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedAsset))
@@ -97,8 +107,15 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var normalizedId = transactionId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedId))
         {
-            var idLower = normalizedId.ToLowerInvariant();
-            query = query.Where(t => t.Id.ToLower().Contains(idLower));
+            if (!TryUnwrapTransactionId(normalizedId, out var rawId))
+            {
+                query = query.Where(_ => false);
+            }
+            else
+            {
+                var idLower = rawId.ToLowerInvariant();
+                query = query.Where(t => t.Id.ToLower().Contains(idLower));
+            }
         }
 
         var normalizedHash = hash?.Trim();
@@ -137,10 +154,24 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<AdminTransactionDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
 
         if (transaction == null)
+        {
+            return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -286,9 +317,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<TransactionStateDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
         if (transaction == null)
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -308,9 +353,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<TransactionStateDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
         if (transaction == null)
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -326,9 +385,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<TransactionStateDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
         if (transaction == null)
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -349,9 +422,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<TransactionStateDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
         if (transaction == null)
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -380,7 +467,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         var result = new TransactionStateDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
             State = transaction.State.ToString(),
         };
 
@@ -409,9 +496,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return WorkspaceRequired<TransactionStateDto>();
         }
 
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id && t.WorkspaceId == _workspace.WorkspaceId);
+        if (!TryUnwrapTransactionId(id, out var rawId))
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
         if (transaction == null)
+        {
+            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+        }
+
+        // Check if the transaction belongs to this workspace (source or destination)
+        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
+                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+
+        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -428,7 +529,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
             var existingResult = new TransactionStateDto
             {
-                Id = transaction.Id,
+                Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
                 State = transaction.State.ToString(),
             };
 
@@ -461,7 +562,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         var result = new TransactionStateDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
             State = transaction.State.ToString(),
         };
 
@@ -477,7 +578,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         return new AdminTransactionDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
             SourceType = sourceType,
@@ -494,7 +595,9 @@ public sealed class AdminTransactionService : IAdminTransactionService
             NetworkFee = transaction.NetworkFee.ToString("F18"),
             IsFrozen = transaction.IsFrozen,
             FailureReason = transaction.FailureReason,
-            ReplacedByTxId = transaction.ReplacedByTxId,
+            ReplacedByTxId = transaction.ReplacedByTxId == null
+                ? null
+                : TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.ReplacedByTxId),
             Confirmations = transaction.Confirmations,
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt,
@@ -607,6 +710,27 @@ public sealed class AdminTransactionService : IAdminTransactionService
         }
 
         return lookup;
+    }
+
+    /// <summary>
+    /// Gets all addresses belonging to vaults in the current workspace.
+    /// Used for filtering transactions that belong to this workspace.
+    /// </summary>
+    private async Task<HashSet<string>> GetWorkspaceAddressesAsync()
+    {
+        var addresses = await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
+            .Select(a => a.AddressValue)
+            .ToListAsync();
+
+        return addresses.ToHashSet();
+    }
+
+    private bool TryUnwrapTransactionId(string id, out string rawId)
+    {
+        return TransactionCompositeId.TryUnwrap(id, _workspace.WorkspaceId, out rawId);
     }
 
     private static TransactionState ResolveInitialState(string? initialState, TransactionState fallback)

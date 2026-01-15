@@ -62,10 +62,10 @@ public class BalanceService : IBalanceService
 
     public async Task<BalanceResult> ReserveFundsAsync(Transaction transaction)
     {
+        // Address-based lookup - no workspace filter needed since addresses are globally unique
         var sourceWallet = await GetWalletByAddressAsync(
             transaction.SourceAddress,
-            transaction.AssetId,
-            transaction.WorkspaceId);
+            transaction.AssetId);
 
         if (sourceWallet == null)
         {
@@ -84,8 +84,7 @@ public class BalanceService : IBalanceService
         {
             feeWallet = await GetOrCreateWalletAsync(
                 sourceVaultId,
-                feeCurrency,
-                transaction.WorkspaceId);
+                feeCurrency);
 
             if (feeWallet == null)
             {
@@ -161,10 +160,10 @@ public class BalanceService : IBalanceService
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
 
+        // Address-based lookup - no workspace filter needed since addresses are globally unique
         var sourceWallet = await GetWalletByAddressAsync(
             transaction.SourceAddress,
-            transaction.AssetId,
-            transaction.WorkspaceId);
+            transaction.AssetId);
 
         if (sourceWallet != null)
         {
@@ -192,8 +191,7 @@ public class BalanceService : IBalanceService
             {
                 var feeWallet = await GetWalletAsync(
                     sourceVaultId,
-                    feeCurrency,
-                    transaction.WorkspaceId);
+                    feeCurrency);
 
                 if (feeWallet != null)
                 {
@@ -208,10 +206,10 @@ public class BalanceService : IBalanceService
             }
         }
 
+        // Credit destination wallet (may be in different workspace for cross-workspace transactions)
         var destinationWallet = await GetWalletByAddressAsync(
             transaction.DestinationAddress,
-            transaction.AssetId,
-            transaction.WorkspaceId);
+            transaction.AssetId);
 
         if (destinationWallet != null)
         {
@@ -230,10 +228,10 @@ public class BalanceService : IBalanceService
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
 
+        // Address-based lookup - no workspace filter needed since addresses are globally unique
         var wallet = await GetWalletByAddressAsync(
             transaction.SourceAddress,
-            transaction.AssetId,
-            transaction.WorkspaceId);
+            transaction.AssetId);
 
         if (wallet == null)
         {
@@ -263,8 +261,7 @@ public class BalanceService : IBalanceService
         {
             var feeWallet = await GetWalletAsync(
                 sourceVaultId,
-                feeCurrency,
-                transaction.WorkspaceId);
+                feeCurrency);
 
             if (feeWallet != null)
             {
@@ -281,10 +278,10 @@ public class BalanceService : IBalanceService
 
     public async Task CreditIncomingAsync(Transaction transaction)
     {
+        // Address-based lookup - no workspace filter needed since addresses are globally unique
         var wallet = await GetWalletByAddressAsync(
             transaction.DestinationAddress,
-            transaction.AssetId,
-            transaction.WorkspaceId);
+            transaction.AssetId);
 
         if (wallet != null)
         {
@@ -297,7 +294,10 @@ public class BalanceService : IBalanceService
         }
     }
 
-    private async Task<Wallet?> GetWalletByAddressAsync(string? address, string assetId, string workspaceId)
+    /// <summary>
+    /// Finds a wallet by its address. No workspace filtering needed since addresses are globally unique.
+    /// </summary>
+    private async Task<Wallet?> GetWalletByAddressAsync(string? address, string assetId)
     {
         if (string.IsNullOrWhiteSpace(address))
         {
@@ -310,31 +310,35 @@ public class BalanceService : IBalanceService
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
             .Where(a => a.AddressValue == normalizedAddress
-                        && a.Wallet.AssetId == assetId
-                        && a.Wallet.VaultAccount.WorkspaceId == workspaceId)
+                        && a.Wallet.AssetId == assetId)
             .Select(a => a.Wallet)
             .FirstOrDefaultAsync();
     }
 
-    private async Task<Wallet?> GetWalletAsync(string vaultAccountId, string assetId, string workspaceId)
+    /// <summary>
+    /// Finds a wallet by vault account ID and asset ID. No workspace filtering needed since vault IDs are globally unique.
+    /// </summary>
+    private async Task<Wallet?> GetWalletAsync(string vaultAccountId, string assetId)
     {
         return await _context.Wallets
             .Include(w => w.VaultAccount)
             .FirstOrDefaultAsync(w =>
                 w.VaultAccountId == vaultAccountId &&
-                w.AssetId == assetId &&
-                w.VaultAccount.WorkspaceId == workspaceId);
+                w.AssetId == assetId);
     }
 
-    private async Task<Wallet?> GetOrCreateWalletAsync(string vaultAccountId, string assetId, string workspaceId)
+    /// <summary>
+    /// Gets or creates a wallet for the given vault and asset. No workspace filtering needed since vault IDs are globally unique.
+    /// </summary>
+    private async Task<Wallet?> GetOrCreateWalletAsync(string vaultAccountId, string assetId)
     {
-        var wallet = await GetWalletAsync(vaultAccountId, assetId, workspaceId);
+        var wallet = await GetWalletAsync(vaultAccountId, assetId);
 
         if (wallet == null)
         {
-            // Verify vault exists and belongs to workspace
+            // Verify vault exists
             var vault = await _context.VaultAccounts
-                .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == workspaceId);
+                .FirstOrDefaultAsync(v => v.Id == vaultAccountId);
 
             if (vault == null)
             {

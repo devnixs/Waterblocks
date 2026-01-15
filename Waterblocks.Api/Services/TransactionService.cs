@@ -258,7 +258,7 @@ public sealed class TransactionService : ITransactionService
 
         return new CreateTransactionResponseDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
             Status = transaction.State.ToString(),
         };
     }

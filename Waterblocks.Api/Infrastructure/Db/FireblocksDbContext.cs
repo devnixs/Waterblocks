@@ -88,12 +88,10 @@ public class FireblocksDbContext : DbContext
             entity.HasIndex(e => e.State);
             entity.HasIndex(e => e.Hash);
             entity.HasIndex(e => e.CreatedAt);
+            // Keep index on WorkspaceId for backwards compatibility, but no FK constraint
+            // Transactions are cross-workspace and determined by address ownership
             entity.HasIndex(e => e.WorkspaceId);
             entity.Property(e => e.State).HasConversion<string>();
-            entity.HasOne(e => e.Workspace)
-                .WithMany(w => w.Transactions)
-                .HasForeignKey(e => e.WorkspaceId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AdminSetting>(entity =>

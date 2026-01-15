@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using Waterblocks.Api.Infrastructure.Db;
+using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Models;
 using Waterblocks.Api.Hubs;
 using Waterblocks.Api.Dtos.Admin;
@@ -146,7 +147,7 @@ public class AutoTransitionService : BackgroundService
 
         return new AdminTransactionDto
         {
-            Id = transaction.Id,
+            Id = TransactionCompositeId.Build(transaction.WorkspaceId, transaction.Id),
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
             SourceType = sourceType,
@@ -163,7 +164,9 @@ public class AutoTransitionService : BackgroundService
             NetworkFee = transaction.NetworkFee.ToString("F18"),
             IsFrozen = transaction.IsFrozen,
             FailureReason = transaction.FailureReason,
-            ReplacedByTxId = transaction.ReplacedByTxId,
+            ReplacedByTxId = transaction.ReplacedByTxId == null
+                ? null
+                : TransactionCompositeId.Build(transaction.WorkspaceId, transaction.ReplacedByTxId),
             Confirmations = transaction.Confirmations,
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt,
