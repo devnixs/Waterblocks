@@ -351,18 +351,27 @@ export default function TransactionsPage() {
       return generated;
     };
 
-    const resolvedSourceAddress = sourceType === 'EXTERNAL'
-      ? await resolveExternalAddress(sourceAddress, setSourceAddress)
-      : undefined;
-    const resolvedDestinationAddress = destinationType === 'EXTERNAL'
-      ? await resolveExternalAddress(destinationAddress, setDestinationAddress)
-      : undefined;
+    let resolvedSourceAddress: string | undefined;
+    let resolvedDestinationAddress: string | undefined;
 
-    if (sourceType === 'EXTERNAL' && !resolvedSourceAddress) {
-      return;
+    if (sourceType === 'EXTERNAL') {
+      resolvedSourceAddress = await resolveExternalAddress(sourceAddress, setSourceAddress);
+      if (!resolvedSourceAddress) {
+        return;
+      }
+    } else {
+      // INTERNAL - send address if specified (optional override for specific vault address)
+      resolvedSourceAddress = sourceAddress.trim() || undefined;
     }
-    if (destinationType === 'EXTERNAL' && !resolvedDestinationAddress) {
-      return;
+
+    if (destinationType === 'EXTERNAL') {
+      resolvedDestinationAddress = await resolveExternalAddress(destinationAddress, setDestinationAddress);
+      if (!resolvedDestinationAddress) {
+        return;
+      }
+    } else {
+      // INTERNAL - send address if specified (optional override for specific vault address)
+      resolvedDestinationAddress = destinationAddress.trim() || undefined;
     }
 
     const result = await createTransaction.mutateAsync({
@@ -479,13 +488,19 @@ export default function TransactionsPage() {
           assetId={assetId}
           setAssetId={setAssetId}
           sourceType={sourceType}
-          setSourceType={setSourceType}
+          setSourceType={(type) => {
+            setSourceType(type);
+            setSourceAddress(''); // Clear address when switching type
+          }}
           sourceAddress={sourceAddress}
           setSourceAddress={setSourceAddress}
           sourceVaultId={sourceVaultId}
           setSourceVaultId={setSourceVaultId}
           destinationType={destinationType}
-          setDestinationType={setDestinationType}
+          setDestinationType={(type) => {
+            setDestinationType(type);
+            setDestinationAddress(''); // Clear address when switching type
+          }}
           destinationAddress={destinationAddress}
           setDestinationAddress={setDestinationAddress}
           destinationVaultId={destinationVaultId}

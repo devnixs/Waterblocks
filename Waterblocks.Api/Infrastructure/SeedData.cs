@@ -42,7 +42,6 @@ public static class SeedData
             "BASECHAIN_ETH",
             "BONK_SOL",
             "EUROC_ETH_F5NG",
-            "EURR_ETH_YSHA",
             "MATIC",
             "MATIC_POLYGON",
             "SOL",
@@ -50,7 +49,6 @@ public static class SeedData
             "USDC",
             "USDC_POLYGON",
             "USDC_POLYGON_NXTB",
-            "USDS",
             "USDT_ERC20",
         };
 

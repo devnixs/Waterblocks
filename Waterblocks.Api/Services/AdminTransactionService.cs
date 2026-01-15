@@ -225,7 +225,26 @@ public sealed class AdminTransactionService : IAdminTransactionService
         if (destinationInternal)
         {
             var destinationWallet = await EnsureWalletWithDepositAddress(destinationVaultId!, request.AssetId);
-            destinationAddress = destinationWallet.Addresses.FirstOrDefault()?.AddressValue ?? "";
+
+            // If specific address provided, validate it belongs to this vault
+            if (!string.IsNullOrWhiteSpace(destinationAddress))
+            {
+                var addressBelongsToVault = destinationWallet.Addresses
+                    .Any(a => a.AddressValue == destinationAddress);
+
+                if (!addressBelongsToVault)
+                {
+                    return Failure<AdminTransactionDto>(
+                        $"Address {destinationAddress} does not belong to vault {destinationVaultId}",
+                        "ADDRESS_VAULT_MISMATCH");
+                }
+                // Use the provided address (already set above)
+            }
+            else
+            {
+                // Use first address (EnsureWalletWithDepositAddress guarantees at least one exists)
+                destinationAddress = destinationWallet.Addresses.First().AddressValue;
+            }
         }
         else if (string.IsNullOrWhiteSpace(destinationAddress))
         {
@@ -233,9 +252,56 @@ public sealed class AdminTransactionService : IAdminTransactionService
         }
 
         var sourceAddress = request.SourceAddress?.Trim();
-        if (!sourceInternal && string.IsNullOrWhiteSpace(sourceAddress))
+        if (sourceInternal)
+        {
+            // Get source wallet (ensures wallet and address exist)
+            var sourceWallet = await EnsureWalletWithDepositAddress(sourceVaultId!, request.AssetId);
+
+            // If specific address provided, validate it belongs to this vault
+            if (!string.IsNullOrWhiteSpace(sourceAddress))
+            {
+                var addressBelongsToVault = sourceWallet.Addresses
+                    .Any(a => a.AddressValue == sourceAddress);
+
+                if (!addressBelongsToVault)
+                {
+                    return Failure<AdminTransactionDto>(
+                        $"Address {sourceAddress} does not belong to vault {sourceVaultId}",
+                        "ADDRESS_VAULT_MISMATCH");
+                }
+                // Use the provided address (already set above)
+            }
+            else
+            {
+                // Use first address (EnsureWalletWithDepositAddress guarantees at least one exists)
+                sourceAddress = sourceWallet.Addresses.First().AddressValue;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(sourceAddress))
         {
             sourceAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
+        }
+
+        // Final validation: ensure both addresses are not empty
+        if (string.IsNullOrWhiteSpace(sourceAddress))
+        {
+            return Failure<AdminTransactionDto>("Source address is required", "SOURCE_ADDRESS_REQUIRED");
+        }
+
+        if (string.IsNullOrWhiteSpace(destinationAddress))
+        {
+            return Failure<AdminTransactionDto>("Destination address is required", "DESTINATION_ADDRESS_REQUIRED");
+        }
+
+        // Final validation: ensure vault IDs are set when type is INTERNAL
+        if (sourceInternal && string.IsNullOrWhiteSpace(sourceVaultId))
+        {
+            return Failure<AdminTransactionDto>("Source vault ID is required when source type is INTERNAL", "SOURCE_VAULT_ID_REQUIRED");
+        }
+
+        if (destinationInternal && string.IsNullOrWhiteSpace(destinationVaultId))
+        {
+            return Failure<AdminTransactionDto>("Destination vault ID is required when destination type is INTERNAL", "DESTINATION_VAULT_ID_REQUIRED");
         }
 
         var transaction = new Transaction
@@ -245,7 +311,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
             WorkspaceId = _workspace.WorkspaceId,
             AssetId = request.AssetId,
             SourceType = sourceType,
-            SourceAddress = sourceInternal ? null : sourceAddress,
+            SourceAddress = sourceAddress,
             SourceVaultAccountId = sourceInternal ? sourceVaultId : null,
             DestinationType = destinationType,
             DestinationVaultAccountId = destinationInternal ? destinationVaultId : null,

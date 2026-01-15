@@ -200,8 +200,8 @@ public class CreateTransactionRequestDto
     public string? PriorityFee { get; set; }
     public bool? FailOnLowFee { get; set; }
     public string? MaxFee { get; set; }
-    public string? GasPrice { get; set; }
-    public string? GasLimit { get; set; }
+    public decimal? GasPrice { get; set; }
+    public decimal? GasLimit { get; set; }
     public string? NetworkFee { get; set; }
     public string? Note { get; set; }
     public bool? AutoStaking { get; set; }

@@ -54,7 +54,7 @@ export function TransactionDetailPanel({
             <div className="font-medium">{transaction.sourceType}</div>
             <div className="text-mono text-sm text-muted break-all mt-1">
               {transaction.sourceType === 'INTERNAL'
-                ? `Vault: ${transaction.vaultAccountId}`
+                ? `Vault: ${transaction.sourceVaultAccountId}`
                 : transaction.sourceAddress}
             </div>
           </div>

@@ -17,17 +17,20 @@ public sealed class TransactionService : ITransactionService
     private readonly ILogger<TransactionService> _logger;
     private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
+    private readonly IAddressGenerator _addressGenerator;
 
     public TransactionService(
         FireblocksDbContext context,
         ILogger<TransactionService> logger,
         WorkspaceContext workspace,
-        IBalanceService balanceService)
+        IBalanceService balanceService,
+        IAddressGenerator addressGenerator)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _balanceService = balanceService;
+        _addressGenerator = addressGenerator;
     }
 
     public async Task<CreateTransactionResponseDto> CreateTransactionAsync(CreateTransactionRequestDto request)
@@ -61,12 +64,6 @@ public sealed class TransactionService : ITransactionService
             throw new KeyNotFoundException($"Asset {request.AssetId} not found");
         }
 
-        var destinationAddress = request.Destination?.OneTimeAddress?.Address ?? string.Empty;
-        if (!string.IsNullOrEmpty(destinationAddress) && !ValidateAddressFormat(request.AssetId, destinationAddress))
-        {
-            throw new ArgumentException($"Invalid destination address format for asset {request.AssetId}");
-        }
-
         if (!decimal.TryParse(request.Amount, out var requestedAmount) || requestedAmount <= 0)
         {
             throw new ArgumentException("Invalid amount");
@@ -80,6 +77,115 @@ public sealed class TransactionService : ITransactionService
             {
                 throw new DuplicateExternalTxIdException(request.ExternalTxId);
             }
+        }
+
+        // Get source address from source vault
+        var sourceWallet = await _context.Wallets
+            .Include(w => w.Addresses)
+            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == request.AssetId);
+
+        if (sourceWallet == null)
+        {
+            throw new KeyNotFoundException($"Wallet for vault {vaultAccountId} and asset {request.AssetId} not found");
+        }
+
+        // Auto-generate address if wallet has no addresses
+        if (!sourceWallet.Addresses.Any())
+        {
+            var newAddress = new Address
+            {
+                AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(request.AssetId, vaultAccountId),
+                Type = "Permanent",
+                WalletId = sourceWallet.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            _context.Addresses.Add(newAddress);
+            await _context.SaveChangesAsync();
+            sourceWallet.Addresses.Add(newAddress);
+
+            _logger.LogInformation("Auto-generated address {Address} for vault {VaultId} asset {AssetId}",
+                newAddress.AddressValue, vaultAccountId, request.AssetId);
+        }
+
+        var sourceAddress = sourceWallet.Addresses.First().AddressValue;
+
+        // Get or validate destination address
+        var destinationAddress = string.Empty;
+        var destinationVaultId = string.Empty;
+
+        if (request.Destination?.Type == "VAULT_ACCOUNT" && !string.IsNullOrEmpty(request.Destination.Id))
+        {
+            // Destination is a vault
+            destinationVaultId = request.Destination.Id;
+            var destinationWallet = await _context.Wallets
+                .Include(w => w.Addresses)
+                .FirstOrDefaultAsync(w => w.VaultAccountId == destinationVaultId && w.AssetId == request.AssetId);
+
+            if (destinationWallet == null)
+            {
+                throw new KeyNotFoundException($"Wallet for vault {destinationVaultId} and asset {request.AssetId} not found");
+            }
+
+            // Auto-generate address if wallet has no addresses
+            if (!destinationWallet.Addresses.Any())
+            {
+                var newAddress = new Address
+                {
+                    AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(request.AssetId, destinationVaultId),
+                    Type = "Permanent",
+                    WalletId = destinationWallet.Id,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                _context.Addresses.Add(newAddress);
+                await _context.SaveChangesAsync();
+                destinationWallet.Addresses.Add(newAddress);
+
+                _logger.LogInformation("Auto-generated address {Address} for vault {VaultId} asset {AssetId}",
+                    newAddress.AddressValue, destinationVaultId, request.AssetId);
+            }
+
+            // Check if specific address is provided via OneTimeAddress (override)
+            var explicitAddress = request.Destination.OneTimeAddress?.Address;
+            if (!string.IsNullOrWhiteSpace(explicitAddress))
+            {
+                // Validate it belongs to this vault
+                var addressBelongsToVault = destinationWallet.Addresses
+                    .Any(a => a.AddressValue == explicitAddress);
+
+                if (!addressBelongsToVault)
+                {
+                    throw new ArgumentException(
+                        $"Address {explicitAddress} does not belong to vault {destinationVaultId}");
+                }
+
+                destinationAddress = explicitAddress;
+            }
+            else
+            {
+                // Use first address if not specified (default behavior)
+                destinationAddress = destinationWallet.Addresses.First().AddressValue;
+            }
+        }
+        else
+        {
+            // Destination is external address
+            destinationAddress = request.Destination?.OneTimeAddress?.Address ?? string.Empty;
+            if (!string.IsNullOrEmpty(destinationAddress) && !ValidateAddressFormat(request.AssetId, destinationAddress))
+            {
+                throw new ArgumentException($"Invalid destination address format for asset {request.AssetId}");
+            }
+        }
+
+        // Final validation: ensure destination address is not empty
+        if (string.IsNullOrWhiteSpace(destinationAddress))
+        {
+            throw new ArgumentException("Destination address is required");
+        }
+
+        // Final validation: ensure destination vault ID is set if type is VAULT_ACCOUNT
+        if (request.Destination?.Type == "VAULT_ACCOUNT" && string.IsNullOrWhiteSpace(destinationVaultId))
+        {
+            throw new ArgumentException("Destination vault ID is required when destination type is VAULT_ACCOUNT");
         }
 
         var networkFee = asset.BaseFee;
@@ -115,6 +221,7 @@ public sealed class TransactionService : ITransactionService
             AssetId = request.AssetId,
             SourceType = "INTERNAL",
             SourceVaultAccountId = vaultAccountId,
+            SourceAddress = sourceAddress,
             Amount = transferAmount,
             RequestedAmount = requestedAmount,
             NetworkFee = networkFee,
@@ -122,6 +229,7 @@ public sealed class TransactionService : ITransactionService
             DestinationAddress = destinationAddress,
             DestinationTag = request.Destination?.OneTimeAddress?.Tag,
             DestinationType = request.Destination?.Type ?? "ONE_TIME_ADDRESS",
+            DestinationVaultAccountId = string.IsNullOrEmpty(destinationVaultId) ? null : destinationVaultId,
             State = TransactionState.SUBMITTED,
             Note = request.Note,
             ExternalTxId = request.ExternalTxId,

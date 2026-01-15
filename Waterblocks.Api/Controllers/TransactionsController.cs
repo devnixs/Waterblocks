@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure;
@@ -251,26 +252,49 @@ public class TransactionsController : ControllerBase
 
         // Use asset's configured fee (with Low/Medium/High multipliers)
         var baseFee = asset.BaseFee;
-        var lowFee = baseFee.ToString("G29");
-        var mediumFee = (baseFee * 1.5m).ToString("G29");
-        var highFee = (baseFee * 2.5m).ToString("G29");
+        var lowFee = baseFee.ToString(CultureInfo.InvariantCulture);
+        var mediumFee = (baseFee * 1.5m).ToString(CultureInfo.InvariantCulture);
+        var highFee = (baseFee * 2.5m).ToString(CultureInfo.InvariantCulture);
+
+        // Calculate feePerByte (assuming typical transaction size of 250 bytes)
+        const int estimatedTxSizeBytes = 250;
+        var lowFeePerByte = (baseFee / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
+        var mediumFeePerByte = (baseFee * 1.5m / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
+        var highFeePerByte = (baseFee * 2.5m / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
+
+        // Calculate gasPrice (in Gwei for ETH-based assets)
+        var lowGasPrice = baseFee.ToString(CultureInfo.InvariantCulture);
+        var mediumGasPrice = (baseFee * 1.5m).ToString(CultureInfo.InvariantCulture);
+        var highGasPrice = (baseFee * 2.5m).ToString(CultureInfo.InvariantCulture);
 
         var response = new EstimateFeeResponseDto
         {
             Low = new FeeEstimateDto
             {
+                FeePerByte = lowFeePerByte,
+                GasPrice = lowGasPrice,
                 NetworkFee = lowFee,
                 BaseFee = lowFee,
+                PriorityFee = "1",
+                GasLimit = "40000",
             },
             Medium = new FeeEstimateDto
             {
+                FeePerByte = mediumFeePerByte,
+                GasPrice = mediumGasPrice,
                 NetworkFee = mediumFee,
                 BaseFee = mediumFee,
+                PriorityFee = "1",
+                GasLimit = "40000",
             },
             High = new FeeEstimateDto
             {
+                FeePerByte = highFeePerByte,
+                GasPrice = highGasPrice,
                 NetworkFee = highFee,
                 BaseFee = highFee,
+                PriorityFee = "1",
+                GasLimit = "40000",
             },
         };
 
@@ -306,9 +330,9 @@ public class TransactionsController : ControllerBase
     {
         var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
         var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
-        var amountStr = transaction.Amount.ToString("G29");
-        var networkFeeStr = transaction.NetworkFee.ToString("G29");
-        var serviceFeeStr = transaction.ServiceFee.ToString("G29");
+        var amountStr = transaction.Amount.ToString(CultureInfo.InvariantCulture);
+        var networkFeeStr = transaction.NetworkFee.ToString(CultureInfo.InvariantCulture);
+        var serviceFeeStr = transaction.ServiceFee.ToString(CultureInfo.InvariantCulture);
         var sourceType = workspaceVaultIds.Contains(transaction.SourceVaultAccountId ?? string.Empty)
             ? "VAULT_ACCOUNT"
             : "ONE_TIME_ADDRESS";
@@ -338,9 +362,9 @@ public class TransactionsController : ControllerBase
                 VirtualType = "UNKNOWN",
                 VirtualId = string.Empty,
             },
-            RequestedAmount = transaction.RequestedAmount.ToString("G29"),
+            RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
             Amount = amountStr,
-            NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString("G29"),
+            NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
             AmountUSD = null, // USD conversion not implemented
             ServiceFee = serviceFeeStr,
             NetworkFee = networkFeeStr,
@@ -350,8 +374,8 @@ public class TransactionsController : ControllerBase
             TxHash = transaction.Hash ?? string.Empty,
             Tag = transaction.DestinationTag ?? string.Empty,
             SubStatus = transaction.SubStatus,
-            DestinationAddress = destinationType == "VAULT_ACCOUNT" ? string.Empty : (transaction.DestinationAddress ?? string.Empty),
-            SourceAddress = sourceType == "VAULT_ACCOUNT" ? string.Empty : (transaction.SourceAddress ?? string.Empty),
+            DestinationAddress = transaction.DestinationAddress ?? string.Empty,
+            SourceAddress = transaction.SourceAddress ?? string.Empty,
             DestinationAddressDescription = string.Empty,
             DestinationTag = transaction.DestinationTag ?? string.Empty,
             SignedBy = new List<string>(),
@@ -389,8 +413,8 @@ public class TransactionsController : ControllerBase
             AmountInfo = new AmountInfoDto
             {
                 Amount = amountStr,
-                RequestedAmount = transaction.RequestedAmount.ToString("G29"),
-                NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString("G29"),
+                RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
+                NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
                 AmountUSD = string.Empty,
             },
             Index = null,

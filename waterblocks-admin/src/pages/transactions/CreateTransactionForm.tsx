@@ -108,6 +108,15 @@ export function CreateTransactionForm({
                 </select>
               )}
             </div>
+            {sourceType === 'INTERNAL' && (
+              <input
+                type="text"
+                placeholder="Specific address (optional - uses first if empty)"
+                value={sourceAddress}
+                onChange={(e) => setSourceAddress(e.target.value)}
+                className="text-sm"
+              />
+            )}
           </div>
 
           <div>
@@ -144,6 +153,15 @@ export function CreateTransactionForm({
                 </select>
               )}
             </div>
+            {destinationType === 'INTERNAL' && (
+              <input
+                type="text"
+                placeholder="Specific address (optional - uses first if empty)"
+                value={destinationAddress}
+                onChange={(e) => setDestinationAddress(e.target.value)}
+                className="text-sm"
+              />
+            )}
           </div>
         </div>
 
