@@ -62,23 +62,17 @@ public class BalanceService : IBalanceService
 
     public async Task<BalanceResult> ReserveFundsAsync(Transaction transaction)
     {
-        // Only reserve funds for internal sources
-        if (transaction.SourceType != "INTERNAL" || string.IsNullOrWhiteSpace(transaction.SourceVaultAccountId))
-        {
-            return BalanceResult.Ok();
-        }
-
-        var sourceWallet = await GetOrCreateWalletAsync(
-            transaction.SourceVaultAccountId,
+        var sourceWallet = await GetWalletByAddressAsync(
+            transaction.SourceAddress,
             transaction.AssetId,
             transaction.WorkspaceId);
 
         if (sourceWallet == null)
         {
-            return BalanceResult.Fail(
-                $"Source wallet not found for vault {transaction.SourceVaultAccountId}",
-                "WALLET_NOT_FOUND");
+            return BalanceResult.Ok();
         }
+
+        var sourceVaultId = sourceWallet.VaultAccountId;
 
         // Check if fee is paid in a different asset
         var feeCurrency = transaction.FeeCurrency ?? transaction.AssetId;
@@ -89,14 +83,14 @@ public class BalanceService : IBalanceService
         if (hasSeparateFeeWallet && feeAmount > 0)
         {
             feeWallet = await GetOrCreateWalletAsync(
-                transaction.SourceVaultAccountId,
+                sourceVaultId,
                 feeCurrency,
                 transaction.WorkspaceId);
 
             if (feeWallet == null)
             {
                 return BalanceResult.Fail(
-                    $"Fee wallet ({feeCurrency}) not found for vault {transaction.SourceVaultAccountId}",
+                    $"Fee wallet ({feeCurrency}) not found for vault {sourceVaultId}",
                     "FEE_WALLET_NOT_FOUND");
             }
 
@@ -109,9 +103,9 @@ public class BalanceService : IBalanceService
                     feeCurrency, availableFeeBalance, feeAmount);
 
                 return BalanceResult.Fail(
-                    $"Insufficient {feeCurrency} for fee. Available: {availableFeeBalance:G29}, Required: {feeAmount:G29}",
-                    "INSUFFICIENT_FEE_BALANCE");
-            }
+                $"Insufficient {feeCurrency} for fee. Available: {availableFeeBalance:G29}, Required: {feeAmount:G29}",
+                "INSUFFICIENT_FEE_BALANCE");
+        }
         }
 
         // Calculate total amount to reserve from source wallet
@@ -122,8 +116,8 @@ public class BalanceService : IBalanceService
         if (availableBalance < amountToReserve)
         {
             _logger.LogWarning(
-                "Insufficient balance for transaction {TxId}: available {Available}, requested {Amount}",
-                transaction.Id, availableBalance, amountToReserve);
+            "Insufficient balance for transaction {TxId}: available {Available}, requested {Amount}",
+            transaction.Id, availableBalance, amountToReserve);
 
             return BalanceResult.Fail(
                 $"Insufficient balance. Available: {availableBalance:G29}, Requested: {amountToReserve:G29}",
@@ -167,42 +161,37 @@ public class BalanceService : IBalanceService
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
 
-        // Deduct from source if internal
-        if (transaction.SourceType == "INTERNAL" && !string.IsNullOrWhiteSpace(transaction.SourceVaultAccountId))
-        {
-            var sourceWallet = await GetWalletAsync(
-                transaction.SourceVaultAccountId,
-                transaction.AssetId,
-                transaction.WorkspaceId);
+        var sourceWallet = await GetWalletByAddressAsync(
+            transaction.SourceAddress,
+            transaction.AssetId,
+            transaction.WorkspaceId);
 
-            if (sourceWallet != null)
+        if (sourceWallet != null)
+        {
+            var sourceVaultId = sourceWallet.VaultAccountId;
+
+            sourceWallet.Balance -= transaction.Amount;
+            sourceWallet.Pending -= transaction.Amount;
+            sourceWallet.UpdatedAt = DateTimeOffset.UtcNow;
+
+            _logger.LogInformation(
+                "Deducted {Amount} {AssetId} from vault {VaultId}. New balance: {Balance}",
+                transaction.Amount, transaction.AssetId, sourceVaultId, sourceWallet.Balance);
+
+            if (!hasSeparateFeeWallet && feeAmount > 0)
             {
-                // Deduct transfer amount
-                sourceWallet.Balance -= transaction.Amount;
-                sourceWallet.Pending -= transaction.Amount;
-                sourceWallet.UpdatedAt = DateTimeOffset.UtcNow;
+                sourceWallet.Balance -= feeAmount;
+                sourceWallet.Pending -= feeAmount;
 
                 _logger.LogInformation(
-                    "Deducted {Amount} {AssetId} from vault {VaultId}. New balance: {Balance}",
-                    transaction.Amount, transaction.AssetId, transaction.SourceVaultAccountId, sourceWallet.Balance);
-
-                // Deduct fee if in same wallet
-                if (!hasSeparateFeeWallet && feeAmount > 0)
-                {
-                    sourceWallet.Balance -= feeAmount;
-                    sourceWallet.Pending -= feeAmount;
-
-                    _logger.LogInformation(
-                        "Deducted fee {Fee} {AssetId} from vault {VaultId}. New balance: {Balance}",
-                        feeAmount, transaction.AssetId, transaction.SourceVaultAccountId, sourceWallet.Balance);
-                }
+                    "Deducted fee {Fee} {AssetId} from vault {VaultId}. New balance: {Balance}",
+                    feeAmount, transaction.AssetId, sourceVaultId, sourceWallet.Balance);
             }
 
-            // Deduct fee from separate wallet if applicable
             if (hasSeparateFeeWallet && feeAmount > 0)
             {
                 var feeWallet = await GetWalletAsync(
-                    transaction.SourceVaultAccountId,
+                    sourceVaultId,
                     feeCurrency,
                     transaction.WorkspaceId);
 
@@ -214,72 +203,66 @@ public class BalanceService : IBalanceService
 
                     _logger.LogInformation(
                         "Deducted fee {Fee} {FeeCurrency} from vault {VaultId}. New balance: {Balance}",
-                        feeAmount, feeCurrency, transaction.SourceVaultAccountId, feeWallet.Balance);
+                        feeAmount, feeCurrency, sourceVaultId, feeWallet.Balance);
                 }
             }
         }
 
-        // Credit destination if internal
-        if (transaction.DestinationType == "INTERNAL" && !string.IsNullOrWhiteSpace(transaction.DestinationVaultAccountId))
+        var destinationWallet = await GetWalletByAddressAsync(
+            transaction.DestinationAddress,
+            transaction.AssetId,
+            transaction.WorkspaceId);
+
+        if (destinationWallet != null)
         {
-            var destWallet = await GetOrCreateWalletAsync(
-                transaction.DestinationVaultAccountId,
-                transaction.AssetId,
-                transaction.WorkspaceId);
+            destinationWallet.Balance += transaction.Amount;
+            destinationWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
-            if (destWallet != null)
-            {
-                destWallet.Balance += transaction.Amount;
-                destWallet.UpdatedAt = DateTimeOffset.UtcNow;
-
-                _logger.LogInformation(
-                    "Credited {Amount} {AssetId} to vault {VaultId}. New balance: {Balance}",
-                    transaction.Amount, transaction.AssetId, transaction.DestinationVaultAccountId, destWallet.Balance);
-            }
+            _logger.LogInformation(
+                "Credited {Amount} {AssetId} to vault {VaultId}. New balance: {Balance}",
+                transaction.Amount, transaction.AssetId, destinationWallet.VaultAccountId, destinationWallet.Balance);
         }
     }
 
     public async Task RollbackTransactionAsync(Transaction transaction)
     {
-        // Only rollback for internal sources
-        if (transaction.SourceType != "INTERNAL" || string.IsNullOrWhiteSpace(transaction.SourceVaultAccountId))
-        {
-            return;
-        }
-
         var feeCurrency = transaction.FeeCurrency ?? transaction.AssetId;
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
 
-        var wallet = await GetWalletAsync(
-            transaction.SourceVaultAccountId,
+        var wallet = await GetWalletByAddressAsync(
+            transaction.SourceAddress,
             transaction.AssetId,
             transaction.WorkspaceId);
 
-        if (wallet != null)
+        if (wallet == null)
         {
-            // Rollback transfer amount
-            wallet.Pending -= transaction.Amount;
-
-            // Rollback fee if in same wallet
-            if (!hasSeparateFeeWallet && feeAmount > 0)
-            {
-                wallet.Pending -= feeAmount;
-            }
-
-            if (wallet.Pending < 0) wallet.Pending = 0; // Safety guard
-            wallet.UpdatedAt = DateTimeOffset.UtcNow;
-
-            _logger.LogInformation(
-                "Rolled back {Amount} {AssetId} pending for vault {VaultId}. New pending: {Pending}",
-                transaction.Amount, transaction.AssetId, transaction.SourceVaultAccountId, wallet.Pending);
+            return;
         }
+
+        var sourceVaultId = wallet.VaultAccountId;
+
+        // Rollback transfer amount
+        wallet.Pending -= transaction.Amount;
+
+        // Rollback fee if in same wallet
+        if (!hasSeparateFeeWallet && feeAmount > 0)
+        {
+            wallet.Pending -= feeAmount;
+        }
+
+        if (wallet.Pending < 0) wallet.Pending = 0; // Safety guard
+        wallet.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _logger.LogInformation(
+            "Rolled back {Amount} {AssetId} pending for vault {VaultId}. New pending: {Pending}",
+            transaction.Amount, transaction.AssetId, sourceVaultId, wallet.Pending);
 
         // Rollback fee from separate wallet if applicable
         if (hasSeparateFeeWallet && feeAmount > 0)
         {
             var feeWallet = await GetWalletAsync(
-                transaction.SourceVaultAccountId,
+                sourceVaultId,
                 feeCurrency,
                 transaction.WorkspaceId);
 
@@ -291,21 +274,15 @@ public class BalanceService : IBalanceService
 
                 _logger.LogInformation(
                     "Rolled back fee {Fee} {FeeCurrency} pending for vault {VaultId}. New pending: {Pending}",
-                    feeAmount, feeCurrency, transaction.SourceVaultAccountId, feeWallet.Pending);
+                    feeAmount, feeCurrency, feeWallet.VaultAccountId, feeWallet.Pending);
             }
         }
     }
 
     public async Task CreditIncomingAsync(Transaction transaction)
     {
-        // Only credit for internal destinations
-        if (transaction.DestinationType != "INTERNAL" || string.IsNullOrWhiteSpace(transaction.DestinationVaultAccountId))
-        {
-            return;
-        }
-
-        var wallet = await GetOrCreateWalletAsync(
-            transaction.DestinationVaultAccountId,
+        var wallet = await GetWalletByAddressAsync(
+            transaction.DestinationAddress,
             transaction.AssetId,
             transaction.WorkspaceId);
 
@@ -316,8 +293,27 @@ public class BalanceService : IBalanceService
 
             _logger.LogInformation(
                 "Credited incoming {Amount} {AssetId} to vault {VaultId}. New balance: {Balance}",
-                transaction.Amount, transaction.AssetId, transaction.DestinationVaultAccountId, wallet.Balance);
+                transaction.Amount, transaction.AssetId, wallet.VaultAccountId, wallet.Balance);
         }
+    }
+
+    private async Task<Wallet?> GetWalletByAddressAsync(string? address, string assetId, string workspaceId)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        var normalizedAddress = address.Trim();
+
+        return await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => a.AddressValue == normalizedAddress
+                        && a.Wallet.AssetId == assetId
+                        && a.Wallet.VaultAccount.WorkspaceId == workspaceId)
+            .Select(a => a.Wallet)
+            .FirstOrDefaultAsync();
     }
 
     private async Task<Wallet?> GetWalletAsync(string vaultAccountId, string assetId, string workspaceId)

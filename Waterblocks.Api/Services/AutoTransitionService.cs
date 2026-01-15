@@ -101,10 +101,10 @@ public class AutoTransitionService : BackgroundService
                 if (updated.Count > 0)
                 {
                     await db.SaveChangesAsync(stoppingToken);
-                    var vaultNameLookup = await BuildVaultNameLookupAsync(db, updated, stoppingToken);
+                    var addressLookup = await BuildAddressOwnershipLookupAsync(db, updated, stoppingToken);
                     foreach (var tx in updated)
                     {
-                        await _hub.Clients.Group(tx.WorkspaceId).SendAsync("transactionUpserted", MapToDto(tx, vaultNameLookup), stoppingToken);
+                        await _hub.Clients.Group(tx.WorkspaceId).SendAsync("transactionUpserted", MapToDto(tx, addressLookup), stoppingToken);
                     }
                     var updatedWorkspaces = updated.Select(t => t.WorkspaceId).Where(id => !string.IsNullOrEmpty(id)).Distinct();
                     foreach (var workspaceId in updatedWorkspaces)
@@ -136,20 +136,23 @@ public class AutoTransitionService : BackgroundService
         };
     }
 
-    private static AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, string> vaultNameLookup)
+    private static AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup)
     {
+        var sourceOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
+        var destinationOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
+        var sourceType = sourceOwnership != null ? "INTERNAL" : "EXTERNAL";
+        var destinationType = destinationOwnership != null ? "INTERNAL" : "EXTERNAL";
+
         return new AdminTransactionDto
         {
             Id = transaction.Id,
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
-            SourceType = transaction.SourceType,
+            SourceType = sourceType,
             SourceAddress = transaction.SourceAddress,
-            SourceVaultAccountId = transaction.SourceVaultAccountId,
-            SourceVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.SourceVaultAccountId),
-            DestinationType = transaction.DestinationType,
-            DestinationVaultAccountId = transaction.DestinationVaultAccountId,
-            DestinationVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.DestinationVaultAccountId),
+            SourceVaultAccountName = sourceOwnership?.VaultAccountName,
+            DestinationType = destinationType,
+            DestinationVaultAccountName = destinationOwnership?.VaultAccountName,
             Amount = transaction.Amount.ToString("F18"),
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
@@ -166,35 +169,75 @@ public class AutoTransitionService : BackgroundService
         };
     }
 
-    private static async Task<Dictionary<string, string>> BuildVaultNameLookupAsync(
-        FireblocksDbContext db,
-        IEnumerable<Transaction> transactions,
-        CancellationToken stoppingToken)
+    private sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
+
+    private static string BuildAddressKey(string assetId, string address)
     {
-        var vaultIds = transactions
-            .SelectMany(t => new[] { t.VaultAccountId, t.SourceVaultAccountId, t.DestinationVaultAccountId })
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select(id => id!)
-            .Distinct()
-            .ToList();
-
-        if (vaultIds.Count == 0)
-        {
-            return new Dictionary<string, string>();
-        }
-
-        return await db.VaultAccounts
-            .Where(v => vaultIds.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, v => v.Name, stoppingToken);
+        return $"{assetId}|{address}";
     }
 
-    private static string? ResolveVaultName(IReadOnlyDictionary<string, string> vaultNameLookup, string? vaultId)
+    private static AddressOwnership? ResolveAddressOwnership(
+        IReadOnlyDictionary<string, AddressOwnership> lookup,
+        string assetId,
+        string? address)
     {
-        if (string.IsNullOrWhiteSpace(vaultId))
+        if (string.IsNullOrWhiteSpace(address))
         {
             return null;
         }
 
-        return vaultNameLookup.TryGetValue(vaultId, out var name) ? name : null;
+        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
+            ? ownership
+            : null;
+    }
+
+    private static async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(
+        FireblocksDbContext db,
+        IEnumerable<Transaction> transactions,
+        CancellationToken stoppingToken)
+    {
+        var addressValues = transactions
+            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Select(address => address!)
+            .Distinct()
+            .ToList();
+
+        if (addressValues.Count == 0)
+        {
+            return new Dictionary<string, AddressOwnership>();
+        }
+
+        var workspaceIds = transactions
+            .Select(t => t.WorkspaceId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+
+        var addresses = await db.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => addressValues.Contains(a.AddressValue)
+                        && workspaceIds.Contains(a.Wallet.VaultAccount.WorkspaceId))
+            .ToListAsync(stoppingToken);
+
+        var lookup = new Dictionary<string, AddressOwnership>();
+        foreach (var address in addresses)
+        {
+            var wallet = address.Wallet;
+            var vault = wallet?.VaultAccount;
+            if (wallet == null || vault == null)
+            {
+                continue;
+            }
+
+            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
+            if (!lookup.ContainsKey(key))
+            {
+                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+        }
+
+        return lookup;
     }
 }

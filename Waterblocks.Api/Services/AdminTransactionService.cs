@@ -64,8 +64,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transactions);
-        var dtos = transactions.Select(t => MapToDto(t, vaultNameLookup)).ToList();
+        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
+        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
         return Success(dtos);
     }
 
@@ -116,8 +116,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
             .Take(safePageSize)
             .ToListAsync();
 
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transactions);
-        var dtos = transactions.Select(t => MapToDto(t, vaultNameLookup)).ToList();
+        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
+        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
 
         var page = new AdminTransactionsPageDto
         {
@@ -145,8 +145,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
 
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        return Success(MapToDto(transaction, vaultNameLookup));
+        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        return Success(MapToDto(transaction, addressLookup));
     }
 
     public async Task<AdminServiceResult<AdminTransactionDto>> CreateTransactionAsync(CreateAdminTransactionRequestDto request)
@@ -167,122 +167,19 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return Failure<AdminTransactionDto>("Invalid amount", "INVALID_AMOUNT");
         }
 
-        var sourceType = NormalizeEndpointType(request.SourceType);
-        var destinationType = NormalizeEndpointType(request.DestinationType);
-
-        var sourceInternal = sourceType == "INTERNAL";
-        var destinationInternal = destinationType == "INTERNAL";
-
-        if (!sourceInternal && !destinationInternal)
-        {
-            return Failure<AdminTransactionDto>(
-                "At least one side of the transaction must be INTERNAL",
-                "INVALID_TRANSACTION_SCOPE");
-        }
-
-        var sourceVaultId = request.SourceVaultAccountId;
-        var destinationVaultId = request.DestinationVaultAccountId;
-
-        if (sourceInternal)
-        {
-            if (string.IsNullOrWhiteSpace(sourceVaultId))
-            {
-                return Failure<AdminTransactionDto>(
-                    "Source vault account is required for INTERNAL source",
-                    "SOURCE_VAULT_REQUIRED");
-            }
-
-            var sourceVault = await _context.VaultAccounts.FindAsync(sourceVaultId);
-            if (sourceVault == null || sourceVault.WorkspaceId != _workspace.WorkspaceId)
-            {
-                return Failure<AdminTransactionDto>($"Vault account {sourceVaultId} not found", "VAULT_NOT_FOUND");
-            }
-        }
-
-        if (destinationInternal)
-        {
-            if (string.IsNullOrWhiteSpace(destinationVaultId))
-            {
-                return Failure<AdminTransactionDto>(
-                    "Destination vault account is required for INTERNAL destination",
-                    "DESTINATION_VAULT_REQUIRED");
-            }
-
-            var destinationVault = await _context.VaultAccounts.FindAsync(destinationVaultId);
-            if (destinationVault == null || destinationVault.WorkspaceId != _workspace.WorkspaceId)
-            {
-                return Failure<AdminTransactionDto>($"Vault account {destinationVaultId} not found", "VAULT_NOT_FOUND");
-            }
-        }
-
-        var transactionVaultId = sourceInternal ? sourceVaultId : destinationVaultId;
-        if (string.IsNullOrWhiteSpace(transactionVaultId))
-        {
-            return Failure<AdminTransactionDto>("Transaction requires an internal vault account", "VAULT_REQUIRED");
-        }
-
-        var destinationAddress = request.DestinationAddress?.Trim() ?? "";
-        if (destinationInternal)
-        {
-            var destinationWallet = await EnsureWalletWithDepositAddress(destinationVaultId!, request.AssetId);
-
-            // If specific address provided, validate it belongs to this vault
-            if (!string.IsNullOrWhiteSpace(destinationAddress))
-            {
-                var addressBelongsToVault = destinationWallet.Addresses
-                    .Any(a => a.AddressValue == destinationAddress);
-
-                if (!addressBelongsToVault)
-                {
-                    return Failure<AdminTransactionDto>(
-                        $"Address {destinationAddress} does not belong to vault {destinationVaultId}",
-                        "ADDRESS_VAULT_MISMATCH");
-                }
-                // Use the provided address (already set above)
-            }
-            else
-            {
-                // Use first address (EnsureWalletWithDepositAddress guarantees at least one exists)
-                destinationAddress = destinationWallet.Addresses.First().AddressValue;
-            }
-        }
-        else if (string.IsNullOrWhiteSpace(destinationAddress))
-        {
-            destinationAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
-        }
-
         var sourceAddress = request.SourceAddress?.Trim();
-        if (sourceInternal)
-        {
-            // Get source wallet (ensures wallet and address exist)
-            var sourceWallet = await EnsureWalletWithDepositAddress(sourceVaultId!, request.AssetId);
+        var destinationAddress = request.DestinationAddress?.Trim();
 
-            // If specific address provided, validate it belongs to this vault
-            if (!string.IsNullOrWhiteSpace(sourceAddress))
-            {
-                var addressBelongsToVault = sourceWallet.Addresses
-                    .Any(a => a.AddressValue == sourceAddress);
-
-                if (!addressBelongsToVault)
-                {
-                    return Failure<AdminTransactionDto>(
-                        $"Address {sourceAddress} does not belong to vault {sourceVaultId}",
-                        "ADDRESS_VAULT_MISMATCH");
-                }
-                // Use the provided address (already set above)
-            }
-            else
-            {
-                // Use first address (EnsureWalletWithDepositAddress guarantees at least one exists)
-                sourceAddress = sourceWallet.Addresses.First().AddressValue;
-            }
-        }
-        else if (string.IsNullOrWhiteSpace(sourceAddress))
+        if (string.IsNullOrWhiteSpace(sourceAddress))
         {
             sourceAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
         }
 
-        // Final validation: ensure both addresses are not empty
+        if (string.IsNullOrWhiteSpace(destinationAddress))
+        {
+            destinationAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
+        }
+
         if (string.IsNullOrWhiteSpace(sourceAddress))
         {
             return Failure<AdminTransactionDto>("Source address is required", "SOURCE_ADDRESS_REQUIRED");
@@ -293,16 +190,26 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return Failure<AdminTransactionDto>("Destination address is required", "DESTINATION_ADDRESS_REQUIRED");
         }
 
-        // Final validation: ensure vault IDs are set when type is INTERNAL
-        if (sourceInternal && string.IsNullOrWhiteSpace(sourceVaultId))
+        var addressLookup = await BuildAddressOwnershipLookupAsync(
+            request.AssetId,
+            new[] { sourceAddress, destinationAddress });
+
+        var sourceOwnership = ResolveAddressOwnership(addressLookup, request.AssetId, sourceAddress);
+        var destinationOwnership = ResolveAddressOwnership(addressLookup, request.AssetId, destinationAddress);
+
+        var sourceInternal = sourceOwnership != null;
+        var destinationInternal = destinationOwnership != null;
+
+        if (!sourceInternal && !destinationInternal)
         {
-            return Failure<AdminTransactionDto>("Source vault ID is required when source type is INTERNAL", "SOURCE_VAULT_ID_REQUIRED");
+            return Failure<AdminTransactionDto>(
+                "At least one side of the transaction must be INTERNAL",
+                "INVALID_TRANSACTION_SCOPE");
         }
 
-        if (destinationInternal && string.IsNullOrWhiteSpace(destinationVaultId))
-        {
-            return Failure<AdminTransactionDto>("Destination vault ID is required when destination type is INTERNAL", "DESTINATION_VAULT_ID_REQUIRED");
-        }
+        var transactionVaultId = sourceInternal
+            ? sourceOwnership!.VaultAccountId
+            : destinationOwnership!.VaultAccountId;
 
         var transaction = new Transaction
         {
@@ -310,11 +217,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
             VaultAccountId = transactionVaultId!,
             WorkspaceId = _workspace.WorkspaceId,
             AssetId = request.AssetId,
-            SourceType = sourceType,
             SourceAddress = sourceAddress,
-            SourceVaultAccountId = sourceInternal ? sourceVaultId : null,
-            DestinationType = destinationType,
-            DestinationVaultAccountId = destinationInternal ? destinationVaultId : null,
             Amount = amount,
             DestinationAddress = destinationAddress,
             DestinationTag = request.DestinationTag,
@@ -357,8 +260,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        var dto = MapToDto(transaction, vaultNameLookup);
+        var responseAddressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        var dto = MapToDto(transaction, responseAddressLookup);
         await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionUpserted", dto);
         await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionsUpdated");
 
@@ -466,8 +369,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
         transaction.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
+        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
@@ -546,8 +449,8 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         transaction.TransitionTo(newState);
         await _context.SaveChangesAsync();
-        var vaultNameLookup = await BuildVaultNameLookupAsync(transaction);
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, vaultNameLookup));
+        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
         await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
@@ -562,20 +465,23 @@ public sealed class AdminTransactionService : IAdminTransactionService
         return Success(result);
     }
 
-    private AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, string> vaultNameLookup)
+    private AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup)
     {
+        var sourceOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
+        var destinationOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
+        var sourceType = sourceOwnership != null ? "INTERNAL" : "EXTERNAL";
+        var destinationType = destinationOwnership != null ? "INTERNAL" : "EXTERNAL";
+
         return new AdminTransactionDto
         {
             Id = transaction.Id,
             VaultAccountId = transaction.VaultAccountId,
             AssetId = transaction.AssetId,
-            SourceType = transaction.SourceType,
+            SourceType = sourceType,
             SourceAddress = transaction.SourceAddress,
-            SourceVaultAccountId = transaction.SourceVaultAccountId,
-            SourceVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.SourceVaultAccountId),
-            DestinationType = transaction.DestinationType,
-            DestinationVaultAccountId = transaction.DestinationVaultAccountId,
-            DestinationVaultAccountName = ResolveVaultName(vaultNameLookup, transaction.DestinationVaultAccountId),
+            SourceVaultAccountName = sourceOwnership?.VaultAccountName,
+            DestinationType = destinationType,
+            DestinationVaultAccountName = destinationOwnership?.VaultAccountName,
             Amount = transaction.Amount.ToString("F18"),
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
@@ -592,44 +498,112 @@ public sealed class AdminTransactionService : IAdminTransactionService
         };
     }
 
-    private async Task<Dictionary<string, string>> BuildVaultNameLookupAsync(IEnumerable<Transaction> transactions)
+    private sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
+
+    private static string BuildAddressKey(string assetId, string address)
     {
-        var vaultIds = transactions
-            .SelectMany(t => new[] { t.VaultAccountId, t.SourceVaultAccountId, t.DestinationVaultAccountId })
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select(id => id!)
-            .Distinct()
-            .ToList();
-
-        if (vaultIds.Count == 0)
-        {
-            return new Dictionary<string, string>();
-        }
-
-        return await _context.VaultAccounts
-            .Where(v => vaultIds.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, v => v.Name);
+        return $"{assetId}|{address}";
     }
 
-    private Task<Dictionary<string, string>> BuildVaultNameLookupAsync(Transaction transaction)
+    private static AddressOwnership? ResolveAddressOwnership(
+        IReadOnlyDictionary<string, AddressOwnership> lookup,
+        string assetId,
+        string? address)
     {
-        return BuildVaultNameLookupAsync(new[] { transaction });
-    }
-
-    private static string? ResolveVaultName(IReadOnlyDictionary<string, string> vaultNameLookup, string? vaultId)
-    {
-        if (string.IsNullOrWhiteSpace(vaultId))
+        if (string.IsNullOrWhiteSpace(address))
         {
             return null;
         }
 
-        return vaultNameLookup.TryGetValue(vaultId, out var name) ? name : null;
+        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
+            ? ownership
+            : null;
     }
 
-    private static string NormalizeEndpointType(string? type)
+    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions)
     {
-        var normalized = (type ?? "EXTERNAL").Trim().ToUpperInvariant();
-        return normalized == "INTERNAL" ? "INTERNAL" : "EXTERNAL";
+        var addressValues = transactions
+            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Select(address => address!)
+            .Distinct()
+            .ToList();
+
+        if (addressValues.Count == 0)
+        {
+            return new Dictionary<string, AddressOwnership>();
+        }
+
+        var addresses = await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => addressValues.Contains(a.AddressValue) && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
+            .ToListAsync();
+
+        var lookup = new Dictionary<string, AddressOwnership>();
+        foreach (var address in addresses)
+        {
+            var wallet = address.Wallet;
+            var vault = wallet?.VaultAccount;
+            if (wallet == null || vault == null)
+            {
+                continue;
+            }
+
+            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
+            if (!lookup.ContainsKey(key))
+            {
+                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+        }
+
+        return lookup;
+    }
+
+    private Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(Transaction transaction)
+    {
+        return BuildAddressOwnershipLookupAsync(new[] { transaction });
+    }
+
+    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(string assetId, IEnumerable<string> addresses)
+    {
+        var addressValues = addresses
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Select(address => address.Trim())
+            .Distinct()
+            .ToList();
+
+        if (addressValues.Count == 0)
+        {
+            return new Dictionary<string, AddressOwnership>();
+        }
+
+        var addressEntities = await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => addressValues.Contains(a.AddressValue)
+                        && a.Wallet.AssetId == assetId
+                        && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
+            .ToListAsync();
+
+        var lookup = new Dictionary<string, AddressOwnership>();
+        foreach (var address in addressEntities)
+        {
+            var wallet = address.Wallet;
+            var vault = wallet?.VaultAccount;
+            if (wallet == null || vault == null)
+            {
+                continue;
+            }
+
+            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
+            if (!lookup.ContainsKey(key))
+            {
+                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+        }
+
+        return lookup;
     }
 
     private static TransactionState ResolveInitialState(string? initialState, TransactionState fallback)
@@ -641,52 +615,6 @@ public sealed class AdminTransactionService : IAdminTransactionService
         }
 
         return fallback;
-    }
-
-    private async Task<Wallet> EnsureWalletWithDepositAddress(string vaultAccountId, string assetId)
-    {
-        var wallet = await _context.Wallets
-            .Include(w => w.Addresses)
-            .Include(w => w.VaultAccount)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == assetId && w.VaultAccount.WorkspaceId == _workspace.WorkspaceId);
-
-        if (wallet == null)
-        {
-            var vault = await _context.VaultAccounts
-                .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
-            if (vault == null)
-            {
-                throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
-            }
-
-            wallet = new Wallet
-            {
-                VaultAccountId = vaultAccountId,
-                AssetId = assetId,
-                Balance = 0,
-                LockedAmount = 0,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
-            };
-            _context.Wallets.Add(wallet);
-            await _context.SaveChangesAsync();
-        }
-
-        if (!wallet.Addresses.Any())
-        {
-            var address = new Address
-            {
-                AddressValue = _addressGenerator.GenerateAdminDepositAddress(assetId, vaultAccountId),
-                Type = "Permanent",
-                WalletId = wallet.Id,
-                CreatedAt = DateTimeOffset.UtcNow,
-            };
-            _context.Addresses.Add(address);
-            await _context.SaveChangesAsync();
-            wallet.Addresses.Add(address);
-        }
-
-        return wallet;
     }
 
     private static AdminServiceResult<T> Success<T>(T data)

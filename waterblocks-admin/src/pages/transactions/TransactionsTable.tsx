@@ -7,7 +7,6 @@ type TransactionsTableProps = {
   onSelect: (transaction: AdminTransaction) => void;
   onToggleSelection: (id: string) => void;
   onToggleAll: (checked: boolean) => void;
-  formatVaultLabel: (id?: string, name?: string) => string;
 };
 
 export function TransactionsTable({
@@ -17,8 +16,19 @@ export function TransactionsTable({
   onSelect,
   onToggleSelection,
   onToggleAll,
-  formatVaultLabel,
 }: TransactionsTableProps) {
+  const formatInternalLabel = (name?: string, fallbackId?: string) => {
+    if (name) return name;
+    if (fallbackId) return `${fallbackId.substring(0, 8)}...`;
+    return '-';
+  };
+
+  const formatExternalAddress = (address?: string) => {
+    if (!address) return '-';
+    if (address.length <= 12) return address;
+    return `${address.substring(0, 12)}...`;
+  };
+
   return (
     <div className="overflow-x-auto rounded-lg border border-tertiary">
       <table className="w-full">
@@ -69,12 +79,14 @@ export function TransactionsTable({
               <td className="font-medium">{tx.assetId}</td>
               <td className="text-mono">{parseFloat(tx.amount).toFixed(4)}</td>
               <td className="text-mono text-sm text-muted">
-                {formatVaultLabel(tx.vaultAccountId)}
+                {tx.sourceType === 'INTERNAL'
+                  ? formatInternalLabel(tx.sourceVaultAccountName, tx.vaultAccountId)
+                  : formatExternalAddress(tx.sourceAddress)}
               </td>
               <td className="text-mono text-sm text-muted">
                 {tx.destinationType === 'INTERNAL'
-                  ? formatVaultLabel(tx.destinationVaultAccountId, tx.destinationVaultAccountName)
-                  : `${tx.destinationAddress.substring(0, 12)}...`}
+                  ? formatInternalLabel(tx.destinationVaultAccountName)
+                  : formatExternalAddress(tx.destinationAddress)}
               </td>
               <td className="text-sm text-muted">{new Date(tx.createdAt).toLocaleString()}</td>
               <td className="text-right">

@@ -113,13 +113,13 @@ public class WorkspaceIsolationTests : IAsyncLifetime
 
         // Create wallet and fund it using admin API
         await adminClient1.CreateWalletAsync(vault!.Id, "BTC");
+        var vaultDetails = await adminClient1.GetVaultAsync(vault.Id);
+        var vaultDepositAddress = vaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
         await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vault.Id,
+            DestinationAddress = vaultDepositAddress,
             Amount = "1"
         });
 
@@ -165,13 +165,13 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Create vault and fund it in workspace 1
         var vault = await client1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "IsoTestVault" });
         await adminClient1.CreateWalletAsync(vault!.Id, "BTC");
+        var vaultDetails = await adminClient1.GetVaultAsync(vault.Id);
+        var vaultDepositAddress = vaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
         await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vault.Id,
+            DestinationAddress = vaultDepositAddress,
             Amount = "1"
         });
 
@@ -210,13 +210,13 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Create vault in workspace 1 and fund it
         var vault = await client1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "VictimVault" });
         await adminClient1.CreateWalletAsync(vault!.Id, "BTC");
+        var vaultDetails = await adminClient1.GetVaultAsync(vault.Id);
+        var vaultDepositAddress = vaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
         await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vault.Id,
+            DestinationAddress = vaultDepositAddress,
             Amount = "10"
         });
 
@@ -285,26 +285,26 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Create vault and incoming transaction in workspace 1
         var vault1Response = await adminClient1.CreateVaultAsync("TxVault1");
         await adminClient1.CreateWalletAsync(vault1Response.Data!.Id, "BTC");
+        var vault1Details = await adminClient1.GetVaultAsync(vault1Response.Data!.Id);
+        var vault1DepositAddress = vault1Details.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
         var tx1Response = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external1",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vault1Response.Data.Id,
+            DestinationAddress = vault1DepositAddress,
             Amount = "1"
         });
 
         // Create vault and incoming transaction in workspace 2
         var vault2Response = await adminClient2.CreateVaultAsync("TxVault2");
         await adminClient2.CreateWalletAsync(vault2Response.Data!.Id, "BTC");
+        var vault2Details = await adminClient2.GetVaultAsync(vault2Response.Data!.Id);
+        var vault2DepositAddress = vault2Details.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
         var tx2Response = await adminClient2.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external2",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vault2Response.Data.Id,
+            DestinationAddress = vault2DepositAddress,
             Amount = "2"
         });
 
@@ -387,7 +387,8 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         receiverVault.Should().NotBeNull();
 
         // Create wallets for both vaults
-        await adminClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderWalletResponse = await adminClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderDepositAddress = senderWalletResponse.Data!.DepositAddress;
         var receiverWalletResponse = await adminClient2.CreateWalletAsync(receiverVault!.Id, "BTC");
         receiverWalletResponse.IsSuccess.Should().BeTrue();
 
@@ -400,10 +401,8 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var fundingTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = senderVault.Id,
+            DestinationAddress = senderDepositAddress,
             Amount = "10"
         });
         fundingTx.IsSuccess.Should().BeTrue();
@@ -413,9 +412,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var outgoingTx = await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = senderVault.Id,
-            DestinationType = "EXTERNAL",
+            SourceAddress = senderDepositAddress,
             DestinationAddress = receiverDepositAddress,
             Amount = "1"
         });
@@ -428,10 +425,8 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var incomingTx = await adminClient2.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-sender",  // Would be sender's address in real scenario
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = receiverVault.Id,
+            DestinationAddress = receiverDepositAddress,
             Amount = "1"
         });
         incomingTx.IsSuccess.Should().BeTrue("Incoming transaction should be created");
@@ -450,7 +445,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var ws1OutgoingTx = workspace1Transactions.Data!.First(t => t.Id == outgoingTx.Data!.Id);
         ws1OutgoingTx.SourceType.Should().Be("INTERNAL", "Source should be internal (vault)");
         ws1OutgoingTx.DestinationType.Should().Be("EXTERNAL", "Destination should be external");
-        ws1OutgoingTx.SourceVaultAccountId.Should().Be(senderVault.Id);
+        ws1OutgoingTx.SourceVaultAccountName.Should().Be("SenderVault");
 
         // Assert: Workspace 2 sees incoming transaction
         workspace2Transactions.IsSuccess.Should().BeTrue();
@@ -462,7 +457,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         var ws2IncomingTx = workspace2Transactions.Data!.First(t => t.Id == incomingTx.Data!.Id);
         ws2IncomingTx.SourceType.Should().Be("EXTERNAL", "Source should be external");
         ws2IncomingTx.DestinationType.Should().Be("INTERNAL", "Destination should be internal (vault)");
-        ws2IncomingTx.DestinationVaultAccountId.Should().Be(receiverVault.Id);
+        ws2IncomingTx.DestinationVaultAccountName.Should().Be("ReceiverVault");
     }
 
     [Fact]
@@ -479,15 +474,15 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Create sender vault and wallet via Fireblocks API
         var senderVault = await fireblocksClient1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "FbSenderVault" });
         await fireblocksClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderVaultDetails = await adminClient1.GetVaultAsync(senderVault.Id);
+        var senderDepositAddress = senderVaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
 
         // Fund the sender vault via Admin API
         await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = senderVault.Id,
+            DestinationAddress = senderDepositAddress,
             Amount = "5"
         });
 
@@ -541,15 +536,15 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Create sender vault and wallet via Fireblocks API
         var senderVault = await fireblocksClient1.CreateVaultAccountAsync(new CreateVaultAccountRequest { Name = "OutVault" });
         await fireblocksClient1.CreateWalletAsync(senderVault!.Id, "BTC");
+        var senderVaultDetails = await adminClient1.GetVaultAsync(senderVault.Id);
+        var senderDepositAddress = senderVaultDetails.Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress;
 
         // Fund the sender vault via Admin API
         await adminClient1.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = senderVault.Id,
+            DestinationAddress = senderDepositAddress,
             Amount = "2"
         });
 

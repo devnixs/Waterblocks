@@ -14,10 +14,8 @@ export interface AdminTransaction {
   assetId: string;
   sourceType: 'EXTERNAL' | 'INTERNAL';
   sourceAddress?: string;
-  sourceVaultAccountId?: string;
   sourceVaultAccountName?: string;
   destinationType: 'EXTERNAL' | 'INTERNAL';
-  destinationVaultAccountId?: string;
   destinationVaultAccountName?: string;
   amount: string;
   destinationAddress: string;
@@ -56,12 +54,8 @@ export type TransactionState =
 
 export interface CreateTransactionRequest {
   assetId: string;
-  sourceType: 'EXTERNAL' | 'INTERNAL';
   sourceAddress?: string;
-  sourceVaultAccountId?: string;
-  destinationType: 'EXTERNAL' | 'INTERNAL';
   destinationAddress?: string;
-  destinationVaultAccountId?: string;
   amount: string;
   destinationTag?: string;
   initialState?: string;

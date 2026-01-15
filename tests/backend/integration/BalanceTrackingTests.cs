@@ -24,6 +24,7 @@ public class BalanceTrackingTests : IAsyncLifetime
 
         var depositWalletResponse = await _fixture.AdminClient.CreateWalletAsync(depositVaultId, "BTC");
         depositWalletResponse.IsSuccess.Should().BeTrue("BTC wallet should be created in Deposit vault");
+        var depositAddress = depositWalletResponse.Data!.DepositAddress;
 
         var withdrawalVaultResponse = await _fixture.AdminClient.CreateVaultAsync("Withdrawal");
         withdrawalVaultResponse.IsSuccess.Should().BeTrue("Withdrawal vault should be created");
@@ -31,15 +32,14 @@ public class BalanceTrackingTests : IAsyncLifetime
 
         var withdrawalWalletResponse = await _fixture.AdminClient.CreateWalletAsync(withdrawalVaultId, "BTC");
         withdrawalWalletResponse.IsSuccess.Should().BeTrue("BTC wallet should be created in Withdrawal vault");
+        var withdrawalAddress = withdrawalWalletResponse.Data!.DepositAddress;
 
         // Act 1: Try to create a transaction of 1 BTC from Deposit to Withdrawal (should fail - no balance)
         var failedTxResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = depositVaultId,
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = withdrawalVaultId,
+            SourceAddress = depositAddress,
+            DestinationAddress = withdrawalAddress,
             Amount = "1"
         });
 
@@ -52,10 +52,8 @@ public class BalanceTrackingTests : IAsyncLifetime
         var incomingTxResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "0x12345",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = depositVaultId,
+            DestinationAddress = depositAddress,
             Amount = "1"
         });
 
@@ -74,10 +72,8 @@ public class BalanceTrackingTests : IAsyncLifetime
         var outgoingTxResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = depositVaultId,
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = withdrawalVaultId,
+            SourceAddress = depositAddress,
+            DestinationAddress = withdrawalAddress,
             Amount = "0.1"
         });
 
@@ -119,10 +115,8 @@ public class BalanceTrackingTests : IAsyncLifetime
         var fundingTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "external-address",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vaultId,
+            DestinationAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             Amount = "1"
         });
         fundingTx.IsSuccess.Should().BeTrue();
@@ -131,9 +125,7 @@ public class BalanceTrackingTests : IAsyncLifetime
         var outgoingTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = vaultId,
-            DestinationType = "EXTERNAL",
+            SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "external-destination",
             Amount = "0.5"
         });
@@ -169,10 +161,8 @@ public class BalanceTrackingTests : IAsyncLifetime
         await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "EXTERNAL",
             SourceAddress = "funder",
-            DestinationType = "INTERNAL",
-            DestinationVaultAccountId = vaultId,
+            DestinationAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             Amount = "1"
         });
 
@@ -180,9 +170,7 @@ public class BalanceTrackingTests : IAsyncLifetime
         var firstTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = vaultId,
-            DestinationType = "EXTERNAL",
+            SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "dest1",
             Amount = "0.6"
         });
@@ -192,9 +180,7 @@ public class BalanceTrackingTests : IAsyncLifetime
         var secondTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
         {
             AssetId = "BTC",
-            SourceType = "INTERNAL",
-            SourceVaultAccountId = vaultId,
-            DestinationType = "EXTERNAL",
+            SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "dest2",
             Amount = "0.6"
         });

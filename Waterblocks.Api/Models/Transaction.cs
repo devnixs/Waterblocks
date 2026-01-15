@@ -22,21 +22,8 @@ public class Transaction
     public string AssetId { get; set; } = string.Empty;
 
     [Required]
-    [MaxLength(20)]
-    public string SourceType { get; set; } = "VAULT_ACCOUNT";
-
     [MaxLength(500)]
-    public string? SourceAddress { get; set; }
-
-    [MaxLength(50)]
-    public string? SourceVaultAccountId { get; set; }
-
-    [Required]
-    [MaxLength(20)]
-    public string DestinationType { get; set; } = "ONE_TIME_ADDRESS";
-
-    [MaxLength(50)]
-    public string? DestinationVaultAccountId { get; set; }
+    public string SourceAddress { get; set; } = string.Empty;
 
     [Required]
     [Column(TypeName = "decimal(36,18)")]

@@ -86,13 +86,8 @@ public class TransactionsController : ControllerBase
             .Take(limit)
             .ToListAsync();
 
-        var workspaceVaultIds = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
-            .Select(v => v.Id)
-            .ToListAsync();
-        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
-
-        var dtos = transactions.Select(t => MapToDto(t, workspaceVaultIdSet)).ToList();
+        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
+        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
         return Ok(dtos);
     }
 
@@ -108,13 +103,8 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Transaction {txId} not found");
         }
 
-        var workspaceVaultIds = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
-            .Select(v => v.Id)
-            .ToListAsync();
-        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
-
-        return Ok(MapToDto(transaction, workspaceVaultIdSet));
+        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        return Ok(MapToDto(transaction, addressLookup));
     }
 
     [HttpGet("external_tx_id/{externalTxId}")]
@@ -129,13 +119,8 @@ public class TransactionsController : ControllerBase
             throw new KeyNotFoundException($"Transaction with external ID {externalTxId} not found");
         }
 
-        var workspaceVaultIds = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
-            .Select(v => v.Id)
-            .ToListAsync();
-        var workspaceVaultIdSet = new HashSet<string>(workspaceVaultIds);
-
-        return Ok(MapToDto(transaction, workspaceVaultIdSet));
+        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
+        return Ok(MapToDto(transaction, addressLookup));
     }
 
     [HttpPost("{txId}/cancel")]
@@ -215,7 +200,7 @@ public class TransactionsController : ControllerBase
             RequestedAmount = transaction.RequestedAmount,
             DestinationAddress = transaction.DestinationAddress,
             DestinationTag = transaction.DestinationTag,
-            DestinationType = transaction.DestinationType,
+            SourceAddress = transaction.SourceAddress,
             State = TransactionState.SUBMITTED,
             NetworkFee = transaction.NetworkFee * 1.2m, // Increase fee by 20%
             Operation = transaction.Operation,
@@ -326,19 +311,17 @@ public class TransactionsController : ControllerBase
         return Ok(response);
     }
 
-    private TransactionDto MapToDto(Transaction transaction, ISet<string> workspaceVaultIds)
+    private TransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup)
     {
         var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
         var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
         var amountStr = transaction.Amount.ToString(CultureInfo.InvariantCulture);
         var networkFeeStr = transaction.NetworkFee.ToString(CultureInfo.InvariantCulture);
         var serviceFeeStr = transaction.ServiceFee.ToString(CultureInfo.InvariantCulture);
-        var sourceType = workspaceVaultIds.Contains(transaction.SourceVaultAccountId ?? string.Empty)
-            ? "VAULT_ACCOUNT"
-            : "ONE_TIME_ADDRESS";
-        var destinationType = workspaceVaultIds.Contains(transaction.DestinationVaultAccountId ?? string.Empty)
-            ? "VAULT_ACCOUNT"
-            : "ONE_TIME_ADDRESS";
+        var sourceOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
+        var destinationOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
+        var sourceType = sourceOwnership != null ? "VAULT_ACCOUNT" : "ONE_TIME_ADDRESS";
+        var destinationType = destinationOwnership != null ? "VAULT_ACCOUNT" : "ONE_TIME_ADDRESS";
 
         return new TransactionDto
         {
@@ -347,8 +330,8 @@ public class TransactionsController : ControllerBase
             Source = new TransferPeerPathResponseDto
             {
                 Type = sourceType,
-                Id = transaction.VaultAccountId,
-                Name = transaction.VaultAccount?.Name,
+                Id = sourceOwnership?.VaultAccountId ?? string.Empty,
+                Name = sourceOwnership?.VaultAccountName ?? string.Empty,
                 SubType = "DEFAULT",
                 VirtualType = "UNKNOWN",
                 VirtualId = string.Empty,
@@ -356,8 +339,8 @@ public class TransactionsController : ControllerBase
             Destination = new TransferPeerPathResponseDto
             {
                 Type = destinationType,
-                Id = transaction.DestinationVaultAccountId,
-                Name = transaction.DestinationVaultAccountId ?? string.Empty,
+                Id = destinationOwnership?.VaultAccountId ?? string.Empty,
+                Name = destinationOwnership?.VaultAccountName ?? string.Empty,
                 SubType = "DEFAULT",
                 VirtualType = "UNKNOWN",
                 VirtualId = string.Empty,
@@ -420,6 +403,68 @@ public class TransactionsController : ControllerBase
             Index = null,
             BlockchainIndex = string.Empty,
         };
+    }
+
+    private sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
+
+    private static string BuildAddressKey(string assetId, string address)
+    {
+        return $"{assetId}|{address}";
+    }
+
+    private static AddressOwnership? ResolveAddressOwnership(
+        IReadOnlyDictionary<string, AddressOwnership> lookup,
+        string assetId,
+        string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
+            ? ownership
+            : null;
+    }
+
+    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions)
+    {
+        var addressValues = transactions
+            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Select(address => address!)
+            .Distinct()
+            .ToList();
+
+        if (addressValues.Count == 0)
+        {
+            return new Dictionary<string, AddressOwnership>();
+        }
+
+        var addresses = await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => addressValues.Contains(a.AddressValue) && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
+            .ToListAsync();
+
+        var lookup = new Dictionary<string, AddressOwnership>();
+        foreach (var address in addresses)
+        {
+            var wallet = address.Wallet;
+            var vault = wallet?.VaultAccount;
+            if (wallet == null || vault == null)
+            {
+                continue;
+            }
+
+            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
+            if (!lookup.ContainsKey(key))
+            {
+                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+        }
+
+        return lookup;
     }
 
     private bool ValidateAddressFormat(string assetId, string address)

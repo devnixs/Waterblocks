@@ -220,10 +220,8 @@ public class TransactionDto
     public string AssetId { get; set; } = string.Empty;
     public string SourceType { get; set; } = string.Empty;
     public string? SourceAddress { get; set; }
-    public string? SourceVaultAccountId { get; set; }
     public string? SourceVaultAccountName { get; set; }
     public string DestinationType { get; set; } = string.Empty;
-    public string? DestinationVaultAccountId { get; set; }
     public string? DestinationVaultAccountName { get; set; }
     public string Amount { get; set; } = "0";
     public string DestinationAddress { get; set; } = string.Empty;
@@ -249,12 +247,8 @@ public class TransactionStateDto
 public class CreateTransactionRequest
 {
     public string AssetId { get; set; } = string.Empty;
-    public string SourceType { get; set; } = "INTERNAL";
     public string? SourceAddress { get; set; }
-    public string? SourceVaultAccountId { get; set; }
-    public string DestinationType { get; set; } = "EXTERNAL";
     public string? DestinationAddress { get; set; }
-    public string? DestinationVaultAccountId { get; set; }
     public string Amount { get; set; } = "0";
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }

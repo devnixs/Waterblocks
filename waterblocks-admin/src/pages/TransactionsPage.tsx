@@ -55,10 +55,11 @@ export default function TransactionsPage() {
     return result.data.address;
   };
 
-  const formatVaultLabel = (id?: string, name?: string) => {
-    if (!id) return '—';
-    if (name) return `${name} (${id.slice(0, 8)}...)`;
-    return `${id.slice(0, 8)}...`;
+  const resolveVaultAddress = (vaultId: string, asset: string) => {
+    if (!vaultId || !asset) return '';
+    const vault = (vaults || []).find((item) => item.id === vaultId);
+    const wallet = vault?.wallets.find((item) => item.assetId === asset);
+    return wallet?.depositAddress || '';
   };
 
   const pagedTransactions = useMemo(() => transactionsPage?.items || [], [transactionsPage]);
@@ -259,7 +260,16 @@ export default function TransactionsPage() {
     let canceled = false;
 
     const updateAddress = async () => {
-      if (sourceType !== 'EXTERNAL' || !assetId) return;
+      if (!assetId) return;
+
+      if (sourceType === 'INTERNAL') {
+        const resolved = resolveVaultAddress(sourceVaultId, assetId);
+        if (!canceled) {
+          setSourceAddress(resolved);
+        }
+        return;
+      }
+
       const generated = await generateExternalAddress(assetId);
       if (!canceled && generated) {
         setSourceAddress(generated);
@@ -270,13 +280,22 @@ export default function TransactionsPage() {
     return () => {
       canceled = true;
     };
-  }, [sourceType, assetId]);
+  }, [sourceType, sourceVaultId, assetId, vaults]);
 
   useEffect(() => {
     let canceled = false;
 
     const updateAddress = async () => {
-      if (destinationType !== 'EXTERNAL' || !assetId) return;
+      if (!assetId) return;
+
+      if (destinationType === 'INTERNAL') {
+        const resolved = resolveVaultAddress(destinationVaultId, assetId);
+        if (!canceled) {
+          setDestinationAddress(resolved);
+        }
+        return;
+      }
+
       const generated = await generateExternalAddress(assetId);
       if (!canceled && generated) {
         setDestinationAddress(generated);
@@ -287,7 +306,7 @@ export default function TransactionsPage() {
     return () => {
       canceled = true;
     };
-  }, [destinationType, assetId]);
+  }, [destinationType, destinationVaultId, assetId, vaults]);
 
   if (isLoading) return <div className="p-8 text-center text-muted">Loading transactions...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
@@ -327,15 +346,6 @@ export default function TransactionsPage() {
       return;
     }
 
-    if (sourceType === 'INTERNAL' && !sourceVaultId) {
-      showToast({ title: 'Source vault is required', type: 'error' });
-      return;
-    }
-    if (destinationType === 'INTERNAL' && !destinationVaultId) {
-      showToast({ title: 'Destination vault is required', type: 'error' });
-      return;
-    }
-
     const resolveExternalAddress = async (
       current: string,
       update: (value: string) => void
@@ -351,38 +361,39 @@ export default function TransactionsPage() {
       return generated;
     };
 
-    let resolvedSourceAddress: string | undefined;
-    let resolvedDestinationAddress: string | undefined;
-
-    if (sourceType === 'EXTERNAL') {
-      resolvedSourceAddress = await resolveExternalAddress(sourceAddress, setSourceAddress);
-      if (!resolvedSourceAddress) {
-        return;
+    const resolveInternalAddress = (
+      vaultId: string,
+      update: (value: string) => void
+    ) => {
+      const resolved = resolveVaultAddress(vaultId, assetId);
+      if (resolved) {
+        update(resolved);
       }
-    } else {
-      // INTERNAL - send address if specified (optional override for specific vault address)
-      resolvedSourceAddress = sourceAddress.trim() || undefined;
+      return resolved;
+    };
+
+    const resolvedSourceAddress = sourceType === 'INTERNAL'
+      ? resolveInternalAddress(sourceVaultId, setSourceAddress)
+      : await resolveExternalAddress(sourceAddress, setSourceAddress);
+    const resolvedDestinationAddress = destinationType === 'INTERNAL'
+      ? resolveInternalAddress(destinationVaultId, setDestinationAddress)
+      : await resolveExternalAddress(destinationAddress, setDestinationAddress);
+
+    if (!resolvedSourceAddress) {
+      showToast({ title: 'Source address is required', type: 'error' });
+      return;
     }
 
-    if (destinationType === 'EXTERNAL') {
-      resolvedDestinationAddress = await resolveExternalAddress(destinationAddress, setDestinationAddress);
-      if (!resolvedDestinationAddress) {
-        return;
-      }
-    } else {
-      // INTERNAL - send address if specified (optional override for specific vault address)
-      resolvedDestinationAddress = destinationAddress.trim() || undefined;
+    if (!resolvedDestinationAddress) {
+      showToast({ title: 'Destination address is required', type: 'error' });
+      return;
     }
 
     const result = await createTransaction.mutateAsync({
       assetId: assetId,
       amount: amount.trim(),
-      sourceType,
       sourceAddress: resolvedSourceAddress,
-      sourceVaultAccountId: sourceType === 'INTERNAL' ? sourceVaultId : undefined,
-      destinationType,
       destinationAddress: resolvedDestinationAddress,
-      destinationVaultAccountId: destinationType === 'INTERNAL' ? destinationVaultId : undefined,
     });
 
     if (result.error) {
@@ -549,7 +560,6 @@ export default function TransactionsPage() {
             setSelectedIds(new Set());
           }
         }}
-        formatVaultLabel={formatVaultLabel}
       />
 
       {showBulkConfirm && (

@@ -17,7 +17,7 @@ export function TransactionDetailPanel({
     <div className="detail-panel">
       <div className="detail-panel-header">
         <h2>Transaction Details</h2>
-        <button className="close-btn" onClick={onClose}>×</button>
+        <button className="close-btn" onClick={onClose}>x</button>
       </div>
 
       <div className="mb-8">
@@ -54,20 +54,20 @@ export function TransactionDetailPanel({
             <div className="font-medium">{transaction.sourceType}</div>
             <div className="text-mono text-sm text-muted break-all mt-1">
               {transaction.sourceType === 'INTERNAL'
-                ? `Vault: ${transaction.sourceVaultAccountId}`
-                : transaction.sourceAddress}
+                ? `Vault: ${transaction.sourceVaultAccountName || transaction.vaultAccountId}`
+                : transaction.sourceAddress || '-'}
             </div>
           </div>
 
-          <div className="flex justify-center text-muted">↓</div>
+          <div className="flex justify-center text-muted">-&gt;</div>
 
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
             <div className="text-xs text-muted uppercase mb-1">Destination</div>
             <div className="font-medium">{transaction.destinationType}</div>
             <div className="text-mono text-sm text-muted break-all mt-1">
               {transaction.destinationType === 'INTERNAL'
-                ? `Vault: ${transaction.destinationVaultAccountId}`
-                : transaction.destinationAddress}
+                ? `Vault: ${transaction.destinationVaultAccountName || transaction.vaultAccountId}`
+                : transaction.destinationAddress || '-'}
             </div>
           </div>
         </div>
