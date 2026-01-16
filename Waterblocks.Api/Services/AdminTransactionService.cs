@@ -1,9 +1,5 @@
-using System.Globalization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Admin;
-using Waterblocks.Api.Hubs;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
@@ -27,50 +23,58 @@ public interface IAdminTransactionService
     Task<AdminServiceResult<TransactionStateDto>> TimeoutAsync(string id);
 }
 
-public sealed class AdminTransactionService : IAdminTransactionService
+public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactionService
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminTransactionService> _logger;
-    private readonly IHubContext<AdminHub> _hub;
-    private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
+    private readonly ITransactionViewService _transactionView;
     private readonly IAddressGenerator _addressGenerator;
+    private readonly ITransactionIdResolver _transactionIdResolver;
+    private readonly IAdminTransactionMapper _transactionMapper;
+    private readonly IAdminTransactionNotifier _transactionNotifier;
+    private readonly IAdminTransactionTransitioner _transactionTransitioner;
 
     public AdminTransactionService(
         FireblocksDbContext context,
         ILogger<AdminTransactionService> logger,
-        IHubContext<AdminHub> hub,
         WorkspaceContext workspace,
         IBalanceService balanceService,
-        IAddressGenerator addressGenerator)
+        IAddressGenerator addressGenerator,
+        ITransactionViewService transactionView,
+        ITransactionIdResolver transactionIdResolver,
+        IAdminTransactionMapper transactionMapper,
+        IAdminTransactionNotifier transactionNotifier,
+        IAdminTransactionTransitioner transactionTransitioner)
+        : base(workspace)
     {
         _context = context;
         _logger = logger;
-        _hub = hub;
-        _workspace = workspace;
         _balanceService = balanceService;
         _addressGenerator = addressGenerator;
+        _transactionView = transactionView;
+        _transactionIdResolver = transactionIdResolver;
+        _transactionMapper = transactionMapper;
+        _transactionNotifier = transactionNotifier;
+        _transactionTransitioner = transactionTransitioner;
     }
 
     public async Task<AdminServiceResult<List<AdminTransactionDto>>> GetTransactionsAsync()
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<List<AdminTransactionDto>>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<List<AdminTransactionDto>>();
+            return failure;
         }
 
         // Get all addresses belonging to vaults in the current workspace
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(workspaceId);
 
         // Find transactions where source OR destination address belongs to this workspace
-        var transactions = await _context.Transactions
-            .Where(t => workspaceAddresses.Contains(t.SourceAddress) ||
-                        workspaceAddresses.Contains(t.DestinationAddress))
+        var transactions = await _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceAddresses)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
-        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
-        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
+        var dtos = await _transactionMapper.MapAsync(transactions, workspaceId);
         return Success(dtos);
     }
 
@@ -81,21 +85,19 @@ public sealed class AdminTransactionService : IAdminTransactionService
         string? transactionId,
         string? hash)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<AdminTransactionsPageDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<AdminTransactionsPageDto>();
+            return failure;
         }
 
         var safePageIndex = Math.Max(0, pageIndex);
         var safePageSize = Math.Clamp(pageSize, 1, 200);
 
         // Get all addresses belonging to vaults in the current workspace
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(workspaceId);
 
         // Find transactions where source OR destination address belongs to this workspace
-        var query = _context.Transactions
-            .Where(t => workspaceAddresses.Contains(t.SourceAddress) ||
-                        workspaceAddresses.Contains(t.DestinationAddress));
+        var query = _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceAddresses);
 
         var normalizedAsset = assetId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedAsset))
@@ -107,7 +109,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
         var normalizedId = transactionId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedId))
         {
-            if (!TryUnwrapTransactionId(normalizedId, out var rawId))
+            if (!_transactionIdResolver.TryUnwrap(normalizedId, out var rawId))
             {
                 query = query.Where(_ => false);
             }
@@ -133,8 +135,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
             .Take(safePageSize)
             .ToListAsync();
 
-        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
-        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
+        var dtos = await _transactionMapper.MapAsync(transactions, workspaceId);
 
         var page = new AdminTransactionsPageDto
         {
@@ -149,42 +150,25 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
     public async Task<AdminServiceResult<AdminTransactionDto>> GetTransactionAsync(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<AdminTransactionDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<AdminTransactionDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
-
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
         {
             return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
 
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
-
-        if (!belongsToWorkspace)
-        {
-            return NotFound<AdminTransactionDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        return Success(MapToDto(transaction, addressLookup));
+        return Success(await _transactionMapper.MapAsync(transaction, workspaceId));
     }
 
     public async Task<AdminServiceResult<AdminTransactionDto>> CreateTransactionAsync(CreateAdminTransactionRequestDto request)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<AdminTransactionDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<AdminTransactionDto>();
+            return failure;
         }
 
         var asset = await _context.Assets.FindAsync(request.AssetId);
@@ -221,12 +205,13 @@ public sealed class AdminTransactionService : IAdminTransactionService
             return Failure<AdminTransactionDto>("Destination address is required", "DESTINATION_ADDRESS_REQUIRED");
         }
 
-        var addressLookup = await BuildAddressOwnershipLookupAsync(
+        var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(
             request.AssetId,
-            new[] { sourceAddress, destinationAddress });
+            new[] { sourceAddress, destinationAddress },
+            workspaceId);
 
-        var sourceOwnership = ResolveAddressOwnership(addressLookup, request.AssetId, sourceAddress);
-        var destinationOwnership = ResolveAddressOwnership(addressLookup, request.AssetId, destinationAddress);
+        var sourceOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, sourceAddress);
+        var destinationOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, destinationAddress);
 
         var sourceInternal = sourceOwnership != null;
         var destinationInternal = destinationOwnership != null;
@@ -246,7 +231,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
         {
             Id = Guid.NewGuid().ToString(),
             VaultAccountId = transactionVaultId!,
-            WorkspaceId = _workspace.WorkspaceId,
+            WorkspaceId = workspaceId,
             AssetId = request.AssetId,
             SourceAddress = sourceAddress,
             Amount = amount,
@@ -291,12 +276,7 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
-        var responseAddressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        var dto = MapToDto(transaction, responseAddressLookup);
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionUpserted", dto);
-        await _hub.Clients.Group(_workspace.WorkspaceId).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
-
+        var dto = await _transactionNotifier.NotifyUpsertAsync(transaction, workspaceId);
         return Success(dto);
     }
 
@@ -312,28 +292,13 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
     public async Task<AdminServiceResult<TransactionStateDto>> BroadcastAsync(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<TransactionStateDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
-
-        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -343,65 +308,35 @@ public sealed class AdminTransactionService : IAdminTransactionService
             transaction.Hash = $"0x{Guid.NewGuid():N}";
         }
 
-        return await TransitionTransactionAsync(transaction, TransactionState.BROADCASTING);
+        return await TransitionTransactionAsync(transaction, TransactionState.BROADCASTING, workspaceId);
     }
 
     public async Task<AdminServiceResult<TransactionStateDto>> ConfirmAsync(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<TransactionStateDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
-
-        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
 
         transaction.Confirmations++;
-        return await TransitionTransactionAsync(transaction, TransactionState.CONFIRMING);
+        return await TransitionTransactionAsync(transaction, TransactionState.CONFIRMING, workspaceId);
     }
 
     public async Task<AdminServiceResult<TransactionStateDto>> CompleteAsync(string id)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<TransactionStateDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
-
-        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -412,33 +347,18 @@ public sealed class AdminTransactionService : IAdminTransactionService
         }
 
         await _balanceService.CompleteTransactionAsync(transaction);
-        return await TransitionTransactionAsync(transaction, TransactionState.COMPLETED);
+        return await TransitionTransactionAsync(transaction, TransactionState.COMPLETED, workspaceId);
     }
 
     public async Task<AdminServiceResult<TransactionStateDto>> FailAsync(string id, string? reason)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<TransactionStateDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
-
-        if (!belongsToWorkspace)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
@@ -457,17 +377,14 @@ public sealed class AdminTransactionService : IAdminTransactionService
         transaction.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync();
-        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
+        await _transactionNotifier.NotifyUpsertAsync(transaction, workspaceId);
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
             id, transaction.FailureReason);
 
         var result = new TransactionStateDto
         {
-            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
+            Id = TransactionCompositeId.Build(workspaceId, transaction.Id),
             State = transaction.State.ToString(),
         };
 
@@ -491,247 +408,39 @@ public sealed class AdminTransactionService : IAdminTransactionService
 
     private async Task<AdminServiceResult<TransactionStateDto>> TransitionTransactionAsync(string id, TransactionState newState)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<TransactionStateDto>();
+            return failure;
         }
 
-        if (!TryUnwrapTransactionId(id, out var rawId))
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == rawId);
+        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
         if (transaction == null)
         {
             return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
         }
 
-        // Check if the transaction belongs to this workspace (source or destination)
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-        var belongsToWorkspace = workspaceAddresses.Contains(transaction.SourceAddress) ||
-                                  workspaceAddresses.Contains(transaction.DestinationAddress);
+        return await TransitionTransactionAsync(transaction, newState, workspaceId);
+    }
 
-        if (!belongsToWorkspace)
+    private async Task<AdminServiceResult<TransactionStateDto>> TransitionTransactionAsync(
+        Transaction transaction,
+        TransactionState newState,
+        string workspaceId)
+    {
+        var outcome = await _transactionTransitioner.TransitionAsync(transaction, newState, workspaceId);
+        if (!outcome.Success)
         {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
+            return Failure<TransactionStateDto>(outcome.ErrorMessage!, outcome.ErrorCode!);
         }
 
-        return await TransitionTransactionAsync(transaction, newState);
+        return Success(outcome.Result!);
     }
 
-    private async Task<AdminServiceResult<TransactionStateDto>> TransitionTransactionAsync(Transaction transaction, TransactionState newState)
-    {
-        if (transaction.State == newState)
-        {
-            _logger.LogInformation("Transaction {TxId} already in state {State}",
-                transaction.Id, newState);
 
-            var existingResult = new TransactionStateDto
-            {
-                Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
-                State = transaction.State.ToString(),
-            };
 
-            return Success(existingResult);
-        }
 
-        if (!transaction.State.CanTransitionTo(newState))
-        {
-            return Failure<TransactionStateDto>(
-                $"Invalid transition from {transaction.State} to {newState}",
-                "INVALID_STATE_TRANSITION");
-        }
 
-        if (newState == TransactionState.REJECTED ||
-            newState == TransactionState.CANCELLED ||
-            newState == TransactionState.TIMEOUT)
-        {
-            await _balanceService.RollbackTransactionAsync(transaction);
-        }
 
-        transaction.TransitionTo(newState);
-        await _context.SaveChangesAsync();
-        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionUpserted", MapToDto(transaction, addressLookup));
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("transactionsUpdated");
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
-
-        _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
-            transaction.Id, transaction.State, newState);
-
-        var result = new TransactionStateDto
-        {
-            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
-            State = transaction.State.ToString(),
-        };
-
-        return Success(result);
-    }
-
-    private AdminTransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup)
-    {
-        var sourceOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
-        var destinationOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
-        var sourceType = sourceOwnership != null ? "INTERNAL" : "EXTERNAL";
-        var destinationType = destinationOwnership != null ? "INTERNAL" : "EXTERNAL";
-
-        return new AdminTransactionDto
-        {
-            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
-            VaultAccountId = transaction.VaultAccountId,
-            AssetId = transaction.AssetId,
-            SourceType = sourceType,
-            SourceAddress = transaction.SourceAddress,
-            SourceVaultAccountName = sourceOwnership?.VaultAccountName,
-            DestinationType = destinationType,
-            DestinationVaultAccountName = destinationOwnership?.VaultAccountName,
-            Amount = transaction.Amount.ToString("F18"),
-            DestinationAddress = transaction.DestinationAddress,
-            DestinationTag = transaction.DestinationTag,
-            State = transaction.State.ToString(),
-            Hash = transaction.Hash,
-            Fee = transaction.Fee.ToString("F18"),
-            NetworkFee = transaction.NetworkFee.ToString("F18"),
-            IsFrozen = transaction.IsFrozen,
-            FailureReason = transaction.FailureReason,
-            ReplacedByTxId = transaction.ReplacedByTxId == null
-                ? null
-                : TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.ReplacedByTxId),
-            Confirmations = transaction.Confirmations,
-            CreatedAt = transaction.CreatedAt,
-            UpdatedAt = transaction.UpdatedAt,
-        };
-    }
-
-    private sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
-
-    private static string BuildAddressKey(string assetId, string address)
-    {
-        return $"{assetId}|{address}";
-    }
-
-    private static AddressOwnership? ResolveAddressOwnership(
-        IReadOnlyDictionary<string, AddressOwnership> lookup,
-        string assetId,
-        string? address)
-    {
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            return null;
-        }
-
-        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
-            ? ownership
-            : null;
-    }
-
-    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions)
-    {
-        var addressValues = transactions
-            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
-            .Where(address => !string.IsNullOrWhiteSpace(address))
-            .Select(address => address!)
-            .Distinct()
-            .ToList();
-
-        if (addressValues.Count == 0)
-        {
-            return new Dictionary<string, AddressOwnership>();
-        }
-
-        var addresses = await _context.Addresses
-            .Include(a => a.Wallet)
-            .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue) && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
-            .ToListAsync();
-
-        var lookup = new Dictionary<string, AddressOwnership>();
-        foreach (var address in addresses)
-        {
-            var wallet = address.Wallet;
-            var vault = wallet?.VaultAccount;
-            if (wallet == null || vault == null)
-            {
-                continue;
-            }
-
-            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
-            if (!lookup.ContainsKey(key))
-            {
-                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
-            }
-        }
-
-        return lookup;
-    }
-
-    private Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(Transaction transaction)
-    {
-        return BuildAddressOwnershipLookupAsync(new[] { transaction });
-    }
-
-    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(string assetId, IEnumerable<string> addresses)
-    {
-        var addressValues = addresses
-            .Where(address => !string.IsNullOrWhiteSpace(address))
-            .Select(address => address.Trim())
-            .Distinct()
-            .ToList();
-
-        if (addressValues.Count == 0)
-        {
-            return new Dictionary<string, AddressOwnership>();
-        }
-
-        var addressEntities = await _context.Addresses
-            .Include(a => a.Wallet)
-            .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue)
-                        && a.Wallet.AssetId == assetId
-                        && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
-            .ToListAsync();
-
-        var lookup = new Dictionary<string, AddressOwnership>();
-        foreach (var address in addressEntities)
-        {
-            var wallet = address.Wallet;
-            var vault = wallet?.VaultAccount;
-            if (wallet == null || vault == null)
-            {
-                continue;
-            }
-
-            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
-            if (!lookup.ContainsKey(key))
-            {
-                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
-            }
-        }
-
-        return lookup;
-    }
-
-    /// <summary>
-    /// Gets all addresses belonging to vaults in the current workspace.
-    /// Used for filtering transactions that belong to this workspace.
-    /// </summary>
-    private async Task<HashSet<string>> GetWorkspaceAddressesAsync()
-    {
-        var addresses = await _context.Addresses
-            .Include(a => a.Wallet)
-            .ThenInclude(w => w.VaultAccount)
-            .Where(a => a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
-            .Select(a => a.AddressValue)
-            .ToListAsync();
-
-        return addresses.ToHashSet();
-    }
-
-    private bool TryUnwrapTransactionId(string id, out string rawId)
-    {
-        return TransactionCompositeId.TryUnwrap(id, _workspace.WorkspaceId, out rawId);
-    }
 
     private static TransactionState ResolveInitialState(string? initialState, TransactionState fallback)
     {
@@ -744,25 +453,6 @@ public sealed class AdminTransactionService : IAdminTransactionService
         return fallback;
     }
 
-    private static AdminServiceResult<T> Success<T>(T data)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Success(data), StatusCodes.Status200OK);
-    }
-
-    private static AdminServiceResult<T> Failure<T>(string message, string code)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure(message, code), StatusCodes.Status400BadRequest);
-    }
-
-    private static AdminServiceResult<T> NotFound<T>(string message, string code)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure(message, code), StatusCodes.Status404NotFound);
-    }
-
-    private static AdminServiceResult<T> WorkspaceRequired<T>()
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure("Workspace is required", "WORKSPACE_REQUIRED"), StatusCodes.Status400BadRequest);
-    }
 }
 
 

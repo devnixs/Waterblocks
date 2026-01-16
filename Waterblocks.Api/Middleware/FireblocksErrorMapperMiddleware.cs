@@ -63,6 +63,7 @@ public class FireblocksErrorMapperMiddleware
 
         return exception switch
         {
+            FireblocksApiException apiException => (apiException.StatusCode, apiException.ErrorCode, apiException.Message),
             DuplicateExternalTxIdException dup => (HttpStatusCode.Conflict, 1438, dup.Message),
             ArgumentNullException => (HttpStatusCode.BadRequest, 400, exception.Message),
             ArgumentException => (HttpStatusCode.BadRequest, 400, exception.Message),

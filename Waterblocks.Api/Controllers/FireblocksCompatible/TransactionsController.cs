@@ -17,20 +17,26 @@ public class TransactionsController : ControllerBase
     private readonly ILogger<TransactionsController> _logger;
     private readonly WorkspaceContext _workspace;
     private readonly ITransactionService _transactionService;
+    private readonly ITransactionViewService _transactionView;
     private readonly IRealtimeNotifier _realtimeNotifier;
+    private readonly ITransactionIdResolver _transactionIdResolver;
 
     public TransactionsController(
         FireblocksDbContext context,
         ILogger<TransactionsController> logger,
         WorkspaceContext workspace,
         ITransactionService transactionService,
-        IRealtimeNotifier realtimeNotifier)
+        ITransactionViewService transactionView,
+        IRealtimeNotifier realtimeNotifier,
+        ITransactionIdResolver transactionIdResolver)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _transactionService = transactionService;
+        _transactionView = transactionView;
         _realtimeNotifier = realtimeNotifier;
+        _transactionIdResolver = transactionIdResolver;
     }
 
     [HttpPost]
@@ -49,15 +55,15 @@ public class TransactionsController : ControllerBase
     {
         if (string.IsNullOrEmpty(_workspace.WorkspaceId))
         {
-            throw new UnauthorizedAccessException("Workspace is required");
+            throw FireblocksApiException.Unauthorized("Workspace is required");
         }
 
         // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(_workspace.WorkspaceId!);
 
-        var query = _context.Transactions
-            .Include(t => t.VaultAccount)
-            .Where(t => workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress))
+        var query = _transactionView.ApplyWorkspaceAddressFilter(
+                _context.Transactions.Include(t => t.VaultAccount),
+                workspaceAddresses)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
@@ -69,7 +75,7 @@ public class TransactionsController : ControllerBase
         {
             if (!long.TryParse(before, out var beforeMs))
             {
-                return BadRequest($"Invalid before parameter: {before}");
+                throw FireblocksApiException.BadRequest($"Invalid before parameter: {before}");
             }
 
             var beforeDate = DateTimeOffset.FromUnixTimeMilliseconds(beforeMs);
@@ -80,7 +86,7 @@ public class TransactionsController : ControllerBase
         {
             if (!long.TryParse(after, out var afterMs))
             {
-                return BadRequest($"Invalid after parameter: {after}");
+                throw FireblocksApiException.BadRequest($"Invalid after parameter: {after}");
             }
 
             var afterDate = DateTimeOffset.FromUnixTimeMilliseconds(afterMs);
@@ -92,54 +98,38 @@ public class TransactionsController : ControllerBase
             .Take(limit)
             .ToListAsync();
 
-        var addressLookup = await BuildAddressOwnershipLookupAsync(transactions);
-        var dtos = transactions.Select(t => MapToDto(t, addressLookup)).ToList();
+        var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(transactions, _workspace.WorkspaceId!);
+        var dtos = transactions.Select(t => _transactionView.MapToFireblocksDto(t, addressLookup, _workspace.WorkspaceId)).ToList();
         return Ok(dtos);
     }
 
     [HttpGet("{txId}")]
     public async Task<ActionResult<TransactionDto>> GetTransaction(string txId)
     {
-        if (!TransactionCompositeId.TryUnwrap(txId, _workspace.WorkspaceId, out var rawId))
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
+        var transaction = await RequireTransactionAsync(txId, includeVaultAccount: true);
 
-        // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-
-        var transaction = await _context.Transactions
-            .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.Id == rawId &&
-                (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
-
-        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        return Ok(MapToDto(transaction, addressLookup));
+        var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(new[] { transaction }, _workspace.WorkspaceId!);
+        return Ok(_transactionView.MapToFireblocksDto(transaction, addressLookup, _workspace.WorkspaceId));
     }
 
     [HttpGet("external_tx_id/{externalTxId}")]
     public async Task<ActionResult<TransactionDto>> GetTransactionByExternalId(string externalTxId)
     {
         // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
+        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(_workspace.WorkspaceId!);
 
-        var transaction = await _context.Transactions
-            .Include(t => t.VaultAccount)
-            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId &&
-                (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
+        var transaction = await _transactionView.ApplyWorkspaceAddressFilter(
+                _context.Transactions.Include(t => t.VaultAccount),
+                workspaceAddresses)
+            .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId);
 
         if (transaction == null)
         {
-            throw new KeyNotFoundException($"Transaction with external ID {externalTxId} not found");
+            throw FireblocksApiException.NotFound($"Transaction with external ID {externalTxId} not found");
         }
 
-        var addressLookup = await BuildAddressOwnershipLookupAsync(new[] { transaction });
-        return Ok(MapToDto(transaction, addressLookup));
+        var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(new[] { transaction }, _workspace.WorkspaceId!);
+        return Ok(_transactionView.MapToFireblocksDto(transaction, addressLookup, _workspace.WorkspaceId));
     }
 
     [HttpPost("{txId}/cancel")]
@@ -149,14 +139,14 @@ public class TransactionsController : ControllerBase
 
         if (transaction.State.IsTerminal())
         {
-            throw new InvalidOperationException($"Cannot cancel transaction in {transaction.State} state");
+            throw FireblocksApiException.BadRequest($"Cannot cancel transaction in {transaction.State} state");
         }
 
         transaction.TransitionTo(TransactionState.CANCELLED);
         transaction.SubStatus = "CANCELLED_BY_USER";
         await _context.SaveChangesAsync();
 
-        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+        await NotifyTransactionsUpdatedAsync(transaction);
 
         _logger.LogInformation("Cancelled transaction {TransactionId}", txId);
 
@@ -171,7 +161,7 @@ public class TransactionsController : ControllerBase
         transaction.Freeze();
         await _context.SaveChangesAsync();
 
-        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+        await NotifyTransactionsUpdatedAsync(transaction);
 
         _logger.LogInformation("Froze transaction {TransactionId}", txId);
 
@@ -186,7 +176,7 @@ public class TransactionsController : ControllerBase
         transaction.Unfreeze();
         await _context.SaveChangesAsync();
 
-        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+        await NotifyTransactionsUpdatedAsync(transaction);
 
         _logger.LogInformation("Unfroze transaction {TransactionId}", txId);
 
@@ -201,12 +191,12 @@ public class TransactionsController : ControllerBase
         // Only ETH transactions can be dropped
         if (transaction.AssetId != "ETH")
         {
-            throw new InvalidOperationException("Drop operation only supported for ETH transactions");
+            throw FireblocksApiException.BadRequest("Drop operation only supported for ETH transactions");
         }
 
         if (transaction.State.IsTerminal())
         {
-            throw new InvalidOperationException($"Cannot drop transaction in {transaction.State} state");
+            throw FireblocksApiException.BadRequest($"Cannot drop transaction in {transaction.State} state");
         }
 
         // Mark original as replaced
@@ -240,7 +230,7 @@ public class TransactionsController : ControllerBase
         _context.Transactions.Add(replacement);
         await _context.SaveChangesAsync();
 
-        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
+        await NotifyTransactionsUpdatedAsync(transaction);
 
         _logger.LogInformation("Dropped transaction {TransactionId} and created replacement {ReplacementId}",
             txId, replacement.Id);
@@ -259,7 +249,7 @@ public class TransactionsController : ControllerBase
         var asset = await _context.Assets.FindAsync(request.AssetId);
         if (asset == null)
         {
-            throw new KeyNotFoundException($"Asset {request.AssetId} not found");
+            throw FireblocksApiException.NotFound($"Asset {request.AssetId} not found");
         }
 
         // Use asset's configured fee (with Low/Medium/High multipliers)
@@ -319,7 +309,7 @@ public class TransactionsController : ControllerBase
         var asset = await _context.Assets.FindAsync(assetId);
         if (asset == null)
         {
-            throw new KeyNotFoundException($"Asset {assetId} not found");
+            throw FireblocksApiException.NotFound($"Asset {assetId} not found");
         }
 
         bool isValid = ValidateAddressFormat(assetId, address);
@@ -338,161 +328,9 @@ public class TransactionsController : ControllerBase
         return Ok(response);
     }
 
-    private TransactionDto MapToDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup)
-    {
-        var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
-        var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
-        var amountStr = transaction.Amount.ToString(CultureInfo.InvariantCulture);
-        var networkFeeStr = transaction.NetworkFee.ToString(CultureInfo.InvariantCulture);
-        var serviceFeeStr = transaction.ServiceFee.ToString(CultureInfo.InvariantCulture);
-        var sourceOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
-        var destinationOwnership = ResolveAddressOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
-        var sourceType = sourceOwnership != null ? "VAULT_ACCOUNT" : "ONE_TIME_ADDRESS";
-        var destinationType = destinationOwnership != null ? "VAULT_ACCOUNT" : "ONE_TIME_ADDRESS";
 
-        return new TransactionDto
-        {
-            Id = TransactionCompositeId.Build(_workspace.WorkspaceId, transaction.Id),
-            AssetId = transaction.AssetId,
-            Source = new TransferPeerPathResponseDto
-            {
-                Type = sourceType,
-                Id = sourceOwnership?.VaultAccountId ?? string.Empty,
-                Name = sourceOwnership?.VaultAccountName ?? string.Empty,
-                SubType = "DEFAULT",
-                VirtualType = "UNKNOWN",
-                VirtualId = string.Empty,
-            },
-            Destination = new TransferPeerPathResponseDto
-            {
-                Type = destinationType,
-                Id = destinationOwnership?.VaultAccountId ?? string.Empty,
-                Name = destinationOwnership?.VaultAccountName ?? string.Empty,
-                SubType = "DEFAULT",
-                VirtualType = "UNKNOWN",
-                VirtualId = string.Empty,
-            },
-            RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
-            Amount = amountStr,
-            NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
-            AmountUSD = null, // USD conversion not implemented
-            ServiceFee = serviceFeeStr,
-            NetworkFee = networkFeeStr,
-            CreatedAt = createdAtUnix,
-            LastUpdated = lastUpdatedUnix,
-            Status = transaction.State.ToString(),
-            TxHash = transaction.Hash ?? string.Empty,
-            Tag = transaction.DestinationTag ?? string.Empty,
-            SubStatus = transaction.SubStatus,
-            DestinationAddress = transaction.DestinationAddress ?? string.Empty,
-            SourceAddress = transaction.SourceAddress ?? string.Empty,
-            DestinationAddressDescription = string.Empty,
-            DestinationTag = transaction.DestinationTag ?? string.Empty,
-            SignedBy = new List<string>(),
-            CreatedBy = string.Empty,
-            RejectedBy = string.Empty,
-            AddressType = "PERMANENT",
-            Note = transaction.Note ?? string.Empty,
-            ExchangeTxId = string.Empty,
-            FeeCurrency = transaction.FeeCurrency ?? transaction.AssetId ?? string.Empty,
-            Operation = transaction.Operation ?? "TRANSFER",
-            NetworkRecords = new List<NetworkRecordDto>(),
-            AmlScreeningResult = new AmlScreeningResultDto
-            {
-                Provider = string.Empty,
-                Payload = new Dictionary<string, object>(),
-            },
-            CustomerRefId = transaction.CustomerRefId ?? string.Empty,
-            NumOfConfirmations = transaction.Confirmations,
-            SignedMessages = new List<SignedMessageDto>(),
-            ExtraParameters = new Dictionary<string, object>(),
-            ExternalTxId = transaction.ExternalTxId ?? string.Empty,
-            ReplacedTxHash = transaction.ReplacedByTxId != null ? transaction.Hash ?? string.Empty : string.Empty,
-            Destinations = new List<TransactionResponseDestinationDto>(),
-            BlockInfo = new BlockInfoDto
-            {
-                BlockHeight = "100",
-                BlockHash = "xxxyyy",
-            },
-            AuthorizationInfo = new AuthorizationInfoDto
-            {
-                AllowOperatorAsAuthorizer = false,
-                Logic = "AND",
-                Groups = new List<AuthorizationGroupDto>(),
-            },
-            AmountInfo = new AmountInfoDto
-            {
-                Amount = amountStr,
-                RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
-                NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
-                AmountUSD = string.Empty,
-            },
-            Index = null,
-            BlockchainIndex = string.Empty,
-        };
-    }
 
-    private sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
 
-    private static string BuildAddressKey(string assetId, string address)
-    {
-        return $"{assetId}|{address}";
-    }
-
-    private static AddressOwnership? ResolveAddressOwnership(
-        IReadOnlyDictionary<string, AddressOwnership> lookup,
-        string assetId,
-        string? address)
-    {
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            return null;
-        }
-
-        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
-            ? ownership
-            : null;
-    }
-
-    private async Task<Dictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions)
-    {
-        var addressValues = transactions
-            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
-            .Where(address => !string.IsNullOrWhiteSpace(address))
-            .Select(address => address!)
-            .Distinct()
-            .ToList();
-
-        if (addressValues.Count == 0)
-        {
-            return new Dictionary<string, AddressOwnership>();
-        }
-
-        var addresses = await _context.Addresses
-            .Include(a => a.Wallet)
-            .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue) && a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
-            .ToListAsync();
-
-        var lookup = new Dictionary<string, AddressOwnership>();
-        foreach (var address in addresses)
-        {
-            var wallet = address.Wallet;
-            var vault = wallet?.VaultAccount;
-            if (wallet == null || vault == null)
-            {
-                continue;
-            }
-
-            var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
-            if (!lookup.ContainsKey(key))
-            {
-                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
-            }
-        }
-
-        return lookup;
-    }
 
     private bool ValidateAddressFormat(string assetId, string address)
     {
@@ -504,40 +342,76 @@ public class TransactionsController : ControllerBase
         };
     }
 
-    private async Task<Transaction> FindTransactionByIdOrExternalIdAsync(string txId)
+    private Task<Transaction> FindTransactionByIdOrExternalIdAsync(string txId)
     {
-        if (!TransactionCompositeId.TryUnwrap(txId, _workspace.WorkspaceId, out var rawId))
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
-
-        // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await GetWorkspaceAddressesAsync();
-
-        var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t =>
-                (t.Id == rawId || t.ExternalTxId == rawId)
-                && (workspaceAddresses.Contains(t.SourceAddress) || workspaceAddresses.Contains(t.DestinationAddress)));
-
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"Transaction {txId} not found");
-        }
-
-        return transaction;
+        return RequireTransactionAsync(txId, allowExternalId: true);
     }
 
-    private async Task<HashSet<string>> GetWorkspaceAddressesAsync()
+    private async Task<Transaction> RequireTransactionAsync(
+        string txId,
+        bool includeVaultAccount = false,
+        bool allowExternalId = false)
     {
-        var addresses = await _context.Addresses
+        try
+        {
+            return await _transactionIdResolver.RequireWorkspaceTransactionAsync(
+                txId,
+                includeVaultAccount: includeVaultAccount,
+                allowExternalId: allowExternalId);
+        }
+        catch (KeyNotFoundException)
+        {
+            throw FireblocksApiException.NotFound($"Transaction {txId} not found");
+        }
+    }
+
+    private async Task NotifyTransactionsUpdatedAsync(Transaction transaction)
+    {
+        var workspaceIds = await GetAffectedWorkspaceIdsAsync(transaction);
+        foreach (var workspaceId in workspaceIds)
+        {
+            await _realtimeNotifier.NotifyTransactionsUpdatedAsync(workspaceId);
+        }
+    }
+
+    private async Task<HashSet<string>> GetAffectedWorkspaceIdsAsync(Transaction transaction)
+    {
+        var workspaceIds = new HashSet<string>(StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(_workspace.WorkspaceId))
+        {
+            workspaceIds.Add(_workspace.WorkspaceId);
+        }
+
+        var addressValues = new[] { transaction.SourceAddress, transaction.DestinationAddress }
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Select(address => address!)
+            .Distinct()
+            .ToList();
+
+        if (addressValues.Count == 0)
+        {
+            return workspaceIds;
+        }
+
+        var addressWorkspaces = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => a.Wallet.VaultAccount.WorkspaceId == _workspace.WorkspaceId)
-            .Select(a => a.AddressValue)
+            .Where(a => addressValues.Contains(a.AddressValue))
+            .Select(a => a.Wallet.VaultAccount.WorkspaceId)
+            .Distinct()
             .ToListAsync();
 
-        return addresses.ToHashSet();
+        foreach (var workspaceId in addressWorkspaces)
+        {
+            if (!string.IsNullOrWhiteSpace(workspaceId))
+            {
+                workspaceIds.Add(workspaceId);
+            }
+        }
+
+        return workspaceIds;
     }
+
 }
 
 

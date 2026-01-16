@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import TransactionsPage from './pages/TransactionsPage';
 import VaultsPage from './pages/VaultsPage';
 import WorkspacesPage from './pages/WorkspacesPage';
+import AssetsPage from './pages/AssetsPage';
 import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -66,6 +67,7 @@ function AppContent() {
     { key: '1', handler: () => navigate('/transactions'), description: 'Navigate to Transactions' },
     { key: '2', handler: () => navigate('/vaults'), description: 'Navigate to Vaults' },
     { key: '3', handler: () => navigate('/workspaces'), description: 'Navigate to Workspaces' },
+    { key: '4', handler: () => navigate('/assets'), description: 'Navigate to Assets' },
     { key: '?', handler: () => setShowShortcuts(true), description: 'Show keyboard shortcuts' },
   ]);
 
@@ -94,6 +96,12 @@ function AppContent() {
             className={`nav-link ${location.pathname === '/workspaces' ? 'active' : ''}`}
           >
             Workspaces
+          </Link>
+          <Link
+            to="/assets"
+            className={`nav-link ${location.pathname === '/assets' ? 'active' : ''}`}
+          >
+            Assets
           </Link>
           <select
             value={workspaceId}
@@ -139,6 +147,7 @@ function AppContent() {
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/vaults" element={<VaultsPage />} />
           <Route path="/workspaces" element={<WorkspacesPage />} />
+          <Route path="/assets" element={<AssetsPage />} />
         </Routes>
       </main>
       <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />

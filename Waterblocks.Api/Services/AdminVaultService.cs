@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Admin;
@@ -14,12 +13,11 @@ public interface IAdminVaultService
     Task<AdminServiceResult<AdminWalletDto>> CreateWalletAsync(string id, CreateAdminWalletRequestDto request);
 }
 
-public sealed class AdminVaultService : IAdminVaultService
+public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<AdminVaultService> _logger;
     private readonly IHubContext<AdminHub> _hub;
-    private readonly WorkspaceContext _workspace;
     private readonly IAddressGenerator _addressGenerator;
 
     public AdminVaultService(
@@ -28,23 +26,23 @@ public sealed class AdminVaultService : IAdminVaultService
         IHubContext<AdminHub> hub,
         WorkspaceContext workspace,
         IAddressGenerator addressGenerator)
+        : base(workspace)
     {
         _context = context;
         _logger = logger;
         _hub = hub;
-        _workspace = workspace;
         _addressGenerator = addressGenerator;
     }
 
     public async Task<AdminServiceResult<AdminWalletDto>> CreateWalletAsync(string id, CreateAdminWalletRequestDto request)
     {
-        if (string.IsNullOrEmpty(_workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<AdminWalletDto>(out var workspaceId, out var failure))
         {
-            return WorkspaceRequired<AdminWalletDto>();
+            return failure;
         }
 
         var vault = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Where(v => v.WorkspaceId == workspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstOrDefaultAsync(v => v.Id == id);
@@ -124,13 +122,13 @@ public sealed class AdminVaultService : IAdminVaultService
         };
 
         var updatedVault = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == _workspace.WorkspaceId)
+            .Where(v => v.WorkspaceId == workspaceId)
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstAsync(v => v.Id == vault.Id);
 
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultUpserted", MapToDto(updatedVault));
-        await _hub.Clients.Group(_workspace.WorkspaceId!).SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(workspaceId).SendAsync("vaultUpserted", MapToDto(updatedVault));
+        await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated");
 
         _logger.LogInformation("Created wallet for asset {AssetId} in vault {VaultId}", request.AssetId, vault.Id);
 
@@ -163,23 +161,4 @@ public sealed class AdminVaultService : IAdminVaultService
         };
     }
 
-    private static AdminServiceResult<T> Success<T>(T data)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Success(data), StatusCodes.Status200OK);
-    }
-
-    private static AdminServiceResult<T> Failure<T>(string message, string code)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure(message, code), StatusCodes.Status400BadRequest);
-    }
-
-    private static AdminServiceResult<T> NotFound<T>(string message, string code)
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure(message, code), StatusCodes.Status404NotFound);
-    }
-
-    private static AdminServiceResult<T> WorkspaceRequired<T>()
-    {
-        return new AdminServiceResult<T>(AdminResponse<T>.Failure("Workspace is required", "WORKSPACE_REQUIRED"), StatusCodes.Status400BadRequest);
-    }
 }

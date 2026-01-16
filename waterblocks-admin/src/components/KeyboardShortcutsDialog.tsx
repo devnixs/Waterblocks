@@ -37,6 +37,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
               <Shortcut keys={['1']} description="Navigate to Transactions" />
               <Shortcut keys={['2']} description="Navigate to Vaults" />
               <Shortcut keys={['3']} description="Navigate to Workspaces" />
+              <Shortcut keys={['4']} description="Navigate to Assets" />
               <Shortcut keys={['/']} description="Focus search/filter input" />
               <Shortcut keys={['Esc']} description="Close panel or clear selection" />
               <Shortcut keys={['?']} description="Show this help dialog" />

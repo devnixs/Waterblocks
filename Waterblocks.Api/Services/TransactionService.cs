@@ -115,13 +115,15 @@ public sealed class TransactionService : ITransactionService
         // Get or validate destination address
         var destinationAddress = string.Empty;
         var destinationVaultId = string.Empty;
+        var destinationWorkspaceId = string.Empty;
 
-        if (request.Destination?.Type == "VAULT_ACCOUNT" && !string.IsNullOrEmpty(request.Destination.Id))
+        if (request.Destination?.Type == TransferPeerType.VAULT_ACCOUNT && !string.IsNullOrEmpty(request.Destination.Id))
         {
             // Destination is a vault
             destinationVaultId = request.Destination.Id;
             var destinationWallet = await _context.Wallets
                 .Include(w => w.Addresses)
+                .Include(w => w.VaultAccount)
                 .FirstOrDefaultAsync(w => w.VaultAccountId == destinationVaultId && w.AssetId == request.AssetId);
 
             if (destinationWallet == null)
@@ -146,6 +148,8 @@ public sealed class TransactionService : ITransactionService
                 _logger.LogInformation("Auto-generated address {Address} for vault {VaultId} asset {AssetId}",
                     newAddress.AddressValue, destinationVaultId, request.AssetId);
             }
+
+            destinationWorkspaceId = destinationWallet.VaultAccount?.WorkspaceId ?? string.Empty;
 
             // Check if specific address is provided via OneTimeAddress (override)
             var explicitAddress = request.Destination.OneTimeAddress?.Address;
@@ -186,7 +190,7 @@ public sealed class TransactionService : ITransactionService
         }
 
         // Final validation: ensure destination vault ID is set if type is VAULT_ACCOUNT
-        if (request.Destination?.Type == "VAULT_ACCOUNT" && string.IsNullOrWhiteSpace(destinationVaultId))
+        if (request.Destination?.Type == TransferPeerType.VAULT_ACCOUNT && string.IsNullOrWhiteSpace(destinationVaultId))
         {
             throw new ArgumentException("Destination vault ID is required when destination type is VAULT_ACCOUNT");
         }
@@ -250,8 +254,22 @@ public sealed class TransactionService : ITransactionService
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        await _realtimeNotifier.NotifyTransactionsUpdatedAsync(_workspace.WorkspaceId);
-        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
+        var affectedWorkspaces = new HashSet<string>(StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(_workspace.WorkspaceId))
+        {
+            affectedWorkspaces.Add(_workspace.WorkspaceId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(destinationWorkspaceId))
+        {
+            affectedWorkspaces.Add(destinationWorkspaceId);
+        }
+
+        foreach (var workspaceId in affectedWorkspaces)
+        {
+            await _realtimeNotifier.NotifyTransactionsUpdatedAsync(workspaceId);
+            await _realtimeNotifier.NotifyVaultsUpdatedAsync(workspaceId);
+        }
 
         _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} (requested: {RequestedAmount}, fee: {Fee} {FeeCurrency}) from vault {VaultAccountId}",
             transaction.Id, transferAmount, request.AssetId, requestedAmount, networkFee, feeCurrency, vaultAccountId);

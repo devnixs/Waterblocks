@@ -12,6 +12,9 @@ import type {
   AdminWallet,
   AdminAutoTransitionSettings,
   Asset,
+  AdminAsset,
+  CreateAdminAssetRequest,
+  UpdateAdminAssetRequest,
   AdminWorkspace,
   CreateWorkspaceRequest,
   AdminGeneratedAddress,
@@ -189,6 +192,28 @@ export const adminApi = {
 
     const data = await response.json();
     return { data, error: null };
+  },
+
+  async getAdminAssets(): Promise<AdminResponse<AdminAsset[]>> {
+    return fetchApi('/admin/assets');
+  },
+
+  async createAdminAsset(request: CreateAdminAssetRequest): Promise<AdminResponse<AdminAsset>> {
+    return fetchApi('/admin/assets', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async updateAdminAsset(id: string, request: UpdateAdminAssetRequest): Promise<AdminResponse<AdminAsset>> {
+    return fetchApi(`/admin/assets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async deleteAdminAsset(id: string): Promise<AdminResponse<boolean>> {
+    return fetchApi(`/admin/assets/${id}`, { method: 'DELETE' });
   },
 
   async generateAddress(assetId: string): Promise<AdminResponse<AdminGeneratedAddress>> {

@@ -116,6 +116,50 @@ export interface Asset {
   type?: string;
 }
 
+export type BlockchainType = 'AccountBased' | 'AddressBased' | 'MemoBased';
+
+export interface AdminAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  type?: string;
+  blockchainType: BlockchainType;
+  contractAddress?: string;
+  nativeAsset?: string;
+  baseFee: number;
+  feeAssetId?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreateAdminAssetRequest {
+  assetId: string;
+  name: string;
+  symbol: string;
+  decimals?: number;
+  type?: string;
+  blockchainType?: BlockchainType;
+  contractAddress?: string;
+  nativeAsset?: string;
+  baseFee?: number;
+  feeAssetId?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateAdminAssetRequest {
+  name?: string;
+  symbol?: string;
+  decimals?: number;
+  type?: string;
+  blockchainType?: BlockchainType;
+  contractAddress?: string;
+  nativeAsset?: string;
+  baseFee?: number;
+  feeAssetId?: string;
+  isActive?: boolean;
+}
+
 export interface AdminApiKey {
   id: string;
   name: string;

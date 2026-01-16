@@ -87,6 +87,31 @@ public class AdminApiClient
         return await DeserializeResponse<List<TransactionDto>>(response);
     }
 
+    // Assets
+    public async Task<AdminResponse<List<AdminAssetDto>>> GetAssetsAsync()
+    {
+        var response = await _client.GetAsync("/admin/assets");
+        return await DeserializeResponse<List<AdminAssetDto>>(response);
+    }
+
+    public async Task<AdminResponse<AdminAssetDto>> CreateAssetAsync(CreateAdminAssetRequest request)
+    {
+        var response = await _client.PostAsJsonAsync("/admin/assets", request);
+        return await DeserializeResponse<AdminAssetDto>(response);
+    }
+
+    public async Task<AdminResponse<AdminAssetDto>> UpdateAssetAsync(string assetId, UpdateAdminAssetRequest request)
+    {
+        var response = await _client.PatchAsJsonAsync($"/admin/assets/{assetId}", request);
+        return await DeserializeResponse<AdminAssetDto>(response);
+    }
+
+    public async Task<AdminResponse<bool>> DeleteAssetAsync(string assetId)
+    {
+        var response = await _client.DeleteAsync($"/admin/assets/{assetId}");
+        return await DeserializeResponse<bool>(response);
+    }
+
     // State transitions
     public async Task<AdminResponse<TransactionStateDto>> ApproveTransactionAsync(string transactionId)
     {
@@ -252,4 +277,49 @@ public class CreateTransactionRequest
     public string Amount { get; set; } = "0";
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }
+}
+
+public class AdminAssetDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Symbol { get; set; } = string.Empty;
+    public int Decimals { get; set; }
+    public string? Type { get; set; }
+    public string BlockchainType { get; set; } = string.Empty;
+    public string? ContractAddress { get; set; }
+    public string? NativeAsset { get; set; }
+    public decimal BaseFee { get; set; }
+    public string? FeeAssetId { get; set; }
+    public bool IsActive { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class CreateAdminAssetRequest
+{
+    public string AssetId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Symbol { get; set; } = string.Empty;
+    public int? Decimals { get; set; }
+    public string? Type { get; set; }
+    public string? BlockchainType { get; set; }
+    public string? ContractAddress { get; set; }
+    public string? NativeAsset { get; set; }
+    public decimal? BaseFee { get; set; }
+    public string? FeeAssetId { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+public class UpdateAdminAssetRequest
+{
+    public string? Name { get; set; }
+    public string? Symbol { get; set; }
+    public int? Decimals { get; set; }
+    public string? Type { get; set; }
+    public string? BlockchainType { get; set; }
+    public string? ContractAddress { get; set; }
+    public string? NativeAsset { get; set; }
+    public decimal? BaseFee { get; set; }
+    public string? FeeAssetId { get; set; }
+    public bool? IsActive { get; set; }
 }

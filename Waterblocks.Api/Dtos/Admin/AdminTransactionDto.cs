@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Waterblocks.Api.Dtos.Admin;
 
 public class AdminTransactionDto
@@ -5,10 +7,10 @@ public class AdminTransactionDto
     public string Id { get; set; } = string.Empty;
     public string VaultAccountId { get; set; } = string.Empty;
     public string AssetId { get; set; } = string.Empty;
-    public string SourceType { get; set; } = "EXTERNAL";
+    public AdminTransactionPartyType SourceType { get; set; } = AdminTransactionPartyType.EXTERNAL;
     public string? SourceAddress { get; set; }
     public string? SourceVaultAccountName { get; set; }
-    public string DestinationType { get; set; } = "EXTERNAL";
+    public AdminTransactionPartyType DestinationType { get; set; } = AdminTransactionPartyType.EXTERNAL;
     public string? DestinationVaultAccountName { get; set; }
     public string Amount { get; set; } = "0";
     public string DestinationAddress { get; set; } = string.Empty;
@@ -54,4 +56,11 @@ public class TransactionStateDto
 {
     public string Id { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AdminTransactionPartyType
+{
+    INTERNAL,
+    EXTERNAL,
 }

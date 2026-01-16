@@ -56,7 +56,7 @@ public class TransactionDto
 /// </summary>
 public class TransferPeerPathResponseDto
 {
-    public string Type { get; set; } = string.Empty;
+    public TransferPeerType Type { get; set; } = TransferPeerType.VAULT_ACCOUNT;
     public string? Id { get; set; }
     public string? Name { get; set; }
     public string SubType { get; set; } = "DEFAULT";
@@ -169,13 +169,13 @@ public class TransactionResponseDestinationDto
 // Keep legacy types for request DTOs
 public class SourceDto
 {
-    public string Type { get; set; } = "VAULT_ACCOUNT";
+    public TransferPeerType Type { get; set; } = TransferPeerType.VAULT_ACCOUNT;
     public string Id { get; set; } = string.Empty;
 }
 
 public class DestinationDto
 {
-    public string Type { get; set; } = "ONE_TIME_ADDRESS";
+    public TransferPeerType Type { get; set; } = TransferPeerType.ONE_TIME_ADDRESS;
     public string? Id { get; set; }
     public OneTimeAddressDto? OneTimeAddress { get; set; }
 }

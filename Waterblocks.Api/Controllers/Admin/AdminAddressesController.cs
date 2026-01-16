@@ -22,9 +22,9 @@ public class AdminAddressesController : AdminControllerBase
     [HttpGet("generate")]
     public ActionResult<AdminResponse<AdminAddressDto>> Generate([FromQuery] string? assetId)
     {
-        if (string.IsNullOrEmpty(Workspace.WorkspaceId))
+        if (!TryGetWorkspaceId<AdminAddressDto>(out _, out var failure))
         {
-            return WorkspaceRequired<AdminAddressDto>();
+            return failure;
         }
 
         if (string.IsNullOrWhiteSpace(assetId))

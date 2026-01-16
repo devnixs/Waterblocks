@@ -35,11 +35,17 @@ builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IRealtimeNotifier, Waterblocks.Api.Services.RealtimeNotifier>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionService, Waterblocks.Api.Services.AdminTransactionService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionMapper, Waterblocks.Api.Services.AdminTransactionMapper>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionNotifier, Waterblocks.Api.Services.AdminTransactionNotifier>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionTransitioner, Waterblocks.Api.Services.AdminTransactionTransitioner>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminVaultService, Waterblocks.Api.Services.AdminVaultService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionService, Waterblocks.Api.Services.TransactionService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionViewService, Waterblocks.Api.Services.TransactionViewService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionIdResolver, Waterblocks.Api.Services.TransactionIdResolver>();
 builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressGenerator, Waterblocks.Api.Services.AddressGenerator>();
 builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressValidationService, Waterblocks.Api.Services.AddressValidationService>();
 builder.Services.AddScoped<Waterblocks.Api.Infrastructure.WorkspaceContext>();
+builder.Services.AddSingleton<Waterblocks.Api.Models.TransactionStateMachine>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AdminUi", policy =>

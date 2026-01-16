@@ -7,6 +7,8 @@ import type {
   AdminAutoTransitionSettings,
   CreateWorkspaceRequest,
   UpdateVaultRequest,
+  CreateAdminAssetRequest,
+  UpdateAdminAssetRequest,
 } from '../types/admin';
 
 function getWorkspaceId() {
@@ -222,6 +224,53 @@ export function useAssets() {
       const response = await adminApi.getAssets();
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
+    },
+  });
+}
+
+export function useAdminAssets() {
+  const workspaceId = getWorkspaceId();
+  return useQuery({
+    queryKey: ['adminAssets', workspaceId],
+    queryFn: async () => {
+      const response = await adminApi.getAdminAssets();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+  });
+}
+
+export function useCreateAdminAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateAdminAssetRequest) => adminApi.createAdminAsset(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminAssets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+    },
+  });
+}
+
+export function useUpdateAdminAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, request }: { id: string; request: UpdateAdminAssetRequest }) => (
+      adminApi.updateAdminAsset(id, request)
+    ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminAssets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+    },
+  });
+}
+
+export function useDeleteAdminAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteAdminAsset(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminAssets'] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
     },
   });
 }
