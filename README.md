@@ -24,7 +24,7 @@ Notes:
 - Build and push `waterblocks-api:latest` and `waterblocks-admin:latest` images to your registry.
 - The Admin UI image must be built with the correct API URL (set `VITE_API_BASE_URL` at build time).
 - Create DNS CNAMEs for `ApiDomain` and `FrontendDomain` pointing to the ALB DNS output.
-- Defaults use x86 (`t3.micro`) and the x86_64 ECS AMI; switch to arm64 by setting `EcsInstanceType` and `EcsAmiId` to arm64-compatible values.
+- Task sizing is configurable via `FargateCpu`/`FargateMemory` (defaults to 0.25 vCPU / 0.5 GB).
 
 ## Quick start (Docker)
 Use the helper scripts to run the correct compose file.

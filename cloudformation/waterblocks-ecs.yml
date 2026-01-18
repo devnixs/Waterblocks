@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Waterblocks ECS (EC2) + RDS (PostgreSQL) with ALB and basic auth for frontend.
+Description: Waterblocks ECS (Fargate) + RDS (PostgreSQL) with ALB and basic auth for frontend.
 
 Parameters:
   ApiDomain:
@@ -39,14 +39,14 @@ Parameters:
     NoEcho: true
     MinLength: 8
     Description: Basic auth password for the Admin UI.
-  EcsInstanceType:
+  FargateCpu:
     Type: String
-    Default: t3.micro
-    Description: ECS EC2 instance type (default: cheapest in eu-west-1).
-  EcsAmiId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
-    Description: ECS-optimized AMI (x86_64).
+    Default: "256"
+    Description: Fargate task CPU units (256 = 0.25 vCPU).
+  FargateMemory:
+    Type: String
+    Default: "512"
+    Description: Fargate task memory in MiB (512 = 0.5 GB).
   VpcCidr:
     Type: String
     Default: 10.20.0.0/16
@@ -297,26 +297,6 @@ Resources:
     Properties:
       ClusterName: waterblocks
 
-  EcsInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-
-  EcsInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Roles:
-        - !Ref EcsInstanceRole
-
   EcsTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -329,34 +309,6 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  EcsLaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
-    Properties:
-      LaunchTemplateData:
-        ImageId: !Ref EcsAmiId
-        InstanceType: !Ref EcsInstanceType
-        IamInstanceProfile:
-          Arn: !GetAtt EcsInstanceProfile.Arn
-        SecurityGroupIds:
-          - !Ref EcsServiceSecurityGroup
-        UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash
-            echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
-
-  EcsAutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
-      MinSize: 1
-      MaxSize: 2
-      DesiredCapacity: 1
-      LaunchTemplate:
-        LaunchTemplateId: !Ref EcsLaunchTemplate
-        Version: !GetAtt EcsLaunchTemplate.LatestVersionNumber
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -376,9 +328,9 @@ Resources:
       Family: waterblocks-api
       NetworkMode: awsvpc
       RequiresCompatibilities:
-        - EC2
-      Cpu: "256"
-      Memory: "512"
+        - FARGATE
+      Cpu: !Ref FargateCpu
+      Memory: !Ref FargateMemory
       ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: api
@@ -404,9 +356,9 @@ Resources:
       Family: waterblocks-frontend
       NetworkMode: awsvpc
       RequiresCompatibilities:
-        - EC2
-      Cpu: "256"
-      Memory: "512"
+        - FARGATE
+      Cpu: !Ref FargateCpu
+      Memory: !Ref FargateMemory
       ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: frontend
@@ -469,7 +421,7 @@ Resources:
       ServiceName: waterblocks-api
       Cluster: !Ref EcsCluster
       DesiredCount: 1
-      LaunchType: EC2
+      LaunchType: FARGATE
       TaskDefinition: !Ref ApiTaskDefinition
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -492,7 +444,7 @@ Resources:
       ServiceName: waterblocks-frontend
       Cluster: !Ref EcsCluster
       DesiredCount: 1
-      LaunchType: EC2
+      LaunchType: FARGATE
       TaskDefinition: !Ref FrontendTaskDefinition
       NetworkConfiguration:
         AwsvpcConfiguration:
