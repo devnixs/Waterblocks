@@ -13,6 +13,19 @@ Drop-in replacement for the Fireblocks API designed for testing crypto-trading p
 - **Realtime**: SignalR WebSockets
 - **Deployment**: Docker Compose
 
+## AWS (CloudFormation)
+The template `cloudformation/waterblocks-ecs.yml` provisions:
+- VPC + ALB (HTTPS)
+- ECS (EC2 launch type)
+- RDS PostgreSQL
+- Basic auth in front of the Admin UI
+
+Notes:
+- Build and push `waterblocks-api:latest` and `waterblocks-admin:latest` images to your registry.
+- The Admin UI image must be built with the correct API URL (set `VITE_API_BASE_URL` at build time).
+- Create DNS CNAMEs for `ApiDomain` and `FrontendDomain` pointing to the ALB DNS output.
+- Defaults use x86 (`t3.micro`) and the x86_64 ECS AMI; switch to arm64 by setting `EcsInstanceType` and `EcsAmiId` to arm64-compatible values.
+
 ## Quick start (Docker)
 Use the helper scripts to run the correct compose file.
 
