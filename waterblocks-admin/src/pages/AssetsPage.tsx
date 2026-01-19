@@ -56,18 +56,20 @@ export default function AssetsPage() {
     }
 
     const decimalsValue = draft.decimals.trim();
-    const decimals = decimalsValue ? Number(decimalsValue) : undefined;
-    if (decimalsValue && (Number.isNaN(decimals) || decimals < 0)) {
+    const parsedDecimals = decimalsValue ? Number(decimalsValue) : undefined;
+    if (decimalsValue && (parsedDecimals === undefined || Number.isNaN(parsedDecimals) || parsedDecimals < 0)) {
       showToast({ title: 'Decimals must be a non-negative number', type: 'error' });
       return;
     }
+    const decimals = decimalsValue ? parsedDecimals : undefined;
 
     const baseFeeValue = draft.baseFee.trim();
-    const baseFee = baseFeeValue ? Number(baseFeeValue) : undefined;
-    if (baseFeeValue && Number.isNaN(baseFee)) {
+    const parsedBaseFee = baseFeeValue ? Number(baseFeeValue) : undefined;
+    if (baseFeeValue && (parsedBaseFee === undefined || Number.isNaN(parsedBaseFee))) {
       showToast({ title: 'Base fee must be a number', type: 'error' });
       return;
     }
+    const baseFee = baseFeeValue ? parsedBaseFee : undefined;
 
     const result = await createAsset.mutateAsync({
       assetId,
@@ -131,18 +133,20 @@ export default function AssetsPage() {
     }
 
     const decimalsValue = editDraft.decimals.trim();
-    const decimals = decimalsValue ? Number(decimalsValue) : undefined;
-    if (decimalsValue && (Number.isNaN(decimals) || decimals < 0)) {
+    const parsedDecimals = decimalsValue ? Number(decimalsValue) : undefined;
+    if (decimalsValue && (parsedDecimals === undefined || Number.isNaN(parsedDecimals) || parsedDecimals < 0)) {
       showToast({ title: 'Decimals must be a non-negative number', type: 'error' });
       return;
     }
+    const decimals = decimalsValue ? parsedDecimals : undefined;
 
     const baseFeeValue = editDraft.baseFee.trim();
-    const baseFee = baseFeeValue ? Number(baseFeeValue) : undefined;
-    if (baseFeeValue && Number.isNaN(baseFee)) {
+    const parsedBaseFee = baseFeeValue ? Number(baseFeeValue) : undefined;
+    if (baseFeeValue && (parsedBaseFee === undefined || Number.isNaN(parsedBaseFee))) {
       showToast({ title: 'Base fee must be a number', type: 'error' });
       return;
     }
+    const baseFee = baseFeeValue ? parsedBaseFee : undefined;
 
     const result = await updateAsset.mutateAsync({
       id: asset.id,
