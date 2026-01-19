@@ -74,6 +74,16 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                     Available = (existingWallet.Balance - existingWallet.Pending).ToString("F18"),
                     AddressCount = existingWallet.Addresses.Count,
                     DepositAddress = existingWallet.Addresses.FirstOrDefault()?.AddressValue,
+                    Addresses = existingWallet.Addresses.Select(a => new WalletAddressDto
+                    {
+                        Id = a.Id,
+                        AddressValue = a.AddressValue,
+                        Type = a.Type,
+                        Description = a.Description,
+                        AddressFormat = a.AddressFormat,
+                        LegacyAddress = a.LegacyAddress,
+                        CreatedAt = a.CreatedAt,
+                    }).ToList(),
                 });
             }
         }
@@ -119,6 +129,16 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
             Available = (wallet.Balance - wallet.Pending).ToString("F18"),
             AddressCount = wallet.Addresses.Count,
             DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue,
+            Addresses = wallet.Addresses.Select(a => new WalletAddressDto
+            {
+                Id = a.Id,
+                AddressValue = a.AddressValue,
+                Type = a.Type,
+                Description = a.Description,
+                AddressFormat = a.AddressFormat,
+                LegacyAddress = a.LegacyAddress,
+                CreatedAt = a.CreatedAt,
+            }).ToList(),
         };
 
         var updatedVault = await _context.VaultAccounts
@@ -155,6 +175,16 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                 Available = (w.Balance - w.Pending).ToString("F18"),
                 AddressCount = w.Addresses.Count,
                 DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue,
+                Addresses = w.Addresses.Select(a => new WalletAddressDto
+                {
+                    Id = a.Id,
+                    AddressValue = a.AddressValue,
+                    Type = a.Type,
+                    Description = a.Description,
+                    AddressFormat = a.AddressFormat,
+                    LegacyAddress = a.LegacyAddress,
+                    CreatedAt = a.CreatedAt,
+                }).ToList(),
             }).ToList(),
             CreatedAt = vault.CreatedAt,
             UpdatedAt = vault.UpdatedAt,

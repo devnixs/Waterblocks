@@ -60,29 +60,74 @@ export function VaultWalletsSection({
                 <th>Balance</th>
                 <th>Locked</th>
                 <th>Available</th>
-                <th>Deposit Address</th>
+                <th>Type</th>
+                <th>Address</th>
+                <th>Description</th>
               </tr>
             </thead>
             <tbody>
-              {vault.wallets.map((wallet) => (
-                <tr key={wallet.assetId}>
-                  <td className="font-bold">{wallet.assetId}</td>
-                  <td className="text-mono">{parseFloat(wallet.balance).toFixed(8)}</td>
-                  <td
-                    className="text-mono"
-                    style={{
-                      color: parseFloat(wallet.lockedAmount) > 0 ? 'var(--warning)' : 'inherit',
-                      fontWeight: parseFloat(wallet.lockedAmount) > 0 ? 'bold' : 'normal',
-                    }}
-                  >
-                    {parseFloat(wallet.lockedAmount).toFixed(8)}
-                  </td>
-                  <td className="text-mono text-success">{parseFloat(wallet.available).toFixed(8)}</td>
-                  <td className="text-mono">
-                    {wallet.depositAddress ? wallet.depositAddress : '-'}
-                  </td>
-                </tr>
-              ))}
+              {vault.wallets.flatMap((wallet) =>
+                wallet.addresses.length > 0
+                  ? wallet.addresses.map((address, index) => (
+                      <tr key={`${wallet.assetId}-${address.id}`}>
+                        {index === 0 && (
+                          <>
+                            <td className="font-bold" rowSpan={wallet.addresses.length}>
+                              {wallet.assetId}
+                            </td>
+                            <td className="text-mono" rowSpan={wallet.addresses.length}>
+                              {parseFloat(wallet.balance).toFixed(8)}
+                            </td>
+                            <td
+                              className="text-mono"
+                              rowSpan={wallet.addresses.length}
+                              style={{
+                                color: parseFloat(wallet.lockedAmount) > 0 ? 'var(--warning)' : 'inherit',
+                                fontWeight: parseFloat(wallet.lockedAmount) > 0 ? 'bold' : 'normal',
+                              }}
+                            >
+                              {parseFloat(wallet.lockedAmount).toFixed(8)}
+                            </td>
+                            <td className="text-mono text-success" rowSpan={wallet.addresses.length}>
+                              {parseFloat(wallet.available).toFixed(8)}
+                            </td>
+                          </>
+                        )}
+                        <td className="font-medium">
+                          <span
+                            className="inline-block px-2 py-0.5 text-xs rounded"
+                            style={{
+                              backgroundColor: address.type === 'Permanent' ? 'var(--accent-bg)' : 'var(--secondary-bg)',
+                              color: address.type === 'Permanent' ? 'var(--accent)' : 'var(--text-secondary)',
+                            }}
+                          >
+                            {address.type}
+                          </span>
+                        </td>
+                        <td className="text-mono text-sm">{address.addressValue}</td>
+                        <td className="text-xs text-muted">{address.description || '-'}</td>
+                      </tr>
+                    ))
+                  : [
+                      <tr key={wallet.assetId}>
+                        <td className="font-bold">{wallet.assetId}</td>
+                        <td className="text-mono">{parseFloat(wallet.balance).toFixed(8)}</td>
+                        <td
+                          className="text-mono"
+                          style={{
+                            color: parseFloat(wallet.lockedAmount) > 0 ? 'var(--warning)' : 'inherit',
+                            fontWeight: parseFloat(wallet.lockedAmount) > 0 ? 'bold' : 'normal',
+                          }}
+                        >
+                          {parseFloat(wallet.lockedAmount).toFixed(8)}
+                        </td>
+                        <td className="text-mono text-success">{parseFloat(wallet.available).toFixed(8)}</td>
+                        <td colSpan={3} className="text-center text-muted">
+                          No addresses
+                        </td>
+                      </tr>,
+                    ]
+              )}
             </tbody>
           </table>
         </div>

@@ -240,6 +240,16 @@ public class AdminVaultsController : AdminControllerBase
                 Available = (w.Balance - w.Pending).ToString("F18"),
                 AddressCount = w.Addresses.Count,
                 DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue,
+                Addresses = w.Addresses.Select(a => new WalletAddressDto
+                {
+                    Id = a.Id,
+                    AddressValue = a.AddressValue,
+                    Type = a.Type,
+                    Description = a.Description,
+                    AddressFormat = a.AddressFormat,
+                    LegacyAddress = a.LegacyAddress,
+                    CreatedAt = a.CreatedAt,
+                }).ToList(),
             }).ToList(),
             CreatedAt = vault.CreatedAt,
             UpdatedAt = vault.UpdatedAt,

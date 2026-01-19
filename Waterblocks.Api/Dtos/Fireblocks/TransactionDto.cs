@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Waterblocks.Api.Dtos.Fireblocks;
 
@@ -231,6 +232,7 @@ public class EstimateFeeRequestDto
     public DestinationDto Destination { get; set; } = new();
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 public class EstimateFeeResponseDto
 {
     public FeeEstimateDto Low { get; set; } = new();
@@ -238,6 +240,7 @@ public class EstimateFeeResponseDto
     public FeeEstimateDto High { get; set; } = new();
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 public class FeeEstimateDto
 {
     public string? FeePerByte { get; set; }

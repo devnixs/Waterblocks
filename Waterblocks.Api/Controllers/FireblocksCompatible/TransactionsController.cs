@@ -277,6 +277,46 @@ public class TransactionsController : ControllerBase
         var mediumGasPrice = (baseFee * 1.5m).ToString(CultureInfo.InvariantCulture);
         var highGasPrice = (baseFee * 2.5m).ToString(CultureInfo.InvariantCulture);
 
+        if (asset.Symbol == "BTC" || asset.Symbol == "ADA")
+        {
+            return Ok(new EstimateFeeResponseDto
+            {
+                Low = new FeeEstimateDto
+                {
+                    FeePerByte = lowFeePerByte,
+                    NetworkFee = lowFee,
+                },
+                Medium = new FeeEstimateDto
+                {
+                    FeePerByte = mediumFeePerByte,
+                    NetworkFee = mediumFee,
+                },
+                High = new FeeEstimateDto
+                {
+                    FeePerByte = highFeePerByte,
+                    NetworkFee = highFee,
+                },
+            });
+        }
+        else if (asset.FeeAssetId == "SOL")
+        {
+            return Ok(new EstimateFeeResponseDto
+            {
+                Low = new FeeEstimateDto
+                {
+                    NetworkFee = lowFee,
+                },
+                Medium = new FeeEstimateDto
+                {
+                    NetworkFee = mediumFee,
+                },
+                High = new FeeEstimateDto
+                {
+                    NetworkFee = highFee,
+                },
+            });
+        }
+
         var response = new EstimateFeeResponseDto
         {
             Low = new FeeEstimateDto

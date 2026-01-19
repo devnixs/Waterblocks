@@ -52,11 +52,19 @@ export function TransactionDetailPanel({
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
             <div className="text-xs text-muted uppercase mb-1">Source</div>
             <div className="font-medium">{transaction.sourceType}</div>
-            <div className="text-mono text-sm text-muted break-all mt-1">
-              {transaction.sourceType === 'INTERNAL'
-                ? `Vault: ${transaction.sourceVaultAccountName || transaction.vaultAccountId}`
-                : transaction.sourceAddress || '-'}
-            </div>
+            {transaction.sourceType === 'INTERNAL' && (
+              <div className="text-sm mt-1">
+                Vault: {transaction.sourceVaultAccountName || transaction.vaultAccountId}
+              </div>
+            )}
+            {transaction.sourceAddress && (
+              <div className="text-mono text-xs text-muted break-all mt-1">
+                {transaction.sourceAddress}
+              </div>
+            )}
+            {!transaction.sourceAddress && transaction.sourceType === 'EXTERNAL' && (
+              <div className="text-muted text-sm mt-1">-</div>
+            )}
           </div>
 
           <div className="flex justify-center text-muted">-&gt;</div>
@@ -64,11 +72,16 @@ export function TransactionDetailPanel({
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
             <div className="text-xs text-muted uppercase mb-1">Destination</div>
             <div className="font-medium">{transaction.destinationType}</div>
-            <div className="text-mono text-sm text-muted break-all mt-1">
-              {transaction.destinationType === 'INTERNAL'
-                ? `Vault: ${transaction.destinationVaultAccountName || transaction.vaultAccountId}`
-                : transaction.destinationAddress || '-'}
-            </div>
+            {transaction.destinationType === 'INTERNAL' && (
+              <div className="text-sm mt-1">
+                Vault: {transaction.destinationVaultAccountName || transaction.vaultAccountId}
+              </div>
+            )}
+            {transaction.destinationAddress && (
+              <div className="text-mono text-xs text-muted break-all mt-1">
+                {transaction.destinationAddress}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -84,6 +84,17 @@ export interface AdminWallet {
   available: string;
   addressCount: number;
   depositAddress?: string;
+  addresses: AdminAddress[];
+}
+
+export interface AdminAddress {
+  id: number;
+  addressValue: string;
+  type: string;
+  description?: string;
+  addressFormat?: string;
+  legacyAddress?: string;
+  createdAt: string;
 }
 
 export interface FrozenBalance {

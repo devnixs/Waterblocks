@@ -23,6 +23,7 @@ public class AdminWalletDto
     public string Available { get; set; } = "0";
     public int AddressCount { get; set; }
     public string? DepositAddress { get; set; }
+    public List<WalletAddressDto> Addresses { get; set; } = new();
 }
 
 public class CreateAdminVaultRequestDto
