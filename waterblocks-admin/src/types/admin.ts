@@ -59,6 +59,7 @@ export interface CreateTransactionRequest {
   amount: string;
   destinationTag?: string;
   initialState?: string;
+  hash?: string;
 }
 
 export interface FailTransactionRequest {

@@ -183,6 +183,20 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             return Failure<AdminTransactionDto>("Invalid amount", "INVALID_AMOUNT");
         }
 
+        // Validate hash uniqueness if provided
+        var providedHash = request.Hash?.Trim();
+        if (!string.IsNullOrWhiteSpace(providedHash))
+        {
+            var hashExists = await _context.Transactions
+                .AnyAsync(t => t.Hash == providedHash);
+            if (hashExists)
+            {
+                return Failure<AdminTransactionDto>(
+                    $"Transaction with hash {providedHash} already exists",
+                    "DUPLICATE_HASH");
+            }
+        }
+
         var sourceAddress = request.SourceAddress?.Trim();
         var destinationAddress = request.DestinationAddress?.Trim();
 
@@ -240,7 +254,9 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             DestinationTag = request.DestinationTag,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Hash = TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
+            Hash = !string.IsNullOrWhiteSpace(providedHash)
+                ? providedHash
+                : TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
         };
 
         var derivedType = sourceInternal && !destinationInternal
@@ -311,7 +327,26 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             {
                 return Failure<TransactionStateDto>($"Asset {transaction.AssetId} not found", "ASSET_NOT_FOUND");
             }
-            transaction.Hash = TransactionHashGenerator.Generate(transaction.AssetId, asset.BlockchainType);
+
+            // Generate hash and ensure uniqueness (retry if collision occurs)
+            string generatedHash;
+            int maxRetries = 10;
+            int attempt = 0;
+            do
+            {
+                generatedHash = TransactionHashGenerator.Generate(transaction.AssetId, asset.BlockchainType);
+                attempt++;
+
+                if (attempt >= maxRetries)
+                {
+                    return Failure<TransactionStateDto>(
+                        "Failed to generate unique transaction hash after multiple attempts",
+                        "HASH_GENERATION_FAILED");
+                }
+            }
+            while (await _context.Transactions.AnyAsync(t => t.Hash == generatedHash && t.Id != transaction.Id));
+
+            transaction.Hash = generatedHash;
         }
 
         return await TransitionTransactionAsync(transaction, TransactionState.BROADCASTING, workspaceId);

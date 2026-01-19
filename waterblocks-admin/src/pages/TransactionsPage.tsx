@@ -30,6 +30,7 @@ export default function TransactionsPage() {
   const [destinationType, setDestinationType] = useState<TransactionEndpointType>('INTERNAL');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [destinationVaultId, setDestinationVaultId] = useState('');
+  const [hash, setHash] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const { data: transactionsPage, isLoading, error } = useTransactionsPaged({
@@ -429,6 +430,7 @@ export default function TransactionsPage() {
       amount: amount.trim(),
       sourceAddress: resolvedSourceAddress,
       destinationAddress: resolvedDestinationAddress,
+      hash: hash.trim() || undefined,
     });
 
     if (result.error) {
@@ -439,6 +441,7 @@ export default function TransactionsPage() {
       setAmount('');
       setSourceAddress('');
       setDestinationAddress('');
+      setHash('');
       setShowCreateForm(false);
     }
   };
@@ -553,6 +556,8 @@ export default function TransactionsPage() {
           setDestinationVaultId={setDestinationVaultId}
           amount={amount}
           setAmount={setAmount}
+          hash={hash}
+          setHash={setHash}
           onSubmit={handleCreateTransaction}
           onCancel={() => setShowCreateForm(false)}
           isSubmitting={createTransaction.isPending}

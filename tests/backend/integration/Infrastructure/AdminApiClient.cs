@@ -277,6 +277,7 @@ public class CreateTransactionRequest
     public string Amount { get; set; } = "0";
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }
+    public string? Hash { get; set; }
 }
 
 public class AdminAssetDto

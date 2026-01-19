@@ -20,6 +20,8 @@ type CreateTransactionFormProps = {
   setDestinationVaultId: SetState<string>;
   amount: string;
   setAmount: SetState<string>;
+  hash: string;
+  setHash: SetState<string>;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -44,6 +46,8 @@ export function CreateTransactionForm({
   setDestinationVaultId,
   amount,
   setAmount,
+  hash,
+  setHash,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -173,6 +177,22 @@ export function CreateTransactionForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm text-muted mb-1">
+            Transaction Hash (optional)
+          </label>
+          <input
+            type="text"
+            placeholder="Leave empty for auto-generation"
+            value={hash}
+            onChange={(e) => setHash(e.target.value)}
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted mt-1">
+            BTC: 64 hex chars (no prefix) • ETH: 0x + 64 hex chars
+          </p>
         </div>
       </div>
 

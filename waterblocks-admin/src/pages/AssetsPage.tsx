@@ -297,6 +297,7 @@ export default function AssetsPage() {
               <th>Decimals</th>
               <th>Type</th>
               <th>Chain</th>
+              <th>Contract</th>
               <th>Base Fee</th>
               <th>Fee Asset</th>
               <th>Native</th>
@@ -368,6 +369,17 @@ export default function AssetsPage() {
                       </select>
                     ) : (
                       asset.blockchainType
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editDraft.contractAddress}
+                        onChange={(e) => setEditDraft((prev) => ({ ...prev, contractAddress: e.target.value }))}
+                      />
+                    ) : (
+                      asset.contractAddress || '-'
                     )}
                   </td>
                   <td>
