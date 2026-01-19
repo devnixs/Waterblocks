@@ -60,6 +60,10 @@ Parameters:
     NoEcho: true
     MinLength: 8
     Description: Basic auth password for the Admin UI.
+  FrontendApiBaseUrl:
+    Type: String
+    Default: ""
+    Description: Optional API base URL for the Admin UI (defaults to https://ApiDomain).
   FargateCpu:
     Type: String
     Default: "256"
@@ -81,6 +85,7 @@ Parameters:
 Conditions:
   UseExistingVpcCondition: !Equals [!Ref UseExistingVpc, "true"]
   CreateVpcCondition: !Equals [!Ref UseExistingVpc, "false"]
+  UseCustomFrontendApiBaseUrl: !Not [!Equals [!Ref FrontendApiBaseUrl, ""]]
 
 Resources:
   Vpc:
@@ -404,6 +409,12 @@ Resources:
           Essential: true
           PortMappings:
             - ContainerPort: 80
+          Environment:
+            - Name: API_BASE_URL
+              Value: !If
+                - UseCustomFrontendApiBaseUrl
+                - !Ref FrontendApiBaseUrl
+                - !Sub "https://${ApiDomain}"
           LogConfiguration:
             LogDriver: awslogs
             Options:

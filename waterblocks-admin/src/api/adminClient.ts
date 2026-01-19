@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../config/runtimeConfig';
 import type {
   AdminResponse,
   AdminTransaction,
@@ -20,7 +21,7 @@ import type {
   AdminGeneratedAddress,
 } from '../types/admin';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5671';
+const API_BASE_URL = getApiBaseUrl();
 
 function getWorkspaceId() {
   try {

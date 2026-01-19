@@ -13,6 +13,64 @@ Drop-in replacement for the Fireblocks API designed for testing crypto-trading p
 - **Realtime**: SignalR WebSockets
 - **Deployment**: Docker Compose
 
+## Docker Images (GitHub Container Registry)
+
+Pre-built Docker images are automatically published to GitHub Container Registry on every push to `main`:
+
+- **API**: `ghcr.io/[owner]/[repo]/api:latest`
+- **Admin UI**: `ghcr.io/[owner]/[repo]/admin:latest`
+
+These images are publicly available and can be pulled without authentication. Tagged versions are also available using the commit SHA (e.g., `main-abc1234`).
+
+### Using Published Images
+
+You can use the published images directly in your `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: waterblocks
+    ports:
+      - "5432:5432"
+
+  api:
+    image: ghcr.io/[owner]/[repo]/api:latest
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=waterblocks;Username=postgres;Password=postgres"
+    ports:
+      - "5671:8080"
+    depends_on:
+      - postgres
+
+  admin:
+    image: ghcr.io/[owner]/[repo]/admin:latest
+    environment:
+      API_BASE_URL: "http://localhost:5671"
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+```
+
+### CI/CD Workflow
+
+The `.github/workflows/ci.yml` workflow automatically:
+1. Runs .NET and frontend builds
+2. Executes integration tests
+3. Builds Docker images for both API and Admin UI
+4. Pushes images to GitHub Container Registry (only on `main` branch pushes)
+
+Images are tagged with:
+- `latest` (for the main branch)
+- `main-<commit-sha>` (for specific commits)
+- Branch names for feature branches (build-only, not pushed)
+
 ## AWS (CloudFormation)
 The template `cloudformation/waterblocks-ecs.yml` provisions:
 - VPC + ALB (HTTPS)
@@ -22,7 +80,7 @@ The template `cloudformation/waterblocks-ecs.yml` provisions:
 
 Notes:
 - Build and push `waterblocks-api:latest` and `waterblocks-admin:latest` images to your registry.
-- The Admin UI image must be built with the correct API URL (set `VITE_API_BASE_URL` at build time).
+- The Admin UI image reads `API_BASE_URL` at runtime (generated into `/config.js`).
 - Create DNS CNAMEs for `ApiDomain` and `FrontendDomain` pointing to the ALB DNS output.
 - Task sizing is configurable via `FargateCpu`/`FargateMemory` (defaults to 0.25 vCPU / 0.5 GB).
 
@@ -31,7 +89,7 @@ Workflow: `.github/workflows/deploy.yml` (runs on every push to `main`).
 
 Set these in GitHub:
 - **Secrets**: `AWS_ROLE_ARN`
-- **Variables**: `AWS_REGION`, `CLOUDFORMATION_STACK`, `ECR_REPOSITORY_API`, `ECR_REPOSITORY_ADMIN`, `VITE_API_BASE_URL`
+- **Variables**: `AWS_REGION`, `CLOUDFORMATION_STACK`, `ECR_REPOSITORY_API`, `ECR_REPOSITORY_ADMIN`
 
 ## Quick start (Docker)
 Use the helper scripts to run the correct compose file.

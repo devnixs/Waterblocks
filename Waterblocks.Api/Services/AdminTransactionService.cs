@@ -3,6 +3,7 @@ using Waterblocks.Api.Dtos.Admin;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
 
@@ -239,7 +240,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             DestinationTag = request.DestinationTag,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Hash = Guid.NewGuid().ToString(),
+            Hash = TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
         };
 
         var derivedType = sourceInternal && !destinationInternal
@@ -305,7 +306,12 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
 
         if (string.IsNullOrEmpty(transaction.Hash))
         {
-            transaction.Hash = $"0x{Guid.NewGuid():N}";
+            var asset = await _context.Assets.FindAsync(transaction.AssetId);
+            if (asset == null)
+            {
+                return Failure<TransactionStateDto>($"Asset {transaction.AssetId} not found", "ASSET_NOT_FOUND");
+            }
+            transaction.Hash = TransactionHashGenerator.Generate(transaction.AssetId, asset.BlockchainType);
         }
 
         return await TransitionTransactionAsync(transaction, TransactionState.BROADCASTING, workspaceId);

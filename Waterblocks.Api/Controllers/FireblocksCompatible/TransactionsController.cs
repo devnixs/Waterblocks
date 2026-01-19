@@ -6,6 +6,7 @@ using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
 using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Services;
+using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Controllers;
 
@@ -204,6 +205,13 @@ public class TransactionsController : ControllerBase
         transaction.SubStatus = "DROPPED_BY_BLOCKCHAIN";
         transaction.FailureReason = "Replaced by higher fee transaction";
 
+        // Load asset for blockchain type
+        var asset = await _context.Assets.FindAsync(transaction.AssetId);
+        if (asset == null)
+        {
+            throw FireblocksApiException.NotFound($"Asset {transaction.AssetId} not found");
+        }
+
         // Create replacement transaction with higher fee
         var replacement = new Transaction
         {
@@ -222,7 +230,7 @@ public class TransactionsController : ControllerBase
             FeeCurrency = transaction.FeeCurrency,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Hash = Guid.NewGuid().ToString(),
+            Hash = TransactionHashGenerator.Generate(transaction.AssetId, asset.BlockchainType),
         };
 
         transaction.ReplacedByTxId = replacement.Id;

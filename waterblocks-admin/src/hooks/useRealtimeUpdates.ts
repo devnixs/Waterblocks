@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AdminTransaction, AdminVault } from '../types/admin';
+import { getApiBaseUrl } from '../config/runtimeConfig';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5671';
+const API_BASE_URL = getApiBaseUrl();
 
 function upsertById<T extends { id: string }>(items: T[] | undefined, next: T): T[] {
   if (!items) return [next];

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
 using Waterblocks.Api.Hubs;
+using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
 
@@ -70,7 +71,16 @@ public class AutoTransitionService : BackgroundService
 
                     if (next == TransactionState.BROADCASTING && string.IsNullOrEmpty(tx.Hash))
                     {
-                        tx.Hash = $"0x{Guid.NewGuid():N}";
+                        var asset = await db.Assets.FindAsync(tx.AssetId);
+                        if (asset != null)
+                        {
+                            tx.Hash = TransactionHashGenerator.Generate(tx.AssetId, asset.BlockchainType);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Asset {AssetId} not found for transaction {TxId}, skipping hash generation", tx.AssetId, tx.Id);
+                            continue;
+                        }
                     }
 
                     if (next == TransactionState.CONFIRMING)

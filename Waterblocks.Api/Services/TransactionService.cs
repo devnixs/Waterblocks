@@ -3,6 +3,7 @@ using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
 
@@ -242,7 +243,7 @@ public sealed class TransactionService : ITransactionService
             TreatAsGrossAmount = treatAsGrossAmount,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Hash = Guid.NewGuid().ToString(),
+            Hash = TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
         };
 
         var reserveResult = await _balanceService.ReserveFundsAsync(transaction);

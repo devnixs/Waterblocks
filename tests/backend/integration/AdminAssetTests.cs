@@ -15,7 +15,7 @@ public class AdminAssetTests : IClassFixture<IntegrationTestFixture>
     [Fact]
     public async Task CreatesUpdatesAndDeactivatesAssets()
     {
-        var assetId = $"TEST_{Guid.NewGuid():N}"[..13];
+        var assetId = $"TEST_{Guid.NewGuid():N}".ToUpperInvariant()[..13];
 
         var createResponse = await _fixture.AdminClient.CreateAssetAsync(new CreateAdminAssetRequest
         {
