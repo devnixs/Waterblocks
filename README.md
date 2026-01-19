@@ -16,7 +16,7 @@ Drop-in replacement for the Fireblocks API designed for testing crypto-trading p
 ## AWS (CloudFormation)
 The template `cloudformation/waterblocks-ecs.yml` provisions:
 - VPC + ALB (HTTPS)
-- ECS (EC2 launch type)
+- ECS (Fargate)
 - RDS PostgreSQL
 - Basic auth in front of the Admin UI
 
@@ -25,6 +25,13 @@ Notes:
 - The Admin UI image must be built with the correct API URL (set `VITE_API_BASE_URL` at build time).
 - Create DNS CNAMEs for `ApiDomain` and `FrontendDomain` pointing to the ALB DNS output.
 - Task sizing is configurable via `FargateCpu`/`FargateMemory` (defaults to 0.25 vCPU / 0.5 GB).
+
+### GitHub Actions deploy (ECR + ECS)
+Workflow: `.github/workflows/deploy.yml` (runs on every push to `main`).
+
+Set these in GitHub:
+- **Secrets**: `AWS_ROLE_ARN`
+- **Variables**: `AWS_REGION`, `CLOUDFORMATION_STACK`, `ECR_REPOSITORY_API`, `ECR_REPOSITORY_ADMIN`, `VITE_API_BASE_URL`
 
 ## Quick start (Docker)
 Use the helper scripts to run the correct compose file.

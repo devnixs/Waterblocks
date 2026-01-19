@@ -2,6 +2,19 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Waterblocks ECS (Fargate) + RDS (PostgreSQL) with ALB and basic auth for frontend.
 
 Parameters:
+  UseExistingVpc:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: "Use an existing VPC and subnets (true/false)."
+  ExistingVpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: "Existing VPC ID (required when UseExistingVpc=true)."
+  ExistingSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: "Existing subnet IDs (at least 2, required when UseExistingVpc=true)."
   ApiDomain:
     Type: String
     Description: Hostname for the API (used in ALB host-based routing).
@@ -14,6 +27,14 @@ Parameters:
   DockerImageRegistryUrl:
     Type: String
     Description: Base registry URL containing waterblocks-api and waterblocks-admin images.
+  ApiImageTag:
+    Type: String
+    Default: latest
+    Description: Tag for the waterblocks-api image.
+  AdminImageTag:
+    Type: String
+    Default: latest
+    Description: Tag for the waterblocks-admin image.
   PostgresInstanceType:
     Type: String
     Default: db.t4g.micro
@@ -57,9 +78,14 @@ Parameters:
     Type: String
     Default: 10.20.2.0/24
 
+Conditions:
+  UseExistingVpcCondition: !Equals [!Ref UseExistingVpc, "true"]
+  CreateVpcCondition: !Equals [!Ref UseExistingVpc, "false"]
+
 Resources:
   Vpc:
     Type: AWS::EC2::VPC
+    Condition: CreateVpcCondition
     Properties:
       CidrBlock: !Ref VpcCidr
       EnableDnsHostnames: true
@@ -70,6 +96,7 @@ Resources:
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Condition: CreateVpcCondition
     Properties:
       Tags:
         - Key: Name
@@ -77,12 +104,14 @@ Resources:
 
   VpcGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
+    Condition: CreateVpcCondition
     Properties:
       VpcId: !Ref Vpc
       InternetGatewayId: !Ref InternetGateway
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
+    Condition: CreateVpcCondition
     Properties:
       VpcId: !Ref Vpc
       Tags:
@@ -91,6 +120,7 @@ Resources:
 
   PublicRoute:
     Type: AWS::EC2::Route
+    Condition: CreateVpcCondition
     DependsOn: VpcGatewayAttachment
     Properties:
       RouteTableId: !Ref PublicRouteTable
@@ -99,6 +129,7 @@ Resources:
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
+    Condition: CreateVpcCondition
     Properties:
       VpcId: !Ref Vpc
       AvailabilityZone: !Select [0, !GetAZs ""]
@@ -110,6 +141,7 @@ Resources:
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
+    Condition: CreateVpcCondition
     Properties:
       VpcId: !Ref Vpc
       AvailabilityZone: !Select [1, !GetAZs ""]
@@ -121,12 +153,14 @@ Resources:
 
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateVpcCondition
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateVpcCondition
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
@@ -135,7 +169,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ALB security group
-      VpcId: !Ref Vpc
+      VpcId: !If [UseExistingVpcCondition, !Ref ExistingVpcId, !Ref Vpc]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -153,7 +187,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ECS tasks security group
-      VpcId: !Ref Vpc
+      VpcId: !If [UseExistingVpcCondition, !Ref ExistingVpcId, !Ref Vpc]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8080
@@ -167,7 +201,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: RDS PostgreSQL security group
-      VpcId: !Ref Vpc
+      VpcId: !If [UseExistingVpcCondition, !Ref ExistingVpcId, !Ref Vpc]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
@@ -181,9 +215,11 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Waterblocks DB subnet group
-      SubnetIds:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
+      SubnetIds: !If
+        - UseExistingVpcCondition
+        - !Ref ExistingSubnetIds
+        - - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
 
   DbInstance:
     Type: AWS::RDS::DBInstance
@@ -206,16 +242,18 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internet-facing
-      Subnets:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
+      Subnets: !If
+        - UseExistingVpcCondition
+        - !Ref ExistingSubnetIds
+        - - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
       SecurityGroups:
         - !Ref AlbSecurityGroup
 
   ApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      VpcId: !Ref Vpc
+      VpcId: !If [UseExistingVpcCondition, !Ref ExistingVpcId, !Ref Vpc]
       Port: 8080
       Protocol: HTTP
       TargetType: ip
@@ -227,7 +265,7 @@ Resources:
   FrontendTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      VpcId: !Ref Vpc
+      VpcId: !If [UseExistingVpcCondition, !Ref ExistingVpcId, !Ref Vpc]
       Port: 8080
       Protocol: HTTP
       TargetType: ip
@@ -334,7 +372,7 @@ Resources:
       ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: api
-          Image: !Sub "${DockerImageRegistryUrl}/waterblocks-api:latest"
+          Image: !Sub "${DockerImageRegistryUrl}/waterblocks-api:${ApiImageTag}"
           Essential: true
           PortMappings:
             - ContainerPort: 8080
@@ -362,7 +400,7 @@ Resources:
       ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: frontend
-          Image: !Sub "${DockerImageRegistryUrl}/waterblocks-admin:latest"
+          Image: !Sub "${DockerImageRegistryUrl}/waterblocks-admin:${AdminImageTag}"
           Essential: true
           PortMappings:
             - ContainerPort: 80
@@ -426,9 +464,11 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
-          Subnets:
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
+          Subnets: !If
+            - UseExistingVpcCondition
+            - !Ref ExistingSubnetIds
+            - - !Ref PublicSubnet1
+              - !Ref PublicSubnet2
           SecurityGroups:
             - !Ref EcsServiceSecurityGroup
       LoadBalancers:
@@ -449,9 +489,11 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
-          Subnets:
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
+          Subnets: !If
+            - UseExistingVpcCondition
+            - !Ref ExistingSubnetIds
+            - - !Ref PublicSubnet1
+              - !Ref PublicSubnet2
           SecurityGroups:
             - !Ref EcsServiceSecurityGroup
       LoadBalancers:
