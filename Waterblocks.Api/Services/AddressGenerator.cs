@@ -92,7 +92,7 @@ public sealed class AddressGenerator : IAddressGenerator
             "MATIC" or "MATIC_POLYGON" => "BASE",
             "AVAX" or "AVAX_C" => "BASE",
             "BNB" or "BNB_BSC" => "BASE",
-            "ADA" => "SHELLEY",
+            "ADA" => "BASE",
             _ => "BASE",
         };
     }
