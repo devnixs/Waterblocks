@@ -40,25 +40,33 @@ function AppContent() {
   const autoTransitions = useAutoTransitions();
   const setAutoTransitions = useSetAutoTransitions();
 
+  const persistWorkspaceId = (id: string) => {
+    try {
+      localStorage.setItem('workspaceId', id);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   useEffect(() => {
     if (!workspaces.data || workspaces.data.length === 0) return;
     if (!workspaceId) {
-      setWorkspaceId(workspaces.data[0].id);
+      const defaultId = workspaces.data[0].id;
+      persistWorkspaceId(defaultId);
+      setWorkspaceId(defaultId);
       return;
     }
     const exists = workspaces.data.some((workspace) => workspace.id === workspaceId);
     if (!exists) {
-      setWorkspaceId(workspaces.data[0].id);
+      const fallbackId = workspaces.data[0].id;
+      persistWorkspaceId(fallbackId);
+      setWorkspaceId(fallbackId);
     }
   }, [workspaceId, workspaces.data]);
 
   useEffect(() => {
     if (workspaceId) {
-      try {
-        localStorage.setItem('workspaceId', workspaceId);
-      } catch {
-        // ignore storage errors
-      }
+      persistWorkspaceId(workspaceId);
       queryClient.invalidateQueries();
     }
   }, [workspaceId]);
@@ -105,7 +113,11 @@ function AppContent() {
           </Link>
           <select
             value={workspaceId}
-            onChange={(e) => setWorkspaceId(e.target.value)}
+            onChange={(e) => {
+              const nextId = e.target.value;
+              persistWorkspaceId(nextId);
+              setWorkspaceId(nextId);
+            }}
             className="workspace-select"
             title="Active workspace"
           >

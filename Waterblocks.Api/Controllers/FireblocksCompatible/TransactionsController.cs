@@ -267,7 +267,7 @@ public class TransactionsController : ControllerBase
         var highFee = (baseFee * 2.5m).ToString(CultureInfo.InvariantCulture);
 
         // Calculate feePerByte (assuming typical transaction size of 250 bytes)
-        const int estimatedTxSizeBytes = 250;
+        const int estimatedTxSizeBytes = 100;
         var lowFeePerByte = (baseFee / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
         var mediumFeePerByte = (baseFee * 1.5m / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
         var highFeePerByte = (baseFee * 2.5m / estimatedTxSizeBytes).ToString(CultureInfo.InvariantCulture);
@@ -298,7 +298,7 @@ public class TransactionsController : ControllerBase
                 },
             });
         }
-        else if (asset.FeeAssetId == "SOL")
+        else if (asset.FeeAssetId == "SOL" || asset.Symbol == "SOL")
         {
             return Ok(new EstimateFeeResponseDto
             {

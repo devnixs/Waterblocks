@@ -196,14 +196,14 @@ public class CreateTransactionRequestDto
     public SourceDto? Source { get; set; }
     public DestinationDto? Destination { get; set; }
     public string? Amount { get; set; }
-    public string? Fee { get; set; }
-    public string? FeeLevel { get; set; }
-    public string? PriorityFee { get; set; }
-    public bool? FailOnLowFee { get; set; }
-    public string? MaxFee { get; set; }
-    public decimal? GasPrice { get; set; }
-    public decimal? GasLimit { get; set; }
-    public string? NetworkFee { get; set; }
+    // public string? Fee { get; set; }
+    // public string? FeeLevel { get; set; }
+    // public string? PriorityFee { get; set; }
+    // public bool? FailOnLowFee { get; set; }
+    // public string? MaxFee { get; set; }
+    // public decimal? GasPrice { get; set; }
+    // public decimal? GasLimit { get; set; }
+    // public string? NetworkFee { get; set; }
     public string? Note { get; set; }
     public bool? AutoStaking { get; set; }
     public string? NetworkStaking { get; set; }
@@ -232,7 +232,6 @@ public class EstimateFeeRequestDto
     public DestinationDto Destination { get; set; } = new();
 }
 
-[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 public class EstimateFeeResponseDto
 {
     public FeeEstimateDto Low { get; set; } = new();
@@ -240,7 +239,6 @@ public class EstimateFeeResponseDto
     public FeeEstimateDto High { get; set; } = new();
 }
 
-[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 public class FeeEstimateDto
 {
     public string? FeePerByte { get; set; }

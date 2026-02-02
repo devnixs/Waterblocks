@@ -79,6 +79,7 @@ public static class SeedData
             asset.Decimals = seed.Decimals ?? 0;
             asset.Symbol = SeedHelpers.DeriveSymbol(seed.Id);
             asset.IsActive = true;
+            asset.BaseFee = 0.01m;
         }
 
         db.SaveChanges();

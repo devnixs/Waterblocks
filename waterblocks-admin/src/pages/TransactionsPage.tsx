@@ -71,6 +71,11 @@ export default function TransactionsPage() {
   
   const ensureVaultAddress = async (vaultId: string, asset: string, label: string) => {
     if (!vaultId || !asset) return '';
+
+    // Check if the vault exists in the current workspace before trying to create a wallet
+    const vaultExists = (vaults || []).some((v) => v.id === vaultId);
+    if (!vaultExists) return '';
+
     const resolved = resolveVaultAddress(vaultId, asset);
     if (resolved) return resolved;
 
@@ -277,10 +282,15 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     if (!vaults || vaults.length === 0) return;
-    if (sourceType === 'INTERNAL' && !sourceVaultId) {
+
+    // Reset vault IDs if they no longer exist in the current workspace
+    const sourceVaultExists = vaults.some((v) => v.id === sourceVaultId);
+    const destVaultExists = vaults.some((v) => v.id === destinationVaultId);
+
+    if (sourceType === 'INTERNAL' && (!sourceVaultId || !sourceVaultExists)) {
       setSourceVaultId(vaults[0].id);
     }
-    if (destinationType === 'INTERNAL' && !destinationVaultId) {
+    if (destinationType === 'INTERNAL' && (!destinationVaultId || !destVaultExists)) {
       setDestinationVaultId(vaults[0].id);
     }
   }, [vaults, sourceType, destinationType, sourceVaultId, destinationVaultId]);
