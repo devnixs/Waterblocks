@@ -242,6 +242,27 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             ? sourceOwnership!.VaultAccountId
             : destinationOwnership!.VaultAccountId;
 
+        // Calculate network fee
+        var networkFee = CalculateNetworkFee(request, asset);
+
+        // Determine fee currency (for tokens, fee is paid in native asset)
+        var feeCurrency = asset.GetFeeAssetId();
+
+        var requestedAmount = amount;
+        var treatAsGrossAmount = request.TreatAsGrossAmount ?? false;
+        var transferAmount = amount;
+
+        if (treatAsGrossAmount && feeCurrency == request.AssetId)
+        {
+            transferAmount = requestedAmount - networkFee;
+            if (transferAmount <= 0)
+            {
+                return Failure<AdminTransactionDto>(
+                    $"Amount ({requestedAmount}) must be greater than fee ({networkFee})",
+                    "AMOUNT_BELOW_FEE");
+            }
+        }
+
         var transaction = new Transaction
         {
             Id = Guid.NewGuid().ToString(),
@@ -249,9 +270,14 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             WorkspaceId = workspaceId,
             AssetId = request.AssetId,
             SourceAddress = sourceAddress,
-            Amount = amount,
+            Amount = transferAmount,
+            RequestedAmount = requestedAmount,
             DestinationAddress = destinationAddress,
             DestinationTag = request.DestinationTag,
+            Fee = networkFee,
+            NetworkFee = networkFee,
+            FeeCurrency = feeCurrency,
+            TreatAsGrossAmount = treatAsGrossAmount,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
             Hash = !string.IsNullOrWhiteSpace(providedHash)
@@ -369,26 +395,10 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         return await TransitionTransactionAsync(transaction, TransactionState.CONFIRMING, workspaceId);
     }
 
-    public async Task<AdminServiceResult<TransactionStateDto>> CompleteAsync(string id)
+    public Task<AdminServiceResult<TransactionStateDto>> CompleteAsync(string id)
     {
-        if (!TryGetWorkspaceId<TransactionStateDto>(out var workspaceId, out var failure))
-        {
-            return failure;
-        }
-
-        var transaction = await _transactionIdResolver.FindWorkspaceTransactionAsync(id);
-        if (transaction == null)
-        {
-            return NotFound<TransactionStateDto>($"Transaction {id} not found", "TRANSACTION_NOT_FOUND");
-        }
-
-        if (transaction.Confirmations == 0)
-        {
-            transaction.Confirmations = 6;
-        }
-
-        await _balanceService.CompleteTransactionAsync(transaction);
-        return await TransitionTransactionAsync(transaction, TransactionState.COMPLETED, workspaceId);
+        // Balance updates are handled in AdminTransactionTransitioner when transitioning to COMPLETED
+        return TransitionTransactionAsync(id, TransactionState.COMPLETED);
     }
 
     public async Task<AdminServiceResult<TransactionStateDto>> FailAsync(string id, string? reason)
@@ -494,7 +504,29 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         return fallback;
     }
 
+    private static decimal CalculateNetworkFee(CreateAdminTransactionRequestDto request, Asset asset)
+    {
+        // If explicit network fee is provided, use it
+        if (!string.IsNullOrEmpty(request.NetworkFee) &&
+            decimal.TryParse(request.NetworkFee, out var explicitFee))
+        {
+            return explicitFee;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.FeeLevel))
+        {
+            return 0m;
+        }
+
+        // Calculate based on fee level using asset's base fee
+        var multiplier = request.FeeLevel.ToUpperInvariant() switch
+        {
+            "LOW" => 1.0m,
+            "HIGH" => 2.5m,
+            _ => 1.5m, // MEDIUM is default
+        };
+
+        return asset.BaseFee * multiplier;
+    }
+
 }
-
-
-

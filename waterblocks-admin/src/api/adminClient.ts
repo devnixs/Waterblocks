@@ -19,6 +19,7 @@ import type {
   AdminWorkspace,
   CreateWorkspaceRequest,
   AdminGeneratedAddress,
+  EstimateFeeResponse,
 } from '../types/admin';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -236,5 +237,30 @@ export const adminApi = {
 
   async deleteWorkspace(id: string): Promise<AdminResponse<boolean>> {
     return fetchApi(`/admin/workspaces/${id}`, { method: 'DELETE' });
+  },
+
+  // Fee estimation (uses Fireblocks-compatible endpoint)
+  async estimateFee(assetId: string): Promise<AdminResponse<EstimateFeeResponse>> {
+    const response = await fetch(`${API_BASE_URL}/transactions/estimate_fee`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assetId,
+        amount: '0',
+        source: { type: 'VAULT_ACCOUNT' },
+        destination: { type: 'ONE_TIME_ADDRESS' },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        data: null,
+        error: { message: `HTTP ${response.status}`, code: 'HTTP_ERROR' },
+      }));
+      return error;
+    }
+
+    const data = await response.json();
+    return { data, error: null };
   },
 };

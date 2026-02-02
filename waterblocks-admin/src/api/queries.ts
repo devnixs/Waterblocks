@@ -228,6 +228,21 @@ export function useAssets() {
   });
 }
 
+// Fee estimation
+export function useEstimateFee(assetId: string | undefined) {
+  return useQuery({
+    queryKey: ['estimateFee', assetId],
+    queryFn: async () => {
+      if (!assetId) return null;
+      const response = await adminApi.estimateFee(assetId);
+      if (response.error) throw new Error(response.error.message);
+      return response.data;
+    },
+    enabled: !!assetId,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+}
+
 export function useAdminAssets() {
   const workspaceId = getWorkspaceId();
   return useQuery({

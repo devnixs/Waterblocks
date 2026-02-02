@@ -47,6 +47,32 @@ export function TransactionDetailPanel({
       </div>
 
       <div className="mb-8">
+        <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Fees</h3>
+        <div className="grid gap-3 p-4 bg-tertiary/20 rounded-lg border border-tertiary">
+          <div className="flex justify-between">
+            <span className="text-muted">Network Fee</span>
+            <span className="text-mono">
+              {parseFloat(transaction.networkFee) > 0
+                ? `${parseFloat(transaction.networkFee).toFixed(8).replace(/\.?0+$/, '')} ${transaction.feeCurrency || transaction.assetId}`
+                : '0'}
+            </span>
+          </div>
+          {transaction.feeCurrency && transaction.feeCurrency !== transaction.assetId && (
+            <div className="flex justify-between">
+              <span className="text-muted">Fee Currency</span>
+              <span>{transaction.feeCurrency}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted">Fee Handling</span>
+            <span className={transaction.treatAsGrossAmount ? 'text-yellow-400' : 'text-muted'}>
+              {transaction.treatAsGrossAmount ? 'Deducted from amount' : 'Added to amount'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-8">
         <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Flow</h3>
         <div className="grid gap-4">
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">

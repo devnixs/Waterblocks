@@ -62,7 +62,8 @@ public static class SeedData
             }
 
             var asset = db.Assets.FirstOrDefault(a => a.AssetId == seed.Id);
-            if (asset == null)
+            var isNew = asset == null;
+            if (isNew)
             {
                 asset = new Waterblocks.Api.Models.Asset
                 {
@@ -79,7 +80,10 @@ public static class SeedData
             asset.Decimals = seed.Decimals ?? 0;
             asset.Symbol = SeedHelpers.DeriveSymbol(seed.Id);
             asset.IsActive = true;
-            asset.BaseFee = 0.01m;
+            if (isNew || asset.BaseFee <= 0)
+            {
+                asset.BaseFee = 0.01m;
+            }
         }
 
         db.SaveChanges();

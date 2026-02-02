@@ -255,6 +255,8 @@ public class TransactionDto
     public string? Hash { get; set; }
     public string Fee { get; set; } = "0";
     public string NetworkFee { get; set; } = "0";
+    public string? FeeCurrency { get; set; }
+    public bool TreatAsGrossAmount { get; set; }
     public bool IsFrozen { get; set; }
     public string? FailureReason { get; set; }
     public string? ReplacedByTxId { get; set; }
@@ -278,6 +280,9 @@ public class CreateTransactionRequest
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }
     public string? Hash { get; set; }
+    public string? NetworkFee { get; set; }
+    public string? FeeLevel { get; set; }
+    public bool? TreatAsGrossAmount { get; set; }
 }
 
 public class AdminAssetDto

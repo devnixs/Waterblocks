@@ -1,5 +1,7 @@
-import type { Asset, AdminVault } from '../../types/admin';
+import type { Asset, AdminVault, EstimateFeeResponse } from '../../types/admin';
 import type { SetState, TransactionEndpointType } from './types';
+
+export type FeeLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
 type CreateTransactionFormProps = {
   assets: Asset[];
@@ -22,10 +24,25 @@ type CreateTransactionFormProps = {
   setAmount: SetState<string>;
   hash: string;
   setHash: SetState<string>;
+  feeLevel: FeeLevel;
+  setFeeLevel: SetState<FeeLevel>;
+  treatAsGrossAmount: boolean;
+  setTreatAsGrossAmount: SetState<boolean>;
+  feeEstimates: EstimateFeeResponse | null | undefined;
+  feeEstimatesLoading: boolean;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
 };
+
+function formatFee(fee: string | undefined): string {
+  if (!fee) return '0';
+  const num = parseFloat(fee);
+  if (isNaN(num)) return '0';
+  if (num === 0) return '0';
+  if (num < 0.000001) return num.toExponential(2);
+  return num.toFixed(8).replace(/\.?0+$/, '');
+}
 
 export function CreateTransactionForm({
   assets,
@@ -48,10 +65,36 @@ export function CreateTransactionForm({
   setAmount,
   hash,
   setHash,
+  feeLevel,
+  setFeeLevel,
+  treatAsGrossAmount,
+  setTreatAsGrossAmount,
+  feeEstimates,
+  feeEstimatesLoading,
   onSubmit,
   onCancel,
   isSubmitting,
 }: CreateTransactionFormProps) {
+  const selectedAsset = assets.find((a) => a.id === assetId);
+  const symbol = selectedAsset?.symbol || assetId || '';
+
+  const getNetworkFee = (level: FeeLevel): string => {
+    if (!feeEstimates) return '0';
+    const estimate = feeEstimates[level.toLowerCase() as 'low' | 'medium' | 'high'];
+    return estimate?.networkFee || '0';
+  };
+
+  const selectedFee = getNetworkFee(feeLevel);
+  const parsedAmount = parseFloat(amount) || 0;
+  const parsedFee = parseFloat(selectedFee) || 0;
+
+  const recipientReceives = treatAsGrossAmount
+    ? Math.max(0, parsedAmount - parsedFee)
+    : parsedAmount;
+  const totalCost = treatAsGrossAmount
+    ? parsedAmount
+    : parsedAmount + parsedFee;
+
   return (
     <form
       onSubmit={(e) => {
@@ -178,6 +221,88 @@ export function CreateTransactionForm({
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
+
+        <div>
+          <label className="block text-sm text-muted mb-1">Fee Level</label>
+          {feeEstimatesLoading ? (
+            <div className="text-sm text-muted">Loading fee estimates...</div>
+          ) : !assetId ? (
+            <div className="text-sm text-muted">Select an asset to see fee estimates</div>
+          ) : (
+            <div className="flex gap-4">
+              {(['LOW', 'MEDIUM', 'HIGH'] as const).map((level) => {
+                const fee = getNetworkFee(level);
+                const isSelected = feeLevel === level;
+                return (
+                  <label
+                    key={level}
+                    className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="feeLevel"
+                      value={level}
+                      checked={isSelected}
+                      onChange={() => setFeeLevel(level)}
+                      className="sr-only"
+                    />
+                    <div>
+                      <div className={`text-sm font-medium ${isSelected ? 'text-blue-400' : ''}`}>
+                        {level.charAt(0) + level.slice(1).toLowerCase()}
+                      </div>
+                      <div className="text-xs text-muted">
+                        {formatFee(fee)} {symbol}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={treatAsGrossAmount}
+              onChange={(e) => setTreatAsGrossAmount(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm">Deduct fees from amount</span>
+          </label>
+          <p className="text-xs text-muted mt-1 ml-6">
+            {treatAsGrossAmount
+              ? 'Fee will be subtracted from the amount. Recipient receives less.'
+              : 'Fee will be added on top. You pay amount + fee.'}
+          </p>
+        </div>
+
+        {parsedAmount > 0 && assetId && (
+          <div className="bg-gray-800 rounded p-3 text-sm">
+            <div className="flex justify-between mb-1">
+              <span className="text-muted">Amount entered:</span>
+              <span>{parsedAmount} {symbol}</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span className="text-muted">Network fee:</span>
+              <span>{treatAsGrossAmount ? '-' : '+'}{formatFee(selectedFee)} {symbol}</span>
+            </div>
+            <div className="border-t border-gray-700 my-2" />
+            <div className="flex justify-between">
+              <span className="text-muted">Recipient receives:</span>
+              <span className="font-medium">{formatFee(recipientReceives.toString())} {symbol}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Total cost:</span>
+              <span className="font-medium">{formatFee(totalCost.toString())} {symbol}</span>
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm text-muted mb-1">

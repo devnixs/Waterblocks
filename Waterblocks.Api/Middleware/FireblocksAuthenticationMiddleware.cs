@@ -37,6 +37,13 @@ public class FireblocksAuthenticationMiddleware
             return;
         }
 
+        // Allow unauthenticated access to fee estimation (used by admin UI)
+        if (path.StartsWith("/transactions/estimate_fee"))
+        {
+            await _next(context);
+            return;
+        }
+
         if (path.StartsWith("/admin"))
         {
             if (path.StartsWith("/admin/workspaces"))

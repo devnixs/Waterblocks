@@ -19,6 +19,8 @@ public class AdminTransactionDto
     public string? Hash { get; set; }
     public string Fee { get; set; } = "0";
     public string NetworkFee { get; set; } = "0";
+    public string? FeeCurrency { get; set; }
+    public bool TreatAsGrossAmount { get; set; }
     public bool IsFrozen { get; set; }
     public string? FailureReason { get; set; }
     public string? ReplacedByTxId { get; set; }
@@ -46,6 +48,21 @@ public class CreateAdminTransactionRequestDto
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }
     public string? Hash { get; set; }
+
+    /// <summary>
+    /// Network fee amount. If not provided, calculated from FeeLevel or defaults to Medium.
+    /// </summary>
+    public string? NetworkFee { get; set; }
+
+    /// <summary>
+    /// Fee level: LOW, MEDIUM, or HIGH. Used to calculate fee if NetworkFee not provided.
+    /// </summary>
+    public string? FeeLevel { get; set; }
+
+    /// <summary>
+    /// If true, the fee is deducted from the amount. If false, fee is added to amount.
+    /// </summary>
+    public bool? TreatAsGrossAmount { get; set; }
 }
 
 public class FailTransactionRequestDto

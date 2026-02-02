@@ -261,6 +261,8 @@ public sealed class TransactionViewService : ITransactionViewService
             Hash = transaction.Hash,
             Fee = transaction.Fee.ToString("F18"),
             NetworkFee = transaction.NetworkFee.ToString("F18"),
+            FeeCurrency = transaction.FeeCurrency ?? transaction.AssetId,
+            TreatAsGrossAmount = transaction.TreatAsGrossAmount,
             IsFrozen = transaction.IsFrozen,
             FailureReason = transaction.FailureReason,
             ReplacedByTxId = transaction.ReplacedByTxId == null

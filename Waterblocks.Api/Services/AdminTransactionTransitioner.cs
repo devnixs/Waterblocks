@@ -60,6 +60,17 @@ public sealed class AdminTransactionTransitioner : IAdminTransactionTransitioner
             await _balanceService.RollbackTransactionAsync(transaction);
         }
 
+        if (newState == TransactionState.COMPLETED)
+        {
+            // Ensure confirmations are set when completing
+            if (transaction.Confirmations == 0)
+            {
+                transaction.Confirmations = 6;
+            }
+            // Update balances: deduct from source (amount + fee), credit to destination
+            await _balanceService.CompleteTransactionAsync(transaction);
+        }
+
         transaction.TransitionTo(newState);
         await _context.SaveChangesAsync();
         await _notifier.NotifyUpsertAsync(transaction, workspaceId);

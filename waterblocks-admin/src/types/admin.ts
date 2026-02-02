@@ -24,6 +24,8 @@ export interface AdminTransaction {
   hash?: string;
   fee: string;
   networkFee: string;
+  feeCurrency?: string;
+  treatAsGrossAmount: boolean;
   isFrozen: boolean;
   failureReason?: string;
   replacedByTxId?: string;
@@ -60,6 +62,31 @@ export interface CreateTransactionRequest {
   destinationTag?: string;
   initialState?: string;
   hash?: string;
+  networkFee?: string;
+  feeLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  treatAsGrossAmount?: boolean;
+}
+
+export interface EstimateFeeRequest {
+  assetId: string;
+  amount?: string;
+  source?: { type: string };
+  destination?: { type: string };
+}
+
+export interface FeeEstimate {
+  feePerByte?: string;
+  gasPrice?: string;
+  gasLimit?: string;
+  networkFee?: string;
+  baseFee?: string;
+  priorityFee?: string;
+}
+
+export interface EstimateFeeResponse {
+  low: FeeEstimate;
+  medium: FeeEstimate;
+  high: FeeEstimate;
 }
 
 export interface FailTransactionRequest {
