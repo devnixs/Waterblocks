@@ -4,6 +4,7 @@ WORKDIR /src
 
 # Copy project file and restore dependencies
 COPY all_assets.json ./
+COPY all_assets.json /all_assets.json
 COPY Waterblocks.Api/Waterblocks.Api.csproj Waterblocks.Api/
 RUN dotnet restore Waterblocks.Api/Waterblocks.Api.csproj
 
