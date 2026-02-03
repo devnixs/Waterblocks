@@ -31,34 +31,6 @@ namespace Waterblocks.Api.Migrations
                 type: "character varying(50)",
                 maxLength: 50,
                 nullable: true);
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                columns: new[] { "BaseFee", "CreatedAt", "FeeAssetId" },
-                values: new object[] { 0.0001m, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 15, 20, 181, DateTimeKind.Unspecified).AddTicks(6470), new TimeSpan(0, 0, 0, 0, 0)), "BTC" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                columns: new[] { "BaseFee", "CreatedAt", "FeeAssetId" },
-                values: new object[] { 0.002m, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 15, 20, 181, DateTimeKind.Unspecified).AddTicks(6490), new TimeSpan(0, 0, 0, 0, 0)), "ETH" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                columns: new[] { "BaseFee", "CreatedAt", "FeeAssetId" },
-                values: new object[] { 0.005m, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 15, 20, 181, DateTimeKind.Unspecified).AddTicks(6510), new TimeSpan(0, 0, 0, 0, 0)), "ETH" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                columns: new[] { "BaseFee", "CreatedAt", "FeeAssetId" },
-                values: new object[] { 0.005m, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 15, 20, 181, DateTimeKind.Unspecified).AddTicks(6490), new TimeSpan(0, 0, 0, 0, 0)), "ETH" });
         }
 
         /// <inheritdoc />

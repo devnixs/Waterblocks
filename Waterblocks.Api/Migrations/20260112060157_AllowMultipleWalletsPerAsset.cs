@@ -23,34 +23,6 @@ namespace Waterblocks.Api.Migrations
                 nullable: false,
                 defaultValue: "Permanent");
 
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9740), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 12, 6, 1, 57, 605, DateTimeKind.Unspecified).AddTicks(9730), new TimeSpan(0, 0, 0, 0, 0)));
-
             migrationBuilder.CreateIndex(
                 name: "IX_Wallets_VaultAccountId_AssetId",
                 table: "Wallets",

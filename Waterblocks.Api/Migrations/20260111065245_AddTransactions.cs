@@ -42,35 +42,6 @@ namespace Waterblocks.Api.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2070));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 6, 52, 45, 148, DateTimeKind.Utc).AddTicks(2060));
-
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_CreatedAt",
                 table: "Transactions",

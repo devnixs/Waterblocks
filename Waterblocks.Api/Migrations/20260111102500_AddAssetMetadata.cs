@@ -23,34 +23,6 @@ namespace Waterblocks.Api.Migrations
                 type: "character varying(50)",
                 maxLength: 50,
                 nullable: true);
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                columns: new[] { "NativeAsset", "Type" },
-                values: new object[] { "BTC", "BASE_ASSET" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                columns: new[] { "NativeAsset", "Type" },
-                values: new object[] { "ETH", "BASE_ASSET" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                columns: new[] { "NativeAsset", "Type" },
-                values: new object[] { "ETH", "ERC20" });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                columns: new[] { "NativeAsset", "Type" },
-                values: new object[] { "ETH", "ERC20" });
         }
 
         /// <inheritdoc />

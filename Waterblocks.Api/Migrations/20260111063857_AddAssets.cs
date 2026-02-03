@@ -29,17 +29,6 @@ namespace Waterblocks.Api.Migrations
                 {
                     table.PrimaryKey("PK_Assets", x => x.AssetId);
                 });
-
-            migrationBuilder.InsertData(
-                table: "Assets",
-                columns: new[] { "AssetId", "CreatedAt", "Decimals", "IsActive", "Name", "Symbol", "Type" },
-                values: new object[,]
-                {
-                    { "BTC", new DateTime(2026, 1, 11, 6, 38, 57, 18, DateTimeKind.Utc).AddTicks(6520), 8, true, "Bitcoin", "BTC", "COIN" },
-                    { "ETH", new DateTime(2026, 1, 11, 6, 38, 57, 18, DateTimeKind.Utc).AddTicks(6530), 18, true, "Ethereum", "ETH", "COIN" },
-                    { "USDC", new DateTime(2026, 1, 11, 6, 38, 57, 18, DateTimeKind.Utc).AddTicks(6530), 6, true, "USD Coin", "USDC", "TOKEN" },
-                    { "USDT", new DateTime(2026, 1, 11, 6, 38, 57, 18, DateTimeKind.Utc).AddTicks(6530), 6, true, "Tether", "USDT", "TOKEN" }
-                });
         }
 
         /// <inheritdoc />

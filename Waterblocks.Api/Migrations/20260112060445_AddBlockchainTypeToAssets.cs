@@ -17,34 +17,6 @@ namespace Waterblocks.Api.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                columns: new[] { "BlockchainType", "CreatedAt" },
-                values: new object[] { 1, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2400), new TimeSpan(0, 0, 0, 0, 0)) });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                columns: new[] { "BlockchainType", "CreatedAt" },
-                values: new object[] { 0, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)) });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                columns: new[] { "BlockchainType", "CreatedAt" },
-                values: new object[] { 0, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)) });
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                columns: new[] { "BlockchainType", "CreatedAt" },
-                values: new object[] { 0, new DateTimeOffset(new DateTime(2026, 1, 12, 6, 4, 45, 310, DateTimeKind.Unspecified).AddTicks(2410), new TimeSpan(0, 0, 0, 0, 0)) });
         }
 
         /// <inheritdoc />

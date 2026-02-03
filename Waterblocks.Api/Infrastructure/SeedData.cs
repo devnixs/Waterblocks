@@ -17,7 +17,7 @@ public static class SeedData
 
     private static void SeedAssets(FireblocksDbContext db, Microsoft.Extensions.Logging.ILogger logger)
     {
-        var assetsPath = Path.Combine(AppContext.BaseDirectory, "all_fireblocks_assets.json");
+        var assetsPath = Path.Combine(AppContext.BaseDirectory, "all_assets.json");
         if (!File.Exists(assetsPath))
         {
             logger.LogWarning("Asset seed file not found at {Path}", assetsPath);
@@ -25,65 +25,64 @@ public static class SeedData
         }
 
         var json = File.ReadAllText(assetsPath);
-        var allAssets = JsonSerializer.Deserialize<List<FireblocksAssetSeed>>(json, new JsonSerializerOptions
+        var allAssets = JsonSerializer.Deserialize<List<AssetSeed>>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-        }) ?? new List<FireblocksAssetSeed>();
+        }) ?? new List<AssetSeed>();
 
-        var requiredIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "BTC",
-            "ETH",
-            "ADA",
-            "AAVE",
-            "AXS",
-            "BNB_BSC",
-            "BNB_ERC20",
-            "BASECHAIN_ETH",
-            "BONK_SOL",
-            "EUROC_ETH_F5NG",
-            "MATIC",
-            "MATIC_POLYGON",
-            "SOL",
-            "SUSD",
-            "USDC",
-            "USDC_POLYGON",
-            "USDC_POLYGON_NXTB",
-            "USDT_ERC20",
-        };
+        var existingSymbols = db.Assets
+            .Select(a => a.Symbol)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingAssetIds = db.Assets
+            .Select(a => a.AssetId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var byId = allAssets.ToDictionary(a => a.Id, a => a, StringComparer.OrdinalIgnoreCase);
-        foreach (var id in requiredIds)
+        foreach (var seed in allAssets)
         {
-            if (!byId.TryGetValue(id, out var seed))
+            if (string.IsNullOrWhiteSpace(seed.ApiId) || seed.ApiId.Equals("N/A", StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogWarning("Seed asset not found in JSON: {AssetId}", id);
+                logger.LogWarning("Skipping asset seed with missing symbol (name: {Name})", seed.Code ?? seed.Description ?? "unknown");
                 continue;
             }
 
-            var asset = db.Assets.FirstOrDefault(a => a.AssetId == seed.Id);
-            var isNew = asset == null;
-            if (isNew)
+            if (existingSymbols.Contains(seed.Code))
             {
-                asset = new Waterblocks.Api.Models.Asset
-                {
-                    AssetId = seed.Id,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                };
-                db.Assets.Add(asset);
+                continue;
             }
 
-            asset.Name = seed.Name ?? seed.Id;
-            asset.Type = seed.Type;
-            asset.ContractAddress = string.IsNullOrWhiteSpace(seed.ContractAddress) ? null : seed.ContractAddress;
-            asset.NativeAsset = seed.NativeAsset;
-            asset.Decimals = seed.Decimals ?? 0;
-            asset.Symbol = SeedHelpers.DeriveSymbol(seed.Id);
-            asset.IsActive = true;
-            if (isNew || asset.BaseFee <= 0)
+            if (!Enum.TryParse<Models.BlockchainType>(seed.BlockchainType ?? string.Empty, true, out var blockchainType))
             {
-                asset.BaseFee = 0.01m;
+                blockchainType = Models.BlockchainType.AccountBased;
             }
+
+            var assetId = seed.ApiId?.Trim();
+            if (existingAssetIds.Contains(assetId))
+            {
+                logger.LogWarning(
+                    "Skipping asset seed with duplicate AssetId {AssetId} for symbol {Symbol}",
+                    assetId, seed.Code);
+                continue;
+            }
+
+            var asset = new Waterblocks.Api.Models.Asset
+            {
+                AssetId = assetId,
+                Name = seed.Description ?? assetId,
+                Symbol = seed.Code ?? assetId,
+                Decimals = seed.Decimals ?? 0,
+                Type = seed.Type,
+                BlockchainType = blockchainType,
+                ContractAddress = string.IsNullOrWhiteSpace(seed.ContractAddress) ? null : seed.ContractAddress,
+                NativeAsset = string.IsNullOrWhiteSpace(seed.NativeAsset) ? null : seed.NativeAsset,
+                BaseFee = seed.BaseFee ?? 0,
+                FeeAssetId = string.IsNullOrWhiteSpace(seed.FuelAssetId) ? null : seed.FuelAssetId,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+
+            db.Assets.Add(asset);
+            existingSymbols.Add(seed.Code);
+            existingAssetIds.Add(assetId);
         }
 
         db.SaveChanges();

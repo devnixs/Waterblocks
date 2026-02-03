@@ -40,34 +40,6 @@ namespace Waterblocks.Api.Migrations
             migrationBuilder.DropColumn(
                 name: "SourceVaultAccountId",
                 table: "Transactions");
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 15, 14, 33, 55, 3, DateTimeKind.Unspecified).AddTicks(281), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 15, 14, 33, 55, 3, DateTimeKind.Unspecified).AddTicks(299), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 15, 14, 33, 55, 3, DateTimeKind.Unspecified).AddTicks(303), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                column: "CreatedAt",
-                value: new DateTimeOffset(new DateTime(2026, 1, 15, 14, 33, 55, 3, DateTimeKind.Unspecified).AddTicks(301), new TimeSpan(0, 0, 0, 0, 0)));
         }
 
         /// <inheritdoc />

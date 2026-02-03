@@ -20,8 +20,8 @@ services:
 
   api:
     build:
-      context: ./Waterblocks.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Waterblocks.Api/Dockerfile
     container_name: waterblocks-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development

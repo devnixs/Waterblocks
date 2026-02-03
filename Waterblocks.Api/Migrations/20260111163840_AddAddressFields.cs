@@ -51,34 +51,6 @@ namespace Waterblocks.Api.Migrations
                 type: "character varying(500)",
                 maxLength: 500,
                 nullable: true);
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "BTC",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2110));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "ETH",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDC",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120));
-
-            migrationBuilder.UpdateData(
-                table: "Assets",
-                keyColumn: "AssetId",
-                keyValue: "USDT",
-                column: "CreatedAt",
-                value: new DateTime(2026, 1, 11, 16, 38, 40, 226, DateTimeKind.Utc).AddTicks(2120));
         }
 
         /// <inheritdoc />

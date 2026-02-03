@@ -35,7 +35,7 @@ public class Asset
     public string Name { get; set; } = string.Empty;
 
     [Required]
-    [MaxLength(10)]
+    [MaxLength(64)]
     public string Symbol { get; set; } = string.Empty;
 
     public int Decimals { get; set; } = 18;

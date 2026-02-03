@@ -122,7 +122,7 @@ Windows PowerShell equivalents:
 ## Key behaviors
 - **Workspaces**: API keys, vaults, and transactions are workspace-scoped. Admin UI provides a workspace switcher and a workspaces page.
 - **Idempotency**: `ExternalTxId` is unique (idempotency key). Duplicates return error code `1438`.
-- **Assets**: seeds from `all_fireblocks_assets.json` at startup.
+- **Assets**: seeds from `all_assets.json` at startup.
 - **Realtime**: UI updates via SignalR; status indicator shows connection state.
 
 ## Configuration
