@@ -223,6 +223,7 @@ export function useAssets() {
     queryFn: async () => {
       const response = await adminApi.getAssets();
       if (response.error) throw new Error(response.error.message);
+      response.data?.sort((i,j)=> i.symbol.localeCompare(j.symbol));
       return response.data || [];
     },
   });

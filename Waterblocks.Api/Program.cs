@@ -46,6 +46,7 @@ builder.Services.AddScoped<Waterblocks.Api.Services.IAdminVaultService, Waterblo
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionService, Waterblocks.Api.Services.TransactionService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionViewService, Waterblocks.Api.Services.TransactionViewService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionIdResolver, Waterblocks.Api.Services.TransactionIdResolver>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IWalletAddressService, Waterblocks.Api.Services.WalletAddressService>();
 builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressGenerator, Waterblocks.Api.Services.AddressGenerator>();
 builder.Services.AddSingleton<Waterblocks.Api.Services.IAddressValidationService, Waterblocks.Api.Services.AddressValidationService>();
 builder.Services.AddScoped<Waterblocks.Api.Infrastructure.WorkspaceContext>();

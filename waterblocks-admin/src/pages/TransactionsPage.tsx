@@ -412,8 +412,12 @@ export default function TransactionsPage() {
 
     const resolveInternalAddress = (
       vaultId: string,
+      current: string,
       update: (value: string) => void
     ) => {
+      if (current.trim()) {
+        return current.trim();
+      }
       const resolved = resolveVaultAddress(vaultId, assetId);
       if (resolved) {
         update(resolved);
@@ -422,10 +426,10 @@ export default function TransactionsPage() {
     };
 
     const resolvedSourceAddress = sourceType === 'INTERNAL'
-      ? resolveInternalAddress(sourceVaultId, setSourceAddress)
+      ? resolveInternalAddress(sourceVaultId, sourceAddress, setSourceAddress)
       : await resolveExternalAddress(sourceAddress, setSourceAddress);
     const resolvedDestinationAddress = destinationType === 'INTERNAL'
-      ? resolveInternalAddress(destinationVaultId, setDestinationAddress)
+      ? resolveInternalAddress(destinationVaultId, destinationAddress, setDestinationAddress)
       : await resolveExternalAddress(destinationAddress, setDestinationAddress);
 
     if (!resolvedSourceAddress) {

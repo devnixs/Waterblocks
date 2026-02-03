@@ -39,13 +39,14 @@ public static class SeedData
 
         foreach (var seed in allAssets)
         {
-            if (string.IsNullOrWhiteSpace(seed.ApiId) || seed.ApiId.Equals("N/A", StringComparison.OrdinalIgnoreCase))
+            var symbol = seed.Symbol ?? seed.ApiId ?? seed.Code;
+            if (string.IsNullOrWhiteSpace(symbol) || symbol.Equals("N/A", StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogWarning("Skipping asset seed with missing symbol (name: {Name})", seed.Code ?? seed.Description ?? "unknown");
+                logger.LogWarning("Skipping asset seed with missing symbol (name: {Name})", seed.Description ?? seed.Name ?? seed.Code ?? "unknown");
                 continue;
             }
 
-            if (existingSymbols.Contains(seed.Code))
+            if (existingSymbols.Contains(symbol))
             {
                 continue;
             }
@@ -55,20 +56,20 @@ public static class SeedData
                 blockchainType = Models.BlockchainType.AccountBased;
             }
 
-            var assetId = seed.ApiId?.Trim();
+            var assetId = symbol.Trim();
             if (existingAssetIds.Contains(assetId))
             {
                 logger.LogWarning(
                     "Skipping asset seed with duplicate AssetId {AssetId} for symbol {Symbol}",
-                    assetId, seed.Code);
+                    assetId, symbol);
                 continue;
             }
 
             var asset = new Waterblocks.Api.Models.Asset
             {
                 AssetId = assetId,
-                Name = seed.Description ?? assetId,
-                Symbol = seed.Code ?? assetId,
+                Name = seed.Description ?? seed.Name ?? seed.Code ?? assetId,
+                Symbol = symbol,
                 Decimals = seed.Decimals ?? 0,
                 Type = seed.Type,
                 BlockchainType = blockchainType,
@@ -81,7 +82,7 @@ public static class SeedData
             };
 
             db.Assets.Add(asset);
-            existingSymbols.Add(seed.Code);
+            existingSymbols.Add(symbol);
             existingAssetIds.Add(assetId);
         }
 

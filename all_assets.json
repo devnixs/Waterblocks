@@ -368,7 +368,7 @@
     "BlockchainType": "AddressBased",
     "ContractAddress": "",
     "NativeAsset": "BTC",
-    "BaseFee": 0.01,
+    "BaseFee": 0.0001,
     "FuelAssetId": null
   },
   {
@@ -476,7 +476,7 @@
     "BlockchainType": "AccountBased",
     "ContractAddress": "",
     "NativeAsset": "ETH",
-    "BaseFee": 0.01,
+    "BaseFee": 0.002,
     "FuelAssetId": null
   },
   {
@@ -956,7 +956,7 @@
     "BlockchainType": "AccountBased",
     "ContractAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
     "NativeAsset": "ETH",
-    "BaseFee": 0.01,
+    "BaseFee": 0.005,
     "FuelAssetId": "ETH"
   },
   {
@@ -1016,7 +1016,7 @@
     "BlockchainType": "AccountBased",
     "ContractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
     "NativeAsset": "ETH",
-    "BaseFee": 0.01,
+    "BaseFee": 0.005,
     "FuelAssetId": "ETH"
   },
   {

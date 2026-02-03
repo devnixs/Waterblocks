@@ -115,7 +115,7 @@ export function CreateTransactionForm({
             <option value="">Select asset</option>
             {assets.map((asset) => (
               <option key={asset.id} value={asset.id}>
-                {asset.name} ({asset.symbol})
+                {asset.symbol} - {asset.name}
               </option>
             ))}
           </select>

@@ -18,23 +18,23 @@ public sealed class TransactionService : ITransactionService
     private readonly ILogger<TransactionService> _logger;
     private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
-    private readonly IAddressGenerator _addressGenerator;
     private readonly IRealtimeNotifier _realtimeNotifier;
+    private readonly IWalletAddressService _walletAddressService;
 
     public TransactionService(
         FireblocksDbContext context,
         ILogger<TransactionService> logger,
         WorkspaceContext workspace,
         IBalanceService balanceService,
-        IAddressGenerator addressGenerator,
-        IRealtimeNotifier realtimeNotifier)
+        IRealtimeNotifier realtimeNotifier,
+        IWalletAddressService walletAddressService)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _balanceService = balanceService;
-        _addressGenerator = addressGenerator;
         _realtimeNotifier = realtimeNotifier;
+        _walletAddressService = walletAddressService;
     }
 
     public async Task<CreateTransactionResponseDto> CreateTransactionAsync(CreateTransactionRequestDto request)
@@ -96,19 +96,10 @@ public sealed class TransactionService : ITransactionService
         // Auto-generate address if wallet has no addresses
         if (!sourceWallet.Addresses.Any())
         {
-            var newAddress = new Address
-            {
-                AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(request.AssetId, vaultAccountId),
-                Type = "Permanent",
-                WalletId = sourceWallet.Id,
-                CreatedAt = DateTimeOffset.UtcNow,
-            };
-            _context.Addresses.Add(newAddress);
-            await _context.SaveChangesAsync();
-            sourceWallet.Addresses.Add(newAddress);
-
-            _logger.LogInformation("Auto-generated address {Address} for vault {VaultId} asset {AssetId}",
-                newAddress.AddressValue, vaultAccountId, request.AssetId);
+            await _walletAddressService.EnsurePrimaryAddressAsync(
+                sourceWallet,
+                asset,
+                _workspace.WorkspaceId);
         }
 
         var sourceAddress = sourceWallet.Addresses.First().AddressValue;
@@ -160,19 +151,10 @@ public sealed class TransactionService : ITransactionService
             // Auto-generate address if wallet has no addresses
             if (!destinationWallet.Addresses.Any())
             {
-                var newAddress = new Address
-                {
-                    AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(request.AssetId, destinationVaultId),
-                    Type = "Permanent",
-                    WalletId = destinationWallet.Id,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                };
-                _context.Addresses.Add(newAddress);
-                await _context.SaveChangesAsync();
-                destinationWallet.Addresses.Add(newAddress);
-
-                _logger.LogInformation("Auto-generated address {Address} for vault {VaultId} asset {AssetId}",
-                    newAddress.AddressValue, destinationVaultId, request.AssetId);
+                await _walletAddressService.EnsurePrimaryAddressAsync(
+                    destinationWallet,
+                    asset,
+                    destinationWallet.VaultAccount?.WorkspaceId ?? _workspace.WorkspaceId);
             }
 
             destinationWorkspaceId = destinationWallet.VaultAccount?.WorkspaceId ?? string.Empty;

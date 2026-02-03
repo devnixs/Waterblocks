@@ -14,18 +14,18 @@ public class VaultAddressesController : ControllerBase
     private readonly FireblocksDbContext _context;
     private readonly ILogger<VaultAddressesController> _logger;
     private readonly WorkspaceContext _workspace;
-    private readonly Waterblocks.Api.Services.IAddressGenerator _addressGenerator;
+    private readonly Waterblocks.Api.Services.IWalletAddressService _walletAddressService;
 
     public VaultAddressesController(
         FireblocksDbContext context,
         ILogger<VaultAddressesController> logger,
         WorkspaceContext workspace,
-        Waterblocks.Api.Services.IAddressGenerator addressGenerator)
+        Waterblocks.Api.Services.IWalletAddressService walletAddressService)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
-        _addressGenerator = addressGenerator;
+        _walletAddressService = walletAddressService;
     }
 
     [HttpGet]
@@ -123,24 +123,13 @@ public class VaultAddressesController : ControllerBase
 
         if (wallet.Addresses.Count == 0)
         {
-            var generatedAddress = _addressGenerator.GenerateVaultAddress(assetId, 0);
-            var address = new Address
+            var asset = await _context.Assets.FindAsync(assetId);
+            if (asset == null)
             {
-                AddressValue = generatedAddress.AddressValue,
-                Tag = null,
-                Type = "Permanent",
-                Description = null,
-                CustomerRefId = null,
-                AddressFormat = generatedAddress.AddressFormat,
-                LegacyAddress = generatedAddress.LegacyAddress,
-                EnterpriseAddress = generatedAddress.EnterpriseAddress,
-                Bip44AddressIndex = 0,
-                WalletId = wallet.Id,
-                CreatedAt = DateTimeOffset.UtcNow,
-            };
+                throw new KeyNotFoundException($"Asset {assetId} not found");
+            }
 
-            _context.Addresses.Add(address);
-            await _context.SaveChangesAsync();
+            await _walletAddressService.CreateAddressAsync(wallet, asset, _workspace.WorkspaceId, null, null);
 
             wallet = await _context.Wallets
                 .Include(w => w.VaultAccount)
@@ -232,32 +221,18 @@ public class VaultAddressesController : ControllerBase
             throw new KeyNotFoundException($"Wallet for asset {assetId} not found in vault {vaultAccountId}");
         }
 
-        var generatedAddress = _addressGenerator.GenerateVaultAddress(assetId, wallet.Addresses.Count);
-
-        // Calculate BIP44 address index (count of existing addresses)
-        var bip44AddressIndex = wallet.Addresses.Count;
-        var isFirstAddress = bip44AddressIndex == 0;
-
-        var address = new Address
+        var assetForCreate = await _context.Assets.FindAsync(assetId);
+        if (assetForCreate == null)
         {
-            AddressValue = generatedAddress.AddressValue,
-            Tag = null,
-            Type = isFirstAddress ? "Permanent" : "DEPOSIT",
-            Description = request?.Description,
-            CustomerRefId = request?.CustomerRefId,
-            AddressFormat = generatedAddress.AddressFormat,
-            LegacyAddress = generatedAddress.LegacyAddress,
-            EnterpriseAddress = generatedAddress.EnterpriseAddress,
-            Bip44AddressIndex = bip44AddressIndex,
-            WalletId = wallet.Id,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
+            throw new KeyNotFoundException($"Asset {assetId} not found");
+        }
 
-        _context.Addresses.Add(address);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Created address {Address} for asset {AssetId} in vault {VaultAccountId}",
-            generatedAddress.AddressValue, assetId, vaultAccountId);
+        var address = await _walletAddressService.CreateAddressAsync(
+            wallet,
+            assetForCreate,
+            _workspace.WorkspaceId,
+            request?.Description,
+            request?.CustomerRefId);
 
         var response = new CreateAddressResponseDto
         {
