@@ -38,7 +38,7 @@ Parameters:
   PostgresInstanceType:
     Type: String
     Default: db.t4g.micro
-    Description: RDS PostgreSQL instance type (default: cheapest in eu-west-1).
+    Description: RDS PostgreSQL instance type (default to cheapest in eu-west-1).
   PostgresUsername:
     Type: String
     Default: postgres
