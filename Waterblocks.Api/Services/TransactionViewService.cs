@@ -14,7 +14,7 @@ public interface ITransactionViewService
     IQueryable<Transaction> ApplyWorkspaceAddressFilter(IQueryable<Transaction> query, HashSet<string> addresses);
     Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions, string workspaceId);
     Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions, IEnumerable<string> workspaceIds);
-    Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(string assetId, IEnumerable<string> addresses, string workspaceId);
+    Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(string assetId, IEnumerable<string> addresses);
     AddressOwnership? ResolveOwnership(IReadOnlyDictionary<string, AddressOwnership> lookup, string assetId, string? address);
     TransactionDto MapToFireblocksDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup, string? workspaceId);
     AdminTransactionDto MapToAdminDto(Transaction transaction, IReadOnlyDictionary<string, AddressOwnership> addressLookup, string? workspaceId);
@@ -97,8 +97,7 @@ public sealed class TransactionViewService : ITransactionViewService
 
     public async Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(
         string assetId,
-        IEnumerable<string> addresses,
-        string workspaceId)
+        IEnumerable<string> addresses)
     {
         var addressValues = addresses
             .Where(address => !string.IsNullOrWhiteSpace(address))
@@ -106,7 +105,7 @@ public sealed class TransactionViewService : ITransactionViewService
             .Distinct()
             .ToList();
 
-        if (addressValues.Count == 0 || string.IsNullOrWhiteSpace(workspaceId))
+        if (addressValues.Count == 0)
         {
             return new Dictionary<string, AddressOwnership>();
         }
@@ -115,8 +114,7 @@ public sealed class TransactionViewService : ITransactionViewService
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
             .Where(a => addressValues.Contains(a.AddressValue)
-                        && a.Wallet.AssetId == assetId
-                        && a.Wallet.VaultAccount.WorkspaceId == workspaceId)
+                        && a.Wallet.AssetId == assetId)
             .ToListAsync();
 
         return BuildAddressOwnershipLookup(addressEntities);

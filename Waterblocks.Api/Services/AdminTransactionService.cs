@@ -222,8 +222,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
 
         var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(
             request.AssetId,
-            new[] { sourceAddress, destinationAddress },
-            workspaceId);
+            new[] { sourceAddress, destinationAddress });
 
         var sourceOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, sourceAddress);
         var destinationOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, destinationAddress);

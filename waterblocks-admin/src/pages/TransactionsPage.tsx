@@ -386,14 +386,22 @@ export default function TransactionsPage() {
 
     const resolveOneTimeAddress = (current: string) => current.trim();
 
-    const resolvedSourceAddress = sourceType === 'VAULT'
-      ? await resolveVaultDefault(sourceVaultId, setSourceAddress, 'Source')
-      : resolveOneTimeAddress(sourceAddress);
+    const resolveSourceAddress = async () => {
+      if (sourceType === 'VAULT') {
+        return await resolveVaultDefault(sourceVaultId, setSourceAddress, 'Source');
+      }
+      if (sourceType === 'EXTERNAL_RANDOM') {
+        return '';
+      }
+      return resolveOneTimeAddress(sourceAddress);
+    };
+
+    const resolvedSourceAddress = await resolveSourceAddress();
     const resolvedDestinationAddress = destinationType === 'VAULT'
       ? await resolveVaultDefault(destinationVaultId, setDestinationAddress, 'Destination')
       : resolveOneTimeAddress(destinationAddress);
 
-    if (!resolvedSourceAddress) {
+    if (!resolvedSourceAddress && sourceType !== 'EXTERNAL_RANDOM') {
       showToast({ title: 'Source address is required', type: 'error' });
       return;
     }
@@ -520,22 +528,22 @@ export default function TransactionsPage() {
           setAssetId={setAssetId}
           sourceType={sourceType}
           setSourceType={(type) => {
-      setSourceType(type);
-      if (type === 'VAULT') {
-        setSourceAddress('');
-      }
-    }}
+            setSourceType(type);
+            if (type === 'VAULT' || type === 'EXTERNAL_RANDOM') {
+              setSourceAddress('');
+            }
+          }}
           sourceAddress={sourceAddress}
           setSourceAddress={setSourceAddress}
           sourceVaultId={sourceVaultId}
           setSourceVaultId={setSourceVaultId}
           destinationType={destinationType}
           setDestinationType={(type) => {
-      setDestinationType(type);
-      if (type === 'VAULT') {
-        setDestinationAddress('');
-      }
-    }}
+            setDestinationType(type);
+            if (type === 'VAULT') {
+              setDestinationAddress('');
+            }
+          }}
           destinationAddress={destinationAddress}
           setDestinationAddress={setDestinationAddress}
           destinationVaultId={destinationVaultId}

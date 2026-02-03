@@ -132,6 +132,7 @@ export function CreateTransactionForm({
               >
                 <option value="VAULT">Existing Vault</option>
                 <option value="ONE_TIME">One-time address</option>
+                <option value="EXTERNAL_RANDOM">External (Random address)</option>
               </select>
               {sourceType === 'ONE_TIME' ? (
                 <input
@@ -141,7 +142,7 @@ export function CreateTransactionForm({
                   onChange={(e) => setSourceAddress(e.target.value)}
                   className="w-2/3"
                 />
-              ) : (
+              ) : sourceType === 'VAULT' ? (
                 <div className="w-2/3">
                   <SearchableVaultSelect
                     vaults={vaults}
@@ -150,6 +151,10 @@ export function CreateTransactionForm({
                     placeholder="Search by name, ID, or address..."
                     assetId={assetId}
                   />
+                </div>
+              ) : (
+                <div className="w-2/3 text-sm text-muted border border-gray-700 rounded px-3 py-2 bg-gray-900/40">
+                  Random external address will be generated on submit.
                 </div>
               )}
             </div>
