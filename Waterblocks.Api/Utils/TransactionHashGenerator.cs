@@ -22,7 +22,7 @@ public static class TransactionHashGenerator
             Models.BlockchainType.AccountBased => GenerateEthereumStyleHash(),
             Models.BlockchainType.AddressBased => GenerateBitcoinStyleHash(),
             Models.BlockchainType.MemoBased => GenerateEthereumStyleHash(), // XRP/XLM use similar format
-            _ => GenerateEthereumStyleHash()
+            _ => GenerateEthereumStyleHash(),
         };
     }
 
@@ -64,7 +64,7 @@ public static class TransactionHashGenerator
             Models.BlockchainType.AccountBased => $"0x{hexString}",
             Models.BlockchainType.AddressBased => hexString,
             Models.BlockchainType.MemoBased => $"0x{hexString}",
-            _ => $"0x{hexString}"
+            _ => $"0x{hexString}",
         };
     }
 }

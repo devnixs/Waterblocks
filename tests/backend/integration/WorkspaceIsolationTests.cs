@@ -26,7 +26,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
         // Act: Create vault via Fireblocks API
         var vault = await _fixture.FireblocksClient.CreateVaultAccountAsync(new CreateVaultAccountRequest
         {
-            Name = vaultName
+            Name = vaultName,
         });
 
         // Assert: Vault should be created
@@ -120,7 +120,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = vaultDepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Create an outgoing transaction in workspace 1 via Fireblocks API
@@ -131,9 +131,9 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Destination = new FireblocksDestinationTransferPeerPath
             {
                 Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qtest123" }
+                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qtest123" },
             },
-            Amount = "0.1"
+            Amount = "0.1",
         });
 
         txResponse.Should().NotBeNull();
@@ -172,7 +172,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = vaultDepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Create transaction in workspace 1
@@ -183,9 +183,9 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Destination = new FireblocksDestinationTransferPeerPath
             {
                 Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qtest456" }
+                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qtest456" },
             },
-            Amount = "0.1"
+            Amount = "0.1",
         });
 
         // Act: Try to get the transaction from workspace 2
@@ -217,7 +217,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = vaultDepositAddress,
-            Amount = "10"
+            Amount = "10",
         });
 
         // Act: Try to create a transaction from workspace 2 using workspace 1's vault
@@ -228,9 +228,9 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Destination = new FireblocksDestinationTransferPeerPath
             {
                 Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qattacker" }
+                OneTimeAddress = new FireblocksOneTimeAddress { Address = "bc1qattacker" },
             },
-            Amount = "1"
+            Amount = "1",
         });
 
         // Assert: Should fail because the vault doesn't belong to workspace 2
@@ -292,7 +292,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external1",
             DestinationAddress = vault1DepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Create vault and incoming transaction in workspace 2
@@ -305,7 +305,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external2",
             DestinationAddress = vault2DepositAddress,
-            Amount = "2"
+            Amount = "2",
         });
 
         tx1Response.IsSuccess.Should().BeTrue();
@@ -388,7 +388,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = senderDepositAddress,
-            Amount = "10"
+            Amount = "10",
         });
 
         // Create cross-workspace transaction
@@ -397,7 +397,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = senderDepositAddress,
             DestinationAddress = receiverDepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
         crossWorkspaceTx.IsSuccess.Should().BeTrue();
 
@@ -467,7 +467,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = senderDepositAddress,
-            Amount = "10"
+            Amount = "10",
         });
 
         // Create cross-workspace transaction: sender vault -> receiver vault
@@ -476,7 +476,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = senderDepositAddress,
             DestinationAddress = receiverDepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
         crossWorkspaceTx.IsSuccess.Should().BeTrue("Cross-workspace transaction should be created");
         var txId = crossWorkspaceTx.Data!.Id;
@@ -546,7 +546,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-funder",
             DestinationAddress = senderDepositAddress,
-            Amount = "10"
+            Amount = "10",
         });
 
         // Create cross-workspace transaction
@@ -555,7 +555,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = senderDepositAddress,
             DestinationAddress = receiverDepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
         var txId = crossWorkspaceTx.Data!.Id;
 
@@ -595,7 +595,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "funder",
             DestinationAddress = senderDepositAddress,
-            Amount = "5"
+            Amount = "5",
         });
 
         // Create receiver vault and wallet via Fireblocks API (generates valid BTC address)
@@ -611,9 +611,9 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Destination = new FireblocksDestinationTransferPeerPath
             {
                 Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new FireblocksOneTimeAddress { Address = receiverAddress }
+                OneTimeAddress = new FireblocksOneTimeAddress { Address = receiverAddress },
             },
-            Amount = "0.5"
+            Amount = "0.5",
         });
         txResponse.Should().NotBeNull();
         var txId = txResponse!.Id;
@@ -663,7 +663,7 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "funder",
             DestinationAddress = senderDepositAddress,
-            Amount = "2"
+            Amount = "2",
         });
 
         // Create receiver vault and wallet via Fireblocks API (generates valid BTC address)
@@ -679,9 +679,9 @@ public class WorkspaceIsolationTests : IAsyncLifetime
             Destination = new FireblocksDestinationTransferPeerPath
             {
                 Type = "ONE_TIME_ADDRESS",
-                OneTimeAddress = new FireblocksOneTimeAddress { Address = receiverAddress }
+                OneTimeAddress = new FireblocksOneTimeAddress { Address = receiverAddress },
             },
-            Amount = "0.25"
+            Amount = "0.25",
         });
         var txId = txResponse!.Id;
 

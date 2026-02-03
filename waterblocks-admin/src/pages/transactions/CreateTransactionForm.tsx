@@ -1,5 +1,6 @@
 import type { Asset, AdminVault, EstimateFeeResponse } from '../../types/admin';
 import type { SetState, TransactionEndpointType } from './types';
+import { SearchableVaultSelect } from '../../components/SearchableVaultSelect';
 
 export type FeeLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -141,18 +142,15 @@ export function CreateTransactionForm({
                   className="w-2/3"
                 />
               ) : (
-                <select
-                  value={sourceVaultId}
-                  onChange={(e) => setSourceVaultId(e.target.value)}
-                  className="w-2/3"
-                >
-                  <option value="">Select source vault</option>
-                  {vaults.map((vault) => (
-                    <option key={vault.id} value={vault.id}>
-                      {vault.name} ({vault.id.slice(0, 8)}...)
-                    </option>
-                  ))}
-                </select>
+                <div className="w-2/3">
+                  <SearchableVaultSelect
+                    vaults={vaults}
+                    selectedVaultId={sourceVaultId}
+                    onSelect={setSourceVaultId}
+                    placeholder="Search by name, ID, or address..."
+                    assetId={assetId}
+                  />
+                </div>
               )}
             </div>
             {sourceType === 'INTERNAL' && (
@@ -186,18 +184,15 @@ export function CreateTransactionForm({
                   className="w-2/3"
                 />
               ) : (
-                <select
-                  value={destinationVaultId}
-                  onChange={(e) => setDestinationVaultId(e.target.value)}
-                  className="w-2/3"
-                >
-                  <option value="">Select destination vault</option>
-                  {vaults.map((vault) => (
-                    <option key={vault.id} value={vault.id}>
-                      {vault.name} ({vault.id.slice(0, 8)}...)
-                    </option>
-                  ))}
-                </select>
+                <div className="w-2/3">
+                  <SearchableVaultSelect
+                    vaults={vaults}
+                    selectedVaultId={destinationVaultId}
+                    onSelect={setDestinationVaultId}
+                    placeholder="Search by name, ID, or address..."
+                    assetId={assetId}
+                  />
+                </div>
               )}
             </div>
             {destinationType === 'INTERNAL' && (

@@ -33,7 +33,7 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
             SourceAddress = "external-btc-address",
             DestinationAddress = depositAddress,
             Amount = "1.5",
-            Hash = customHash
+            Hash = customHash,
         });
 
         Assert.NotNull(createResponse.Data);
@@ -61,7 +61,7 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
             SourceAddress = "external-btc-address-1",
             DestinationAddress = depositAddress,
             Amount = "1.0",
-            Hash = customHash
+            Hash = customHash,
         });
 
         Assert.NotNull(createResponse1.Data);
@@ -74,7 +74,7 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
             SourceAddress = "external-btc-address-2",
             DestinationAddress = depositAddress,
             Amount = "2.0",
-            Hash = customHash
+            Hash = customHash,
         });
 
         Assert.Null(createResponse2.Data);
@@ -102,7 +102,7 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
             AssetId = "BTC",
             SourceAddress = "external-btc-address",
             DestinationAddress = depositAddress,
-            Amount = "1.5"
+            Amount = "1.5",
         });
 
         Assert.NotNull(createResponse.Data);
@@ -134,7 +134,7 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
             AssetId = "ETH",
             SourceAddress = "external-eth-address",
             DestinationAddress = depositAddress,
-            Amount = "1.5"
+            Amount = "1.5",
         });
 
         Assert.NotNull(createResponse.Data);

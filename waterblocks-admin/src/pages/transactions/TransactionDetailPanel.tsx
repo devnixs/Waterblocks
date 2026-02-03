@@ -13,6 +13,23 @@ export function TransactionDetailPanel({
   getAvailableActions,
   onTransition,
 }: TransactionDetailPanelProps) {
+  const formatAmount = (value: number, currency: string) => {
+    if (!Number.isFinite(value)) return '-';
+    const display = value === 0 ? '0' : value.toFixed(8).replace(/\.?0+$/, '');
+    return `${display} ${currency}`;
+  };
+
+  const amountValue = parseFloat(transaction.amount);
+  const feeValue = parseFloat(transaction.networkFee);
+  const feeCurrency = transaction.feeCurrency || transaction.assetId;
+  const isFeeCurrencyDifferent = !!transaction.feeCurrency && transaction.feeCurrency !== transaction.assetId;
+  const senderSendsValue = transaction.treatAsGrossAmount ? amountValue : amountValue + (Number.isFinite(feeValue) ? feeValue : 0);
+  const recipientReceivesValue = transaction.treatAsGrossAmount
+    ? Math.max(0, amountValue - (Number.isFinite(feeValue) ? feeValue : 0))
+    : amountValue;
+  const feeDisplay = Number.isFinite(feeValue)
+    ? (feeValue > 0 ? formatAmount(feeValue, feeCurrency) : '0')
+    : '-';
   return (
     <div className="detail-panel">
       <div className="detail-panel-header">
@@ -52,9 +69,7 @@ export function TransactionDetailPanel({
           <div className="flex justify-between">
             <span className="text-muted">Network Fee</span>
             <span className="text-mono">
-              {parseFloat(transaction.networkFee) > 0
-                ? `${parseFloat(transaction.networkFee).toFixed(8).replace(/\.?0+$/, '')} ${transaction.feeCurrency || transaction.assetId}`
-                : '0'}
+              {feeDisplay}
             </span>
           </div>
           {transaction.feeCurrency && transaction.feeCurrency !== transaction.assetId && (
@@ -63,6 +78,22 @@ export function TransactionDetailPanel({
               <span>{transaction.feeCurrency}</span>
             </div>
           )}
+          <div className="flex justify-between">
+            <span className="text-muted">Sender Sends</span>
+            <span className="text-mono">
+              {isFeeCurrencyDifferent
+                ? `${formatAmount(amountValue, transaction.assetId)} + ${feeDisplay}`
+                : formatAmount(senderSendsValue, transaction.assetId)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted">Recipient Receives</span>
+            <span className="text-mono">
+              {isFeeCurrencyDifferent
+                ? formatAmount(amountValue, transaction.assetId)
+                : formatAmount(recipientReceivesValue, transaction.assetId)}
+            </span>
+          </div>
           <div className="flex justify-between">
             <span className="text-muted">Fee Handling</span>
             <span className={transaction.treatAsGrossAmount ? 'text-yellow-400' : 'text-muted'}>

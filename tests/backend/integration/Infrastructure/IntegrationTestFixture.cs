@@ -56,7 +56,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 BaseFee = 0.0001m,
                 FeeAssetId = "BTC",
                 IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
             });
         }
 
@@ -75,7 +75,7 @@ public class IntegrationTestFixture : IAsyncLifetime
                 BaseFee = 0.002m,
                 FeeAssetId = "ETH",
                 IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
             });
         }
 

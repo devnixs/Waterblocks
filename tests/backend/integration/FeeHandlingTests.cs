@@ -40,7 +40,7 @@ public class FeeHandlingTests : IAsyncLifetime
             AssetId = "ETH",
             SourceAddress = "external-funder",
             DestinationAddress = sourceAddress,
-            Amount = "10"
+            Amount = "10",
         });
         fundingTx.IsSuccess.Should().BeTrue("Funding transaction should succeed");
 
@@ -56,7 +56,7 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = sourceAddress,
             DestinationAddress = destAddress,
             Amount = "1",
-            FeeLevel = "MEDIUM"
+            FeeLevel = "MEDIUM",
         });
         outgoingTx.IsSuccess.Should().BeTrue("Outgoing transaction should be created");
         var txId = outgoingTx.Data!.Id;
@@ -104,7 +104,7 @@ public class FeeHandlingTests : IAsyncLifetime
             AssetId = "ETH",
             SourceAddress = "funder",
             DestinationAddress = address,
-            Amount = "5"
+            Amount = "5",
         });
 
         // Act: Create outgoing transaction
@@ -114,7 +114,7 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = address,
             DestinationAddress = "external-dest",
             Amount = "1",
-            FeeLevel = "MEDIUM"
+            FeeLevel = "MEDIUM",
         });
         tx.IsSuccess.Should().BeTrue();
 
@@ -147,7 +147,7 @@ public class FeeHandlingTests : IAsyncLifetime
             AssetId = "ETH",
             SourceAddress = "funder",
             DestinationAddress = address,
-            Amount = "3"
+            Amount = "3",
         });
 
         // Create outgoing transaction
@@ -157,7 +157,7 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = address,
             DestinationAddress = "external-dest",
             Amount = "1",
-            FeeLevel = "HIGH" // 0.002 * 2.5 = 0.005
+            FeeLevel = "HIGH", // 0.002 * 2.5 = 0.005
         });
         tx.IsSuccess.Should().BeTrue();
 
@@ -205,7 +205,7 @@ public class FeeHandlingTests : IAsyncLifetime
             AssetId = "ETH",
             SourceAddress = "funder",
             DestinationAddress = sourceAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Act: Create transaction with TreatAsGrossAmount=true
@@ -217,7 +217,7 @@ public class FeeHandlingTests : IAsyncLifetime
             DestinationAddress = destAddress,
             Amount = "1",
             FeeLevel = "MEDIUM", // 0.003 ETH
-            TreatAsGrossAmount = true
+            TreatAsGrossAmount = true,
         });
         tx.IsSuccess.Should().BeTrue("Transaction should be created with gross amount");
         tx.Data!.TreatAsGrossAmount.Should().BeTrue();
@@ -263,7 +263,7 @@ public class FeeHandlingTests : IAsyncLifetime
             AssetId = "ETH",
             SourceAddress = "funder",
             DestinationAddress = address,
-            Amount = "100"
+            Amount = "100",
         });
 
         // Act & Assert: Create transactions with different fee levels
@@ -276,7 +276,7 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = address,
             DestinationAddress = "dest1",
             Amount = "1",
-            FeeLevel = "LOW"
+            FeeLevel = "LOW",
         });
         lowFeeTx.IsSuccess.Should().BeTrue();
         decimal.Parse(lowFeeTx.Data!.NetworkFee).Should().Be(0.002m, "LOW fee should be 0.002 (base * 1.0)");
@@ -288,7 +288,7 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = address,
             DestinationAddress = "dest2",
             Amount = "1",
-            FeeLevel = "MEDIUM"
+            FeeLevel = "MEDIUM",
         });
         mediumFeeTx.IsSuccess.Should().BeTrue();
         decimal.Parse(mediumFeeTx.Data!.NetworkFee).Should().Be(0.003m, "MEDIUM fee should be 0.003 (base * 1.5)");
@@ -300,9 +300,112 @@ public class FeeHandlingTests : IAsyncLifetime
             SourceAddress = address,
             DestinationAddress = "dest3",
             Amount = "1",
-            FeeLevel = "HIGH"
+            FeeLevel = "HIGH",
         });
         highFeeTx.IsSuccess.Should().BeTrue();
         decimal.Parse(highFeeTx.Data!.NetworkFee).Should().Be(0.005m, "HIGH fee should be 0.005 (base * 2.5)");
+    }
+
+    [Fact]
+    public async Task Fireblocks_API_NetAmount_Equals_Amount_When_TreatAsGrossAmount_Is_False()
+    {
+        // Arrange: Create vault with ETH wallet
+        var vaultResponse = await _fixture.AdminClient.CreateVaultAsync("NetAmountTestVault");
+        vaultResponse.IsSuccess.Should().BeTrue();
+        var vaultId = vaultResponse.Data!.Id;
+
+        var walletResponse = await _fixture.AdminClient.CreateWalletAsync(vaultId, "ETH");
+        walletResponse.IsSuccess.Should().BeTrue();
+        var address = walletResponse.Data!.DepositAddress;
+
+        // Fund with 10 ETH
+        await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "ETH",
+            SourceAddress = "funder",
+            DestinationAddress = address,
+            Amount = "10",
+        });
+
+        // Act: Create transaction with TreatAsGrossAmount=false (default)
+        // This means fees are paid separately - recipient should receive the full amount
+        var tx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "ETH",
+            SourceAddress = address,
+            DestinationAddress = "external-dest",
+            Amount = "1",
+            FeeLevel = "MEDIUM", // 0.003 ETH fee
+            TreatAsGrossAmount = false,
+        });
+        tx.IsSuccess.Should().BeTrue();
+        tx.Data!.TreatAsGrossAmount.Should().BeFalse();
+
+        // Complete the transaction
+        await _fixture.AdminClient.CompleteTransactionFullCycleAsync(tx.Data.Id);
+
+        // Assert: Fetch via Fireblocks API and verify netAmount equals amount
+        var fireblocksTransaction = await _fixture.FireblocksClient.GetTransactionAsync(tx.Data.Id);
+        fireblocksTransaction.Should().NotBeNull();
+
+        decimal.Parse(fireblocksTransaction!.Amount).Should().Be(1m, "Amount should be 1 ETH");
+        decimal.Parse(fireblocksTransaction.NetworkFee).Should().Be(0.003m, "NetworkFee should be 0.003 ETH");
+        decimal.Parse(fireblocksTransaction.NetAmount).Should().Be(1m,
+            "NetAmount should equal Amount (1 ETH) when TreatAsGrossAmount is false - fees are paid separately");
+    }
+
+    [Fact]
+    public async Task Fireblocks_API_NetAmount_Equals_Amount_When_TreatAsGrossAmount_Is_True()
+    {
+        // Arrange: Create vault with ETH wallet
+        var vaultResponse = await _fixture.AdminClient.CreateVaultAsync("NetAmountGrossTestVault");
+        vaultResponse.IsSuccess.Should().BeTrue();
+        var vaultId = vaultResponse.Data!.Id;
+
+        var walletResponse = await _fixture.AdminClient.CreateWalletAsync(vaultId, "ETH");
+        walletResponse.IsSuccess.Should().BeTrue();
+        var address = walletResponse.Data!.DepositAddress;
+
+        // Fund with 10 ETH
+        await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "ETH",
+            SourceAddress = "funder",
+            DestinationAddress = address,
+            Amount = "10",
+        });
+
+        // Act: Create transaction with TreatAsGrossAmount=true
+        // This means fees are deducted from the requested amount before transfer
+        // User requests 1 ETH total, so Amount stored = 1 - 0.003 = 0.997
+        var tx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "ETH",
+            SourceAddress = address,
+            DestinationAddress = "external-dest",
+            Amount = "1",
+            FeeLevel = "MEDIUM", // 0.003 ETH fee
+            TreatAsGrossAmount = true,
+        });
+        tx.IsSuccess.Should().BeTrue();
+        tx.Data!.TreatAsGrossAmount.Should().BeTrue();
+
+        // The actual transfer amount should be 1 - 0.003 = 0.997
+        decimal.Parse(tx.Data.Amount).Should().Be(0.997m, "Transfer amount should be reduced by fee");
+
+        // Complete the transaction
+        await _fixture.AdminClient.CompleteTransactionFullCycleAsync(tx.Data.Id);
+
+        // Assert: Fetch via Fireblocks API and verify netAmount equals amount
+        // NetworkFee is paid to the network, NOT deducted from what recipient receives
+        var fireblocksTransaction = await _fixture.FireblocksClient.GetTransactionAsync(tx.Data.Id);
+        fireblocksTransaction.Should().NotBeNull();
+
+        decimal.Parse(fireblocksTransaction!.Amount).Should().Be(0.997m,
+            "Amount should be 0.997 ETH (1 - 0.003 fee)");
+        decimal.Parse(fireblocksTransaction.NetworkFee).Should().Be(0.003m,
+            "NetworkFee should be 0.003 ETH");
+        decimal.Parse(fireblocksTransaction.NetAmount).Should().Be(0.997m,
+            "NetAmount should equal Amount (0.997 ETH) - recipient receives the full transfer amount");
     }
 }

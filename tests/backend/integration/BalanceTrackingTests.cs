@@ -40,7 +40,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = depositAddress,
             DestinationAddress = withdrawalAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Assert 1: Transaction should be rejected due to insufficient balance
@@ -54,7 +54,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "0x12345",
             DestinationAddress = depositAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Assert 2: Incoming transaction should be created and completed automatically
@@ -74,7 +74,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = depositAddress,
             DestinationAddress = withdrawalAddress,
-            Amount = "0.1"
+            Amount = "0.1",
         });
 
         // Assert 3: Outgoing transaction should be created successfully
@@ -117,7 +117,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "external-address",
             DestinationAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
         fundingTx.IsSuccess.Should().BeTrue();
 
@@ -127,7 +127,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "external-destination",
-            Amount = "0.5"
+            Amount = "0.5",
         });
         outgoingTx.IsSuccess.Should().BeTrue();
 
@@ -163,7 +163,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = "funder",
             DestinationAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
-            Amount = "1"
+            Amount = "1",
         });
 
         // Create first transaction for 0.6 BTC (reserves it as pending)
@@ -172,7 +172,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "dest1",
-            Amount = "0.6"
+            Amount = "0.6",
         });
         firstTx.IsSuccess.Should().BeTrue();
 
@@ -182,7 +182,7 @@ public class BalanceTrackingTests : IAsyncLifetime
             AssetId = "BTC",
             SourceAddress = (await _fixture.AdminClient.GetVaultAsync(vaultId)).Data!.Wallets.First(w => w.AssetId == "BTC").DepositAddress,
             DestinationAddress = "dest2",
-            Amount = "0.6"
+            Amount = "0.6",
         });
 
         // Assert: Second transaction should fail due to insufficient available balance

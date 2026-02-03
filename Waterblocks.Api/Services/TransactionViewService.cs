@@ -147,6 +147,11 @@ public sealed class TransactionViewService : ITransactionViewService
         var amountStr = transaction.Amount.ToString(CultureInfo.InvariantCulture);
         var networkFeeStr = transaction.NetworkFee.ToString(CultureInfo.InvariantCulture);
         var serviceFeeStr = transaction.ServiceFee.ToString(CultureInfo.InvariantCulture);
+        // netAmount is what the recipient receives after any service fees
+        // NetworkFee is paid to the network (miners/validators), not deducted from recipient
+        // When TreatAsGrossAmount=true, the Amount already has fees deducted from the requested amount
+        var netAmount = transaction.Amount - transaction.ServiceFee;
+        var netAmountStr = netAmount.ToString(CultureInfo.InvariantCulture);
         var sourceOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
         var destinationOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
         var sourceType = sourceOwnership != null ? TransferPeerType.VAULT_ACCOUNT : TransferPeerType.ONE_TIME_ADDRESS;
@@ -176,7 +181,7 @@ public sealed class TransactionViewService : ITransactionViewService
             },
             RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
             Amount = amountStr,
-            NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
+            NetAmount = netAmountStr,
             AmountUSD = null,
             ServiceFee = serviceFeeStr,
             NetworkFee = networkFeeStr,
@@ -226,7 +231,7 @@ public sealed class TransactionViewService : ITransactionViewService
             {
                 Amount = amountStr,
                 RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
-                NetAmount = (transaction.Amount - transaction.NetworkFee - transaction.ServiceFee).ToString(CultureInfo.InvariantCulture),
+                NetAmount = netAmountStr,
                 AmountUSD = string.Empty,
             },
             Index = null,
