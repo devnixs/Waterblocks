@@ -106,9 +106,23 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
 
         if (wallet.Addresses.Count == 0)
         {
+            // For account-based blockchains, reuse the address from another wallet on the same blockchain
+            // E.g., USDC and ETH should share the same address since they're both on Ethereum
+            string addressValue;
+            if (asset.BlockchainType == BlockchainType.AccountBased || asset.BlockchainType == BlockchainType.MemoBased)
+            {
+                var blockchainId = asset.NativeAsset ?? asset.AssetId;
+                var existingAddress = await FindExistingBlockchainAddressAsync(vault.Id, blockchainId, asset.AssetId);
+                addressValue = existingAddress ?? _addressGenerator.GenerateAdminDepositAddress(request.AssetId, vault.Id);
+            }
+            else
+            {
+                addressValue = _addressGenerator.GenerateAdminDepositAddress(request.AssetId, vault.Id);
+            }
+
             var address = new Address
             {
-                AddressValue = _addressGenerator.GenerateAdminDepositAddress(request.AssetId, vault.Id),
+                AddressValue = addressValue,
                 Type = "Permanent",
                 WalletId = wallet.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -153,6 +167,31 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
         _logger.LogInformation("Created wallet for asset {AssetId} in vault {VaultId}", request.AssetId, vault.Id);
 
         return Success(dto);
+    }
+
+    /// <summary>
+    /// Finds an existing address on the same blockchain within the vault.
+    /// For account-based blockchains, all assets on the same chain should share one address.
+    /// </summary>
+    private async Task<string?> FindExistingBlockchainAddressAsync(string vaultId, string blockchainId, string excludeAssetId)
+    {
+        // Find wallets in this vault for assets on the same blockchain
+        var walletsOnSameBlockchain = await _context.Wallets
+            .Include(w => w.Addresses)
+            .Where(w => w.VaultAccountId == vaultId && w.AssetId != excludeAssetId)
+            .Join(
+                _context.Assets.Where(a =>
+                    a.AssetId == blockchainId || // The native asset itself (e.g., ETH)
+                    a.NativeAsset == blockchainId), // Tokens on this blockchain (e.g., USDC, USDT)
+                w => w.AssetId,
+                a => a.AssetId,
+                (w, a) => w)
+            .ToListAsync();
+
+        // Return the first address found on this blockchain
+        return walletsOnSameBlockchain
+            .SelectMany(w => w.Addresses)
+            .FirstOrDefault()?.AddressValue;
     }
 
     private static AdminVaultDto MapToDto(VaultAccount vault)

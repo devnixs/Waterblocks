@@ -79,6 +79,26 @@ public class IntegrationTestFixture : IAsyncLifetime
             });
         }
 
+        // Seed USDC asset if not exists (ERC-20 token on Ethereum)
+        if (!db.Assets.Any(a => a.AssetId == "USDC"))
+        {
+            db.Assets.Add(new Waterblocks.Api.Models.Asset
+            {
+                AssetId = "USDC",
+                Name = "USD Coin",
+                Symbol = "USDC",
+                Decimals = 6,
+                Type = "ERC20",
+                BlockchainType = Waterblocks.Api.Models.BlockchainType.AccountBased,
+                NativeAsset = "ETH", // USDC is on Ethereum blockchain
+                BaseFee = 0,
+                FeeAssetId = "ETH", // Fees are paid in ETH
+                ContractAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+        }
+
         await db.SaveChangesAsync();
 
         // Create default workspace (which also creates an API key)

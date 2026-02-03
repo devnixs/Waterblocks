@@ -129,7 +129,32 @@ public sealed class TransactionService : ITransactionService
 
             if (destinationWallet == null)
             {
-                throw new KeyNotFoundException($"Wallet for vault {destinationVaultId} and asset {request.AssetId} not found");
+                var destinationVault = await _context.VaultAccounts
+                    .FirstOrDefaultAsync(v => v.Id == destinationVaultId);
+                if (destinationVault == null)
+                {
+                    throw new KeyNotFoundException($"Vault account {destinationVaultId} not found");
+                }
+
+                destinationWallet = new Wallet
+                {
+                    VaultAccountId = destinationVaultId,
+                    AssetId = request.AssetId,
+                    Type = "Permanent",
+                    Balance = 0,
+                    Pending = 0,
+                    LockedAmount = 0,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    VaultAccount = destinationVault,
+                };
+
+                _context.Wallets.Add(destinationWallet);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Created wallet for vault {VaultId} and asset {AssetId}",
+                    destinationVaultId, request.AssetId);
             }
 
             // Auto-generate address if wallet has no addresses

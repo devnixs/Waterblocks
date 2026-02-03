@@ -131,10 +131,24 @@ public class VaultWalletsController : ControllerBase
         _context.Wallets.Add(wallet);
         await _context.SaveChangesAsync();
 
+        // For account-based blockchains, reuse the address from another wallet on the same blockchain
+        // E.g., USDC and ETH should share the same address since they're both on Ethereum
+        string addressValue;
+        if (asset.BlockchainType == BlockchainType.AccountBased || asset.BlockchainType == BlockchainType.MemoBased)
+        {
+            var blockchainId = asset.NativeAsset ?? asset.AssetId;
+            var existingAddress = await FindExistingBlockchainAddressAsync(vaultAccountId, blockchainId, assetId, _workspace.WorkspaceId!);
+            addressValue = existingAddress ?? _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId);
+        }
+        else
+        {
+            addressValue = _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId);
+        }
+
         // Create initial address
         var address = new Address
         {
-            AddressValue = _addressGenerator.GenerateVaultWalletDepositAddress(assetId, vaultAccountId),
+            AddressValue = addressValue,
             Type = "Permanent",
             WalletId = wallet.Id,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -228,6 +242,38 @@ public class VaultWalletsController : ControllerBase
             Status = "READY",
             ActivationTxId = string.Empty,
         };
+    }
+
+    /// <summary>
+    /// Finds an existing address on the same blockchain within the vault.
+    /// For account-based blockchains, all assets on the same chain should share one address.
+    /// </summary>
+    private async Task<string?> FindExistingBlockchainAddressAsync(
+        string vaultAccountId,
+        string blockchainId,
+        string excludeAssetId,
+        string workspaceId)
+    {
+        // Find wallets in this vault for assets on the same blockchain
+        var walletsOnSameBlockchain = await _context.Wallets
+            .Include(w => w.Addresses)
+            .Include(w => w.VaultAccount)
+            .Where(w => w.VaultAccountId == vaultAccountId
+                     && w.AssetId != excludeAssetId
+                     && w.VaultAccount.WorkspaceId == workspaceId)
+            .Join(
+                _context.Assets.Where(a =>
+                    a.AssetId == blockchainId || // The native asset itself (e.g., ETH)
+                    a.NativeAsset == blockchainId), // Tokens on this blockchain (e.g., USDC, USDT)
+                w => w.AssetId,
+                a => a.AssetId,
+                (w, a) => w)
+            .ToListAsync();
+
+        // Return the first address found on this blockchain
+        return walletsOnSameBlockchain
+            .SelectMany(w => w.Addresses)
+            .FirstOrDefault()?.AddressValue;
     }
 
 }
