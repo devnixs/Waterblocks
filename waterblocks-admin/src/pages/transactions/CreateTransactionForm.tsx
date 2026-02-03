@@ -130,10 +130,10 @@ export function CreateTransactionForm({
                 onChange={(e) => setSourceType(e.target.value as TransactionEndpointType)}
                 className="w-1/3"
               >
-                <option value="EXTERNAL">External</option>
-                <option value="INTERNAL">Internal</option>
+                <option value="VAULT">Existing Vault</option>
+                <option value="ONE_TIME">One-time address</option>
               </select>
-              {sourceType === 'EXTERNAL' ? (
+              {sourceType === 'ONE_TIME' ? (
                 <input
                   type="text"
                   placeholder="Source address"
@@ -153,15 +153,6 @@ export function CreateTransactionForm({
                 </div>
               )}
             </div>
-            {sourceType === 'INTERNAL' && (
-              <input
-                type="text"
-                placeholder="Specific address (optional - uses first if empty)"
-                value={sourceAddress}
-                onChange={(e) => setSourceAddress(e.target.value)}
-                className="text-sm"
-              />
-            )}
           </div>
 
           <div>
@@ -172,10 +163,10 @@ export function CreateTransactionForm({
                 onChange={(e) => setDestinationType(e.target.value as TransactionEndpointType)}
                 className="w-1/3"
               >
-                <option value="EXTERNAL">External</option>
-                <option value="INTERNAL">Internal</option>
+                <option value="VAULT">Existing Vault</option>
+                <option value="ONE_TIME">One-time address</option>
               </select>
-              {destinationType === 'EXTERNAL' ? (
+              {destinationType === 'ONE_TIME' ? (
                 <input
                   type="text"
                   placeholder="Destination address"
@@ -195,15 +186,6 @@ export function CreateTransactionForm({
                 </div>
               )}
             </div>
-            {destinationType === 'INTERNAL' && (
-              <input
-                type="text"
-                placeholder="Specific address (optional - uses first if empty)"
-                value={destinationAddress}
-                onChange={(e) => setDestinationAddress(e.target.value)}
-                className="text-sm"
-              />
-            )}
           </div>
         </div>
 

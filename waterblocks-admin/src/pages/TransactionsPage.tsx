@@ -24,10 +24,10 @@ export default function TransactionsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [assetId, setAssetId] = useState('');
   const [amount, setAmount] = useState('');
-  const [sourceType, setSourceType] = useState<TransactionEndpointType>('EXTERNAL');
+  const [sourceType, setSourceType] = useState<TransactionEndpointType>('ONE_TIME');
   const [sourceAddress, setSourceAddress] = useState('');
   const [sourceVaultId, setSourceVaultId] = useState('');
-  const [destinationType, setDestinationType] = useState<TransactionEndpointType>('INTERNAL');
+  const [destinationType, setDestinationType] = useState<TransactionEndpointType>('VAULT');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [destinationVaultId, setDestinationVaultId] = useState('');
   const [hash, setHash] = useState('');
@@ -52,17 +52,6 @@ export default function TransactionsPage() {
   const createTransaction = useCreateTransaction();
   
   const { showToast } = useToast();
-  
-  const generateExternalAddress = async (asset: string) => {
-    const result = await adminApi.generateAddress(asset);
-    if (result.error || !result.data?.address) {
-      const message = result.error?.message || 'Failed to generate address';
-      showToast({ title: message, type: 'error', duration: 5000 });
-      return '';
-    }
-    return result.data.address;
-  };
-
   
   const resolveVaultAddress = (vaultId: string, asset: string) => {
     if (!vaultId || !asset) return '';
@@ -290,10 +279,10 @@ export default function TransactionsPage() {
     const sourceVaultExists = vaults.some((v) => v.id === sourceVaultId);
     const destVaultExists = vaults.some((v) => v.id === destinationVaultId);
 
-    if (sourceType === 'INTERNAL' && (!sourceVaultId || !sourceVaultExists)) {
+    if (sourceType === 'VAULT' && (!sourceVaultId || !sourceVaultExists)) {
       setSourceVaultId(vaults[0].id);
     }
-    if (destinationType === 'INTERNAL' && (!destinationVaultId || !destVaultExists)) {
+    if (destinationType === 'VAULT' && (!destinationVaultId || !destVaultExists)) {
       setDestinationVaultId(vaults[0].id);
     }
   }, [vaults, sourceType, destinationType, sourceVaultId, destinationVaultId]);
@@ -311,17 +300,11 @@ export default function TransactionsPage() {
     const updateAddress = async () => {
       if (!assetId) return;
 
-      if (sourceType === 'INTERNAL') {
+      if (sourceType === 'VAULT') {
         const resolved = await ensureVaultAddress(sourceVaultId, assetId, 'Source');
         if (!canceled) {
           setSourceAddress(resolved);
         }
-        return;
-      }
-
-      const generated = await generateExternalAddress(assetId);
-      if (!canceled && generated) {
-        setSourceAddress(generated);
       }
     };
 
@@ -337,17 +320,11 @@ export default function TransactionsPage() {
     const updateAddress = async () => {
       if (!assetId) return;
 
-      if (destinationType === 'INTERNAL') {
+      if (destinationType === 'VAULT') {
         const resolved = await ensureVaultAddress(destinationVaultId, assetId, 'Destination');
         if (!canceled) {
           setDestinationAddress(resolved);
         }
-        return;
-      }
-
-      const generated = await generateExternalAddress(assetId);
-      if (!canceled && generated) {
-        setDestinationAddress(generated);
       }
     };
 
@@ -395,42 +372,26 @@ export default function TransactionsPage() {
       return;
     }
 
-    const resolveExternalAddress = async (
-      current: string,
-      update: (value: string) => void
-    ) => {
-      if (current.trim()) {
-        return current.trim();
-      }
-
-      const generated = await generateExternalAddress(assetId);
-      if (generated) {
-        update(generated);
-      }
-      return generated;
-    };
-
-    const resolveInternalAddress = (
+    const resolveVaultDefault = async (
       vaultId: string,
-      current: string,
-      update: (value: string) => void
+      update: (value: string) => void,
+      label: string
     ) => {
-      if (current.trim()) {
-        return current.trim();
-      }
-      const resolved = resolveVaultAddress(vaultId, assetId);
+      const resolved = await ensureVaultAddress(vaultId, assetId, label);
       if (resolved) {
         update(resolved);
       }
       return resolved;
     };
 
-    const resolvedSourceAddress = sourceType === 'INTERNAL'
-      ? resolveInternalAddress(sourceVaultId, sourceAddress, setSourceAddress)
-      : await resolveExternalAddress(sourceAddress, setSourceAddress);
-    const resolvedDestinationAddress = destinationType === 'INTERNAL'
-      ? resolveInternalAddress(destinationVaultId, destinationAddress, setDestinationAddress)
-      : await resolveExternalAddress(destinationAddress, setDestinationAddress);
+    const resolveOneTimeAddress = (current: string) => current.trim();
+
+    const resolvedSourceAddress = sourceType === 'VAULT'
+      ? await resolveVaultDefault(sourceVaultId, setSourceAddress, 'Source')
+      : resolveOneTimeAddress(sourceAddress);
+    const resolvedDestinationAddress = destinationType === 'VAULT'
+      ? await resolveVaultDefault(destinationVaultId, setDestinationAddress, 'Destination')
+      : resolveOneTimeAddress(destinationAddress);
 
     if (!resolvedSourceAddress) {
       showToast({ title: 'Source address is required', type: 'error' });
@@ -559,18 +520,22 @@ export default function TransactionsPage() {
           setAssetId={setAssetId}
           sourceType={sourceType}
           setSourceType={(type) => {
-            setSourceType(type);
-            setSourceAddress(''); // Clear address when switching type
-          }}
+      setSourceType(type);
+      if (type === 'VAULT') {
+        setSourceAddress('');
+      }
+    }}
           sourceAddress={sourceAddress}
           setSourceAddress={setSourceAddress}
           sourceVaultId={sourceVaultId}
           setSourceVaultId={setSourceVaultId}
           destinationType={destinationType}
           setDestinationType={(type) => {
-            setDestinationType(type);
-            setDestinationAddress(''); // Clear address when switching type
-          }}
+      setDestinationType(type);
+      if (type === 'VAULT') {
+        setDestinationAddress('');
+      }
+    }}
           destinationAddress={destinationAddress}
           setDestinationAddress={setDestinationAddress}
           destinationVaultId={destinationVaultId}
