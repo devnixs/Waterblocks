@@ -55,7 +55,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AdminUi", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        var frontendOrigin = builder.Configuration["FRONTEND_ORIGIN"];
+        var origins = new List<string> { "http://localhost:5173" };
+        if (!string.IsNullOrWhiteSpace(frontendOrigin))
+        {
+            origins.Add(frontendOrigin.Trim());
+        }
+
+        policy.WithOrigins(origins.ToArray())
             .AllowCredentials()
             .AllowAnyHeader()
             .AllowAnyMethod();
