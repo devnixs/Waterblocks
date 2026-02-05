@@ -23,12 +23,30 @@ asset ID lists. The Admin API currently omits tags from its address DTOs.
 - Vault address creation and listing include `Tag` where present.
 - Existing response shapes remain unchanged (no breaking changes).
 
+### AC4: Vault address creation matches Fireblocks response fields
+- `POST /v1/vault/accounts/{vaultId}/{assetId}/addresses` returns:
+  - `address` (string)
+  - `legacyAddress` (string, may be empty)
+  - `tag` (string, populated for MemoBased)
+  - `bip44AddressIndex` (number)
+- For MemoBased assets, the `tag` field is required and reflects the generated
+  memo/tag used to distinguish wallets sharing the same address.
+
 ## Technical Notes
 - Target files:
   - `Waterblocks.Api/Services/AddressValidationService.cs`
   - `Waterblocks.Api/Dtos/Admin/AdminAddressDto.cs`
   - `Waterblocks.Api/Controllers/FireblocksCompatible/VaultAddressesController.cs`
   - `Waterblocks.Api/Controllers/FireblocksCompatible/VaultWalletsController.cs`
+  - Fireblocks response example to match:
+    ```
+    {
+      "address": "1220...1053::1220...79ec",
+      "legacyAddress": "",
+      "tag": "6BF2309952AEED806535",
+      "bip44AddressIndex": 0
+    }
+    ```
 
 ## Dependencies
 - Story 02 (tag persistence)

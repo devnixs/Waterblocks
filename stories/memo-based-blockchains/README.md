@@ -9,3 +9,4 @@ address per vault+asset, but generate a unique memo/tag per address creation.
 - 02-memobased-address-creation.md
 - 03-memobased-validation-and-dtos.md
 - 04-admin-ui-display-memos.md
+- 05-admin-ui-transaction-tag.md

@@ -64,6 +64,11 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
             var existingWallet = vault.Wallets.FirstOrDefault(w => w.AssetId == request.AssetId);
             if (existingWallet != null)
             {
+                if (asset.BlockchainType == BlockchainType.MemoBased)
+                {
+                    await _walletAddressService.CreateAddressAsync(existingWallet, asset, workspaceId, null, null);
+                }
+
                 return Success(new AdminWalletDto
                 {
                     Id = existingWallet.Id,
@@ -79,7 +84,8 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                     {
                         Id = a.Id,
                         AddressValue = a.AddressValue,
-                        Type = a.Type,
+                        Tag = a.Tag,
+                        Type = a.Type ?? string.Empty,
                         Description = a.Description,
                         AddressFormat = a.AddressFormat,
                         LegacyAddress = a.LegacyAddress,
@@ -125,7 +131,8 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
             {
                 Id = a.Id,
                 AddressValue = a.AddressValue,
-                Type = a.Type,
+                Tag = a.Tag,
+                Type = a.Type ?? string.Empty,
                 Description = a.Description,
                 AddressFormat = a.AddressFormat,
                 LegacyAddress = a.LegacyAddress,
@@ -171,7 +178,8 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                 {
                     Id = a.Id,
                     AddressValue = a.AddressValue,
-                    Type = a.Type,
+                    Tag = a.Tag,
+                    Type = a.Type ?? string.Empty,
                     Description = a.Description,
                     AddressFormat = a.AddressFormat,
                     LegacyAddress = a.LegacyAddress,

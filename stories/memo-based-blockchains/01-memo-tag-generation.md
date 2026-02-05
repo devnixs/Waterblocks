@@ -14,7 +14,8 @@ alphanumeric tag generator and a way to return the tag to callers.
 ### AC1: Address generator produces alphanumeric tags
 - Add a memo/tag generator in `AddressGenerator`.
 - Tags are alphanumeric (A–Z, a–z, 0–9).
-- Tags have a fixed length (default 12 characters).
+- Tags have a fixed length (default 20 characters) to match Fireblocks-style
+  tags like `6BF2309952AEED806535`.
 
 ### AC2: Tag generation is exposed to callers
 - `AddressGenerationResult` (or equivalent) includes the generated tag.
@@ -24,6 +25,7 @@ alphanumeric tag generator and a way to return the tag to callers.
 - Target file: `Waterblocks.Api/Services/AddressGenerator.cs`
 - If `AddressGenerationResult` is extended, update its call sites.
 - Length can be adjusted later if product needs change; keep a single constant.
+- Uppercase hex output is acceptable as long as it is alphanumeric.
 
 ## Dependencies
 - None

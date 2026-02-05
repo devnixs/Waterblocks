@@ -35,7 +35,10 @@ public sealed class WalletAddressService : IWalletAddressService
         }
 
         var addressValue = await ResolveAddressValueAsync(asset, wallet.VaultAccountId, asset.AssetId, workspaceId);
-        var address = CreateAddressEntity(wallet, addressValue, "Permanent", null, null, null, null);
+        var tag = asset.BlockchainType == BlockchainType.MemoBased
+            ? await GenerateUniqueMemoTagAsync(wallet)
+            : null;
+        var address = CreateAddressEntity(wallet, addressValue, "Permanent", null, null, null, null, tag);
 
         _context.Addresses.Add(address);
         await _context.SaveChangesAsync();
@@ -55,6 +58,31 @@ public sealed class WalletAddressService : IWalletAddressService
         string? description,
         string? customerRefId)
     {
+        if (asset.BlockchainType == BlockchainType.MemoBased)
+        {
+            var primary = await EnsurePrimaryAddressAsync(wallet, asset, workspaceId);
+            var memoTag = await GenerateUniqueMemoTagAsync(wallet);
+            var memoAddress = CreateAddressEntity(
+                wallet,
+                primary.AddressValue,
+                "DEPOSIT",
+                description,
+                customerRefId,
+                null,
+                null,
+                memoTag);
+
+            _context.Addresses.Add(memoAddress);
+            await _context.SaveChangesAsync();
+            wallet.Addresses.Add(memoAddress);
+
+            _logger.LogInformation(
+                "Created memo-based address {Address} with tag {Tag} for asset {AssetId} in vault {VaultAccountId}",
+                primary.AddressValue, memoTag, asset.AssetId, wallet.VaultAccountId);
+
+            return memoAddress;
+        }
+
         if (asset.BlockchainType != BlockchainType.AddressBased)
         {
             return await EnsurePrimaryAddressAsync(wallet, asset, workspaceId);
@@ -71,7 +99,8 @@ public sealed class WalletAddressService : IWalletAddressService
             description,
             customerRefId,
             bip44AddressIndex,
-            generatedAddress);
+            generatedAddress,
+            null);
 
         _context.Addresses.Add(address);
         await _context.SaveChangesAsync();
@@ -140,12 +169,13 @@ public sealed class WalletAddressService : IWalletAddressService
         string? description,
         string? customerRefId,
         int? bip44AddressIndex,
-        AddressGenerationResult? generatedAddress)
+        AddressGenerationResult? generatedAddress,
+        string? tag)
     {
         return new Address
         {
             AddressValue = addressValue,
-            Tag = null,
+            Tag = tag ?? generatedAddress?.Tag,
             Type = type,
             Description = description,
             CustomerRefId = customerRefId,
@@ -156,5 +186,21 @@ public sealed class WalletAddressService : IWalletAddressService
             WalletId = wallet.Id,
             CreatedAt = DateTimeOffset.UtcNow,
         };
+    }
+
+    private async Task<string> GenerateUniqueMemoTagAsync(Wallet wallet)
+    {
+        const int maxAttempts = 5;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var tag = _addressGenerator.GenerateMemoTag();
+            var exists = await _context.Addresses.AnyAsync(a => a.WalletId == wallet.Id && a.Tag == tag);
+            if (!exists)
+            {
+                return tag;
+            }
+        }
+
+        return _addressGenerator.GenerateMemoTag();
     }
 }

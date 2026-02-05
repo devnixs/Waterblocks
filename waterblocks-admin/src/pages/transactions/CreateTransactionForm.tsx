@@ -21,6 +21,8 @@ type CreateTransactionFormProps = {
   setDestinationAddress: SetState<string>;
   destinationVaultId: string;
   setDestinationVaultId: SetState<string>;
+  destinationTag: string;
+  setDestinationTag: SetState<string>;
   amount: string;
   setAmount: SetState<string>;
   hash: string;
@@ -31,6 +33,7 @@ type CreateTransactionFormProps = {
   setTreatAsGrossAmount: SetState<boolean>;
   feeEstimates: EstimateFeeResponse | null | undefined;
   feeEstimatesLoading: boolean;
+  isMemoBased: boolean;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -62,6 +65,8 @@ export function CreateTransactionForm({
   setDestinationAddress,
   destinationVaultId,
   setDestinationVaultId,
+  destinationTag,
+  setDestinationTag,
   amount,
   setAmount,
   hash,
@@ -72,6 +77,7 @@ export function CreateTransactionForm({
   setTreatAsGrossAmount,
   feeEstimates,
   feeEstimatesLoading,
+  isMemoBased,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -191,6 +197,17 @@ export function CreateTransactionForm({
                 </div>
               )}
             </div>
+            {isMemoBased && (
+              <div className="mt-2">
+                <label className="block text-sm text-muted mb-1">Destination tag / memo</label>
+                <input
+                  type="text"
+                  placeholder="Required for memo-based assets"
+                  value={destinationTag}
+                  onChange={(e) => setDestinationTag(e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </div>
 

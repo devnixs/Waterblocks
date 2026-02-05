@@ -14,6 +14,7 @@ public interface IAddressGenerator
     string GenerateAdminDepositAddress(string assetId, string vaultAccountId);
     string GenerateVaultWalletDepositAddress(string assetId, string vaultAccountId);
     string GenerateExternalAddress(string assetId);
+    string GenerateMemoTag();
     AddressGenerationResult GenerateVaultAddress(string assetId, int addressIndex);
 }
 
@@ -21,15 +22,18 @@ public sealed record AddressGenerationResult(
     string AddressValue,
     string AddressFormat,
     string? LegacyAddress,
-    string? EnterpriseAddress);
+    string? EnterpriseAddress,
+    string? Tag);
 
 public sealed class AddressGenerator : IAddressGenerator
 {
     private const int MaxGenerationAttempts = 5;
+    private const int MemoTagLength = 20;
     // Character sets for different address formats
     private const string HexChars = "0123456789abcdef";
     private const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     private const string Bech32Chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    private const string MemoTagChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static readonly HashSet<string> EvmAssets = new(StringComparer.OrdinalIgnoreCase)
     {
         "ETH",
@@ -68,6 +72,11 @@ public sealed class AddressGenerator : IAddressGenerator
         return GenerateValidAddress(assetId, DetermineAddressFormat(assetId));
     }
 
+    public string GenerateMemoTag()
+    {
+        return GenerateRandomString(MemoTagChars, MemoTagLength);
+    }
+
     public AddressGenerationResult GenerateVaultAddress(string assetId, int addressIndex)
     {
         _ = addressIndex;
@@ -75,7 +84,7 @@ public sealed class AddressGenerator : IAddressGenerator
         var addressValue = GenerateValidAddress(assetId, addressFormat);
         var legacyAddress = GenerateValidLegacyAddress(assetId, addressFormat);
         var enterpriseAddress = GenerateValidEnterpriseAddress(assetId);
-        return new AddressGenerationResult(addressValue, addressFormat, legacyAddress, enterpriseAddress);
+        return new AddressGenerationResult(addressValue, addressFormat, legacyAddress, enterpriseAddress, null);
     }
 
     private static string DetermineAddressFormat(string assetId)

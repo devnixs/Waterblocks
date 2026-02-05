@@ -139,6 +139,13 @@ export function TransactionDetailPanel({
                 {transaction.destinationAddress}
               </div>
             )}
+            {transaction.destinationTag ? (
+              <div className="text-mono text-xs text-muted break-all mt-1">
+                Tag: {transaction.destinationTag}
+              </div>
+            ) : (
+              <div className="text-muted text-xs mt-1">Tag: -</div>
+            )}
           </div>
         </div>
       </div>

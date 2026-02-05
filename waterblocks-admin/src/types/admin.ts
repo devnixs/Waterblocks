@@ -117,6 +117,7 @@ export interface AdminWallet {
 export interface AdminAddress {
   id: number;
   addressValue: string;
+  tag?: string;
   type: string;
   description?: string;
   addressFormat?: string;

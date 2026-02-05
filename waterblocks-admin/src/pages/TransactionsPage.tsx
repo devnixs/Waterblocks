@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, useVaults, useAssets, useEstimateFee } from '../api/queries';
+import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, useVaults, useAssets, useEstimateFee, useAdminAssets } from '../api/queries';
 import { adminApi } from '../api/adminClient';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -30,6 +30,7 @@ export default function TransactionsPage() {
   const [destinationType, setDestinationType] = useState<TransactionEndpointType>('VAULT');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [destinationVaultId, setDestinationVaultId] = useState('');
+  const [destinationTag, setDestinationTag] = useState('');
   const [hash, setHash] = useState('');
   const [feeLevel, setFeeLevel] = useState<FeeLevel>('MEDIUM');
   const [treatAsGrossAmount, setTreatAsGrossAmount] = useState(false);
@@ -45,6 +46,7 @@ export default function TransactionsPage() {
   
   const { data: vaults } = useVaults();
   const { data: assets } = useAssets();
+  const { data: adminAssets } = useAdminAssets();
   const { data: feeEstimates, isLoading: feeEstimatesLoading } = useEstimateFee(assetId || undefined);
 
   const transition = useTransitionTransaction();
@@ -294,6 +296,15 @@ export default function TransactionsPage() {
     }
   }, [assets, assetId]);
 
+  const selectedAdminAsset = (adminAssets || []).find((asset) => asset.id === assetId);
+  const isMemoBased = selectedAdminAsset?.blockchainType === 'MemoBased';
+
+  useEffect(() => {
+    if (!isMemoBased && destinationTag) {
+      setDestinationTag('');
+    }
+  }, [isMemoBased, destinationTag]);
+
   useEffect(() => {
     let canceled = false;
 
@@ -416,6 +427,7 @@ export default function TransactionsPage() {
       amount: amount.trim(),
       sourceAddress: resolvedSourceAddress,
       destinationAddress: resolvedDestinationAddress,
+      destinationTag: destinationTag.trim() || undefined,
       hash: hash.trim() || undefined,
       feeLevel: feeLevel,
       treatAsGrossAmount: treatAsGrossAmount,
@@ -429,6 +441,7 @@ export default function TransactionsPage() {
       setAmount('');
       setSourceAddress('');
       setDestinationAddress('');
+      setDestinationTag('');
       setHash('');
       setFeeLevel('MEDIUM');
       setTreatAsGrossAmount(false);
@@ -548,6 +561,8 @@ export default function TransactionsPage() {
           setDestinationAddress={setDestinationAddress}
           destinationVaultId={destinationVaultId}
           setDestinationVaultId={setDestinationVaultId}
+          destinationTag={destinationTag}
+          setDestinationTag={setDestinationTag}
           amount={amount}
           setAmount={setAmount}
           hash={hash}
@@ -558,6 +573,7 @@ export default function TransactionsPage() {
           setTreatAsGrossAmount={setTreatAsGrossAmount}
           feeEstimates={feeEstimates}
           feeEstimatesLoading={feeEstimatesLoading}
+          isMemoBased={isMemoBased}
           onSubmit={handleCreateTransaction}
           onCancel={() => setShowCreateForm(false)}
           isSubmitting={createTransaction.isPending}

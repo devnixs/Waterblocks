@@ -361,7 +361,7 @@ public class TransactionsController : ControllerBase
         }
 
         bool isValid = ValidateAddressFormat(assetId, address);
-        bool requiresTag = assetId == "XRP" || assetId == "XLM";
+        bool requiresTag = asset.BlockchainType == BlockchainType.MemoBased;
 
         var response = new ValidateAddressResponseDto
         {

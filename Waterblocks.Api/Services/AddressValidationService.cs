@@ -1,11 +1,12 @@
-using CardanoSharp.Wallet.Models.Addresses;
+using CardanoAddress = CardanoSharp.Wallet.Models.Addresses.Address;
+using Waterblocks.Api.Models;
 
 namespace Waterblocks.Api.Services;
 
 public interface IAddressValidationService
 {
     bool ValidateAddress(string assetId, string address);
-    bool RequiresTag(string assetId);
+    bool RequiresTag(Asset asset);
 }
 
 public sealed class AddressValidationService : IAddressValidationService
@@ -68,10 +69,9 @@ public sealed class AddressValidationService : IAddressValidationService
         };
     }
 
-    public bool RequiresTag(string assetId)
+    public bool RequiresTag(Asset asset)
     {
-        var upperAsset = assetId.ToUpperInvariant();
-        return upperAsset is "XRP" or "XRP_TEST" or "XLM" or "ATOM" or "EOS";
+        return asset.BlockchainType == BlockchainType.MemoBased;
     }
 
     private static bool ValidateBtcAddress(string address)
@@ -166,7 +166,7 @@ public sealed class AddressValidationService : IAddressValidationService
     {
         try
         {
-            var bytes = new Address(address).GetBytes();
+            var bytes = new CardanoAddress(address).GetBytes();
             return bytes.Length > 0;
         }
         catch

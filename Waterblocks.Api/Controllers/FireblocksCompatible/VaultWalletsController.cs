@@ -83,6 +83,28 @@ public class VaultWalletsController : ControllerBase
         if (existingWallet != null)
         {
             // For AccountBased and MemoBased assets, return the existing wallet as-is
+            Address newAddress;
+            if (asset.BlockchainType == BlockchainType.MemoBased)
+            {
+                newAddress = await _walletAddressService.CreateAddressAsync(
+                    existingWallet,
+                    asset,
+                    _workspace.WorkspaceId,
+                    null,
+                    null);
+
+                _logger.LogInformation(
+                    "Created new memo tag for asset {AssetId} in vault {VaultAccountId}",
+                    assetId, vaultAccountId);
+
+                existingWallet = await _context.Wallets
+                    .Include(w => w.VaultAccount)
+                    .Include(w => w.Addresses)
+                    .FirstAsync(w => w.Id == existingWallet.Id);
+
+                return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName, newAddress));
+            }
+
             if (asset.BlockchainType != BlockchainType.AddressBased)
             {
                 return Ok(MapToCreateVaultAssetResponseDto(existingWallet, request?.EosAccountName));
@@ -90,7 +112,7 @@ public class VaultWalletsController : ControllerBase
 
             // For AddressBased/UTXO assets (like BTC), create a new address on the existing wallet
             // This keeps all addresses under one wallet with a shared balance
-            var newAddress = await _walletAddressService.CreateAddressAsync(
+            newAddress = await _walletAddressService.CreateAddressAsync(
                 existingWallet,
                 asset,
                 _workspace.WorkspaceId,

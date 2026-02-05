@@ -62,6 +62,7 @@ export function VaultWalletsSection({
                 <th>Available</th>
                 <th>Type</th>
                 <th>Address</th>
+                <th>Tag</th>
                 <th>Description</th>
               </tr>
             </thead>
@@ -105,6 +106,7 @@ export function VaultWalletsSection({
                           </span>
                         </td>
                         <td className="text-mono text-sm">{address.addressValue}</td>
+                        <td className="text-mono text-xs text-muted">{address.tag || '-'}</td>
                         <td className="text-xs text-muted">{address.description || '-'}</td>
                       </tr>
                     ))
@@ -122,7 +124,7 @@ export function VaultWalletsSection({
                           {parseFloat(wallet.lockedAmount).toFixed(8)}
                         </td>
                         <td className="text-mono text-success">{parseFloat(wallet.available).toFixed(8)}</td>
-                        <td colSpan={3} className="text-center text-muted">
+                        <td colSpan={4} className="text-center text-muted">
                           No addresses
                         </td>
                       </tr>,

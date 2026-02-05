@@ -108,6 +108,7 @@ public sealed class TransactionService : ITransactionService
         var destinationAddress = string.Empty;
         var destinationVaultId = string.Empty;
         var destinationWorkspaceId = string.Empty;
+        var destinationTag = request.Destination?.OneTimeAddress?.Tag?.Trim();
 
         if (request.Destination?.Type == TransferPeerType.VAULT_ACCOUNT && !string.IsNullOrEmpty(request.Destination.Id))
         {
@@ -180,6 +181,11 @@ public sealed class TransactionService : ITransactionService
                 // Use first address if not specified (default behavior)
                 destinationAddress = destinationWallet.Addresses.First().AddressValue;
             }
+
+            if (asset.BlockchainType == BlockchainType.MemoBased && string.IsNullOrWhiteSpace(destinationTag))
+            {
+                destinationTag = destinationWallet.Addresses.FirstOrDefault()?.Tag;
+            }
         }
         else
         {
@@ -195,6 +201,11 @@ public sealed class TransactionService : ITransactionService
         if (string.IsNullOrWhiteSpace(destinationAddress))
         {
             throw new ArgumentException("Destination address is required");
+        }
+
+        if (asset.BlockchainType == BlockchainType.MemoBased && string.IsNullOrWhiteSpace(destinationTag))
+        {
+            destinationTag = null;
         }
 
         // Final validation: ensure destination vault ID is set if type is VAULT_ACCOUNT
@@ -240,7 +251,7 @@ public sealed class TransactionService : ITransactionService
             NetworkFee = networkFee,
             Fee = networkFee,
             DestinationAddress = destinationAddress,
-            DestinationTag = request.Destination?.OneTimeAddress?.Tag,
+            DestinationTag = destinationTag,
             State = TransactionState.SUBMITTED,
             Note = request.Note,
             ExternalTxId = request.ExternalTxId,

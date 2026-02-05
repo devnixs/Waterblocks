@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Waterblocks.Api.Dtos.Admin;
 using Waterblocks.Api.Infrastructure;
+using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Services;
 
 namespace Waterblocks.Api.Controllers.Admin;
@@ -9,13 +10,16 @@ namespace Waterblocks.Api.Controllers.Admin;
 [Route("admin/addresses")]
 public class AdminAddressesController : AdminControllerBase
 {
+    private readonly FireblocksDbContext _context;
     private readonly IAddressGenerator _addressGenerator;
 
     public AdminAddressesController(
         WorkspaceContext workspace,
+        FireblocksDbContext context,
         IAddressGenerator addressGenerator)
         : base(workspace)
     {
+        _context = context;
         _addressGenerator = addressGenerator;
     }
 
@@ -33,9 +37,14 @@ public class AdminAddressesController : AdminControllerBase
         }
 
         var address = _addressGenerator.GenerateExternalAddress(assetId);
+        var asset = _context.Assets.FirstOrDefault(a => a.AssetId == assetId);
+        var tag = asset?.BlockchainType == Models.BlockchainType.MemoBased
+            ? _addressGenerator.GenerateMemoTag()
+            : null;
         return Ok(AdminResponse<AdminAddressDto>.Success(new AdminAddressDto
         {
             Address = address,
+            Tag = tag,
         }));
     }
 }

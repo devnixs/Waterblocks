@@ -244,7 +244,8 @@ public class AdminVaultsController : AdminControllerBase
                 {
                     Id = a.Id,
                     AddressValue = a.AddressValue,
-                    Type = a.Type,
+                    Tag = a.Tag,
+                    Type = a.Type ?? string.Empty,
                     Description = a.Description,
                     AddressFormat = a.AddressFormat,
                     LegacyAddress = a.LegacyAddress,

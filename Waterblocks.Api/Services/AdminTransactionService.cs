@@ -199,6 +199,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
 
         var sourceAddress = request.SourceAddress?.Trim();
         var destinationAddress = request.DestinationAddress?.Trim();
+        var destinationTag = request.DestinationTag?.Trim();
 
         if (string.IsNullOrWhiteSpace(sourceAddress))
         {
@@ -218,6 +219,11 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         if (string.IsNullOrWhiteSpace(destinationAddress))
         {
             return Failure<AdminTransactionDto>("Destination address is required", "DESTINATION_ADDRESS_REQUIRED");
+        }
+
+        if (asset.BlockchainType == BlockchainType.MemoBased && string.IsNullOrWhiteSpace(destinationTag))
+        {
+            destinationTag = null;
         }
 
         var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(
@@ -272,7 +278,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             Amount = transferAmount,
             RequestedAmount = requestedAmount,
             DestinationAddress = destinationAddress,
-            DestinationTag = request.DestinationTag,
+            DestinationTag = destinationTag,
             Fee = networkFee,
             NetworkFee = networkFee,
             FeeCurrency = feeCurrency,

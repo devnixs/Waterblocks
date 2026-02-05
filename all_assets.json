@@ -1090,5 +1090,17 @@
     "NativeAsset": "MATIC_POLYGON",
     "BaseFee": 0.01,
     "FuelAssetId": "MATIC_POLYGON"
+  },
+  {
+    "Description": "Canton",
+    "Code": "CC",
+    "API_ID": "CANTON",
+    "Decimals": 6,
+    "Type": "BASE_ASSET",
+    "BlockchainType": "MemoBased",
+    "ContractAddress": null,
+    "NativeAsset": "CANTON",
+    "BaseFee": 0.00,
+    "FuelAssetId": "CANTON"
   }
 ]
