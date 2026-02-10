@@ -222,6 +222,7 @@ export function useAssets() {
     queryKey: ['assets'],
     queryFn: async () => {
       const response = await adminApi.getAssets();
+      console.log('Response', response);
       if (response.error) throw new Error(response.error.message);
       response.data?.sort((i,j)=> i.symbol.localeCompare(j.symbol));
       return response.data || [];

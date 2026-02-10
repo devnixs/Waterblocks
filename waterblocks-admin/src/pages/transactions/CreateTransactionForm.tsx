@@ -84,6 +84,20 @@ export function CreateTransactionForm({
 }: CreateTransactionFormProps) {
   const selectedAsset = assets.find((a) => a.id === assetId);
   const symbol = selectedAsset?.symbol || assetId || '';
+  const assetsByBlockchain = assets.reduce<Record<string, Asset[]>>((acc, asset) => {
+    const blockchain = (asset.nativeAsset || asset.id || 'OTHER').trim();
+    if (!acc[blockchain]) {
+      acc[blockchain] = [];
+    }
+    acc[blockchain].push(asset);
+    return acc;
+  }, {});
+  const groupedAssets = Object.entries(assetsByBlockchain)
+    .map(([blockchain, blockchainAssets]) => ({
+      blockchain,
+      assets: [...blockchainAssets].sort((a, b) => a.symbol.localeCompare(b.symbol)),
+    }))
+    .sort((a, b) => a.blockchain.localeCompare(b.blockchain));
 
   const getNetworkFee = (level: FeeLevel): string => {
     if (!feeEstimates) return '0';
@@ -119,10 +133,14 @@ export function CreateTransactionForm({
             onChange={(e) => setAssetId(e.target.value)}
           >
             <option value="">Select asset</option>
-            {assets.map((asset) => (
-              <option key={asset.id} value={asset.id}>
-                {asset.symbol} - {asset.name}
-              </option>
+            {groupedAssets.map((group) => (
+              <optgroup key={group.blockchain} label={group.blockchain}>
+                {group.assets.map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.symbol} - {asset.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

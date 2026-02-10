@@ -24,7 +24,7 @@ export default function TransactionsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [assetId, setAssetId] = useState('');
   const [amount, setAmount] = useState('');
-  const [sourceType, setSourceType] = useState<TransactionEndpointType>('ONE_TIME');
+  const [sourceType, setSourceType] = useState<TransactionEndpointType>('EXTERNAL_RANDOM');
   const [sourceAddress, setSourceAddress] = useState('');
   const [sourceVaultId, setSourceVaultId] = useState('');
   const [destinationType, setDestinationType] = useState<TransactionEndpointType>('VAULT');
@@ -439,6 +439,7 @@ export default function TransactionsPage() {
       showToast({ title: 'Transaction created', type: 'success', duration: 3000 });
       setAssetId('');
       setAmount('');
+      setSourceType('EXTERNAL_RANDOM');
       setSourceAddress('');
       setDestinationAddress('');
       setDestinationTag('');

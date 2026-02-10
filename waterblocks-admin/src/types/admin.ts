@@ -154,6 +154,8 @@ export interface Asset {
   symbol: string;
   decimals: number;
   type?: string;
+  contractAddress?: string;
+  nativeAsset?: string;
 }
 
 export type BlockchainType = 'AccountBased' | 'AddressBased' | 'MemoBased';

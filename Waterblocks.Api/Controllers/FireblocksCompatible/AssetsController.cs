@@ -27,10 +27,12 @@ public class AssetsController : ControllerBase
         var dtos = assets.Select(a => new AssetDto
         {
             Id = a.AssetId,
-            Name = a.Name,
+            Name = string.IsNullOrWhiteSpace(a.Symbol) ? a.Name : a.Symbol,
             Symbol = a.Symbol,
             Decimals = a.Decimals,
             Type = a.Type,
+            ContractAddress = a.ContractAddress,
+            NativeAsset = a.NativeAsset,
         }).ToList();
 
         return Ok(dtos);
@@ -70,6 +72,8 @@ public class AssetsController : ControllerBase
             Symbol = asset.Symbol,
             Decimals = asset.Decimals,
             Type = asset.Type,
+            ContractAddress = asset.ContractAddress,
+            NativeAsset = asset.NativeAsset,
         };
 
         return Ok(dto);

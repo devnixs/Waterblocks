@@ -7,6 +7,8 @@ public class AssetDto
     public string Symbol { get; set; } = string.Empty;
     public int Decimals { get; set; }
     public string? Type { get; set; }
+    public string? ContractAddress { get; set; }
+    public string? NativeAsset { get; set; }
 }
 
 /// <summary>
