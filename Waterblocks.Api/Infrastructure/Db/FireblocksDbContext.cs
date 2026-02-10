@@ -46,6 +46,7 @@ public class FireblocksDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CustomerRefId);
+            entity.HasQueryFilter(e => !e.IsArchived);
             entity.HasMany(e => e.Wallets)
                 .WithOne(w => w.VaultAccount)
                 .HasForeignKey(w => w.VaultAccountId)

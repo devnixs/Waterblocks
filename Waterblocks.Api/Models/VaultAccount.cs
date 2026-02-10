@@ -23,6 +23,10 @@ public class VaultAccount
 
     public bool AutoFuel { get; set; } = false;
 
+    public bool IsArchived { get; set; } = false;
+
+    public DateTimeOffset? ArchivedAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

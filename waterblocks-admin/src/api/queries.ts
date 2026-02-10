@@ -112,12 +112,12 @@ export function useTransitionTransaction() {
 }
 
 // Vaults
-export function useVaults() {
+export function useVaults(includeArchived = false) {
   const workspaceId = getWorkspaceId();
   return useQuery({
-    queryKey: ['vaults', workspaceId],
+    queryKey: ['vaults', workspaceId, includeArchived],
     queryFn: async () => {
-      const response = await adminApi.getVaults();
+      const response = await adminApi.getVaults(includeArchived);
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
@@ -162,6 +162,26 @@ export function useDeleteVault() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.deleteVault(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+    },
+  });
+}
+
+export function useArchiveVault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.archiveVault(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+    },
+  });
+}
+
+export function useUnarchiveVault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.unarchiveVault(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
     },

@@ -14,6 +14,7 @@ export function VaultsTable({ vaults, onSelect }: VaultsTableProps) {
             <th>ID</th>
             <th>Name</th>
             <th>Assets</th>
+            <th>Archived</th>
             <th>Hidden</th>
             <th>Created</th>
             <th className="text-right">Actions</th>
@@ -31,6 +32,7 @@ export function VaultsTable({ vaults, onSelect }: VaultsTableProps) {
               </td>
               <td className="font-medium">{vault.name}</td>
               <td className="text-mono">{vault.wallets.length}</td>
+              <td>{vault.isArchived ? 'Yes' : 'No'}</td>
               <td>{vault.hiddenOnUI ? 'Yes' : 'No'}</td>
               <td className="text-sm text-muted">{new Date(vault.createdAt).toLocaleString()}</td>
               <td className="text-right">

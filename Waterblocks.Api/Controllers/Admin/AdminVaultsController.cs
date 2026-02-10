@@ -34,15 +34,18 @@ public class AdminVaultsController : AdminControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<AdminResponse<List<AdminVaultDto>>>> GetVaults()
+    public async Task<ActionResult<AdminResponse<List<AdminVaultDto>>>> GetVaults([FromQuery] bool includeArchived = false)
     {
         if (!TryGetWorkspaceId<List<AdminVaultDto>>(out var workspaceId, out var failure))
         {
             return failure;
         }
 
-        var vaults = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == workspaceId)
+        IQueryable<VaultAccount> query = includeArchived
+            ? _context.VaultAccounts.IgnoreQueryFilters().Where(v => v.WorkspaceId == workspaceId)
+            : _context.VaultAccounts.Where(v => v.WorkspaceId == workspaceId);
+
+        var vaults = await query
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .OrderByDescending(v => v.CreatedAt)
@@ -53,15 +56,18 @@ public class AdminVaultsController : AdminControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AdminResponse<AdminVaultDto>>> GetVault(string id)
+    public async Task<ActionResult<AdminResponse<AdminVaultDto>>> GetVault(string id, [FromQuery] bool includeArchived = false)
     {
         if (!TryGetWorkspaceId<AdminVaultDto>(out var workspaceId, out var failure))
         {
             return failure;
         }
 
-        var vault = await _context.VaultAccounts
-            .Where(v => v.WorkspaceId == workspaceId)
+        IQueryable<VaultAccount> query = includeArchived
+            ? _context.VaultAccounts.IgnoreQueryFilters().Where(v => v.WorkspaceId == workspaceId)
+            : _context.VaultAccounts.Where(v => v.WorkspaceId == workspaceId);
+
+        var vault = await query
             .Include(v => v.Wallets)
                 .ThenInclude(w => w.Addresses)
             .FirstOrDefaultAsync(v => v.Id == id);
@@ -163,7 +169,6 @@ public class AdminVaultsController : AdminControllerBase
         }
 
         var vault = await _context.VaultAccounts
-            .Include(v => v.Wallets)
             .FirstOrDefaultAsync(v => v.Id == id && v.WorkspaceId == workspaceId);
 
         if (vault == null)
@@ -173,7 +178,43 @@ public class AdminVaultsController : AdminControllerBase
                 "VAULT_NOT_FOUND"));
         }
 
-        _context.VaultAccounts.Remove(vault);
+        vault.IsArchived = true;
+        vault.ArchivedAt = DateTimeOffset.UtcNow;
+        vault.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated");
+        return Ok(AdminResponse<bool>.Success(true));
+    }
+
+    [HttpPost("{id}/archive")]
+    public Task<ActionResult<AdminResponse<bool>>> ArchiveVault(string id)
+    {
+        return DeleteVault(id);
+    }
+
+    [HttpPost("{id}/unarchive")]
+    public async Task<ActionResult<AdminResponse<bool>>> UnarchiveVault(string id)
+    {
+        if (!TryGetWorkspaceId<bool>(out var workspaceId, out var failure))
+        {
+            return failure;
+        }
+
+        var vault = await _context.VaultAccounts
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == id && v.WorkspaceId == workspaceId && v.IsArchived);
+
+        if (vault == null)
+        {
+            return NotFound(AdminResponse<bool>.Failure(
+                $"Vault {id} not found",
+                "VAULT_NOT_FOUND"));
+        }
+
+        vault.IsArchived = false;
+        vault.ArchivedAt = null;
+        vault.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
 
         await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated");
@@ -229,6 +270,8 @@ public class AdminVaultsController : AdminControllerBase
             HiddenOnUI = vault.HiddenOnUI,
             CustomerRefId = vault.CustomerRefId,
             AutoFuel = vault.AutoFuel,
+            IsArchived = vault.IsArchived,
+            ArchivedAt = vault.ArchivedAt,
             Wallets = vault.Wallets.Select(w => new AdminWalletDto
             {
                 Id = w.Id,

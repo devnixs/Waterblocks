@@ -7,6 +7,8 @@ public class AdminVaultDto
     public bool HiddenOnUI { get; set; }
     public string? CustomerRefId { get; set; }
     public bool AutoFuel { get; set; }
+    public bool IsArchived { get; set; }
+    public DateTimeOffset? ArchivedAt { get; set; }
     public List<AdminWalletDto> Wallets { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

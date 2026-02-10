@@ -130,8 +130,15 @@ export const adminApi = {
   },
 
   // Vaults
-  async getVaults(): Promise<AdminResponse<AdminVault[]>> {
-    return fetchApi('/admin/vaults');
+  async getVaults(includeArchived = false): Promise<AdminResponse<AdminVault[]>> {
+    const search = new URLSearchParams();
+    if (includeArchived) {
+      search.set('includeArchived', 'true');
+    }
+
+    const suffix = search.toString();
+    const endpoint = suffix ? `/admin/vaults?${suffix}` : '/admin/vaults';
+    return fetchApi(endpoint);
   },
 
   async getVault(id: string): Promise<AdminResponse<AdminVault>> {
@@ -154,6 +161,14 @@ export const adminApi = {
 
   async deleteVault(id: string): Promise<AdminResponse<boolean>> {
     return fetchApi(`/admin/vaults/${id}`, { method: 'DELETE' });
+  },
+
+  async archiveVault(id: string): Promise<AdminResponse<boolean>> {
+    return fetchApi(`/admin/vaults/${id}/archive`, { method: 'POST' });
+  },
+
+  async unarchiveVault(id: string): Promise<AdminResponse<boolean>> {
+    return fetchApi(`/admin/vaults/${id}/unarchive`, { method: 'POST' });
   },
 
   async getFrozenBalances(id: string): Promise<AdminResponse<FrozenBalance[]>> {

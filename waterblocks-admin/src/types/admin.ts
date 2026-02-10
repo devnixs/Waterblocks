@@ -99,6 +99,8 @@ export interface AdminVault {
   hiddenOnUI: boolean;
   customerRefId?: string;
   autoFuel: boolean;
+  isArchived: boolean;
+  archivedAt?: string;
   wallets: AdminWallet[];
   createdAt: string;
   updatedAt: string;

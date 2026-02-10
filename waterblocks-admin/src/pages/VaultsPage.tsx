@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useVaults, useCreateVault, useFrozenBalances, useCreateWallet, useAssets, useUpdateVault, useDeleteVault } from '../api/queries';
+import {
+  useVaults,
+  useCreateVault,
+  useFrozenBalances,
+  useCreateWallet,
+  useAssets,
+  useUpdateVault,
+  useArchiveVault,
+  useUnarchiveVault,
+} from '../api/queries';
 import { useToast } from '../components/ToastProvider';
 import type { AdminVault } from '../types/admin';
 import { CreateVaultForm } from './vaults/CreateVaultForm';
@@ -9,11 +18,13 @@ import { VaultsHeader } from './vaults/VaultsHeader';
 import { VaultsTable } from './vaults/VaultsTable';
 
 export default function VaultsPage() {
-  const { data: vaults, isLoading, error } = useVaults();
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: vaults, isLoading, error } = useVaults(showArchived);
   const { data: assets } = useAssets();
   const createVault = useCreateVault();
   const updateVault = useUpdateVault();
-  const deleteVault = useDeleteVault();
+  const archiveVault = useArchiveVault();
+  const unarchiveVault = useUnarchiveVault();
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const [selectedVault, setSelectedVault] = useState<AdminVault | null>(null);
@@ -22,29 +33,32 @@ export default function VaultsPage() {
   const [walletAssetId, setWalletAssetId] = useState('');
   const frozenBalancesQuery = useFrozenBalances(selectedVault?.id ?? '');
   const createWallet = useCreateWallet(selectedVault?.id ?? '');
+  const displayedVaults = (vaults || []).filter((vault) => (showArchived ? vault.isArchived : !vault.isArchived));
 
   useEffect(() => {
-    if (!selectedVault || !vaults) return;
-    const updated = vaults.find((vault) => vault.id === selectedVault.id);
+    if (!selectedVault) return;
+    const updated = displayedVaults.find((vault) => vault.id === selectedVault.id);
     if (updated) {
       setSelectedVault(updated);
+      return;
     }
-  }, [vaults, selectedVault]);
+    setSelectedVault(null);
+  }, [displayedVaults, selectedVault]);
 
   useEffect(() => {
-    if (!vaults || vaults.length === 0) return;
+    if (!displayedVaults || displayedVaults.length === 0) return;
     const vaultId = searchParams.get('vaultId');
     const vaultNameParam = searchParams.get('vaultName');
     if (!vaultId && !vaultNameParam) return;
 
     const match = vaultId
-      ? vaults.find((vault) => vault.id === vaultId)
-      : vaults.find((vault) => vault.name === vaultNameParam);
+      ? displayedVaults.find((vault) => vault.id === vaultId)
+      : displayedVaults.find((vault) => vault.name === vaultNameParam);
 
     if (match && match.id !== selectedVault?.id) {
       setSelectedVault(match);
     }
-  }, [vaults, searchParams, selectedVault]);
+  }, [displayedVaults, searchParams, selectedVault]);
 
   useEffect(() => {
     if (!assets || assets.length === 0) return;
@@ -104,25 +118,39 @@ export default function VaultsPage() {
 
   const handleDeleteVault = async () => {
     if (!selectedVault) return;
-    const confirmed = confirm(`Delete vault "${selectedVault.name}"? This cannot be undone.`);
+    const confirmed = confirm(`Archive vault "${selectedVault.name}"? You can restore it later via the API.`);
     if (!confirmed) return;
 
-    const result = await deleteVault.mutateAsync(selectedVault.id);
+    const result = await archiveVault.mutateAsync(selectedVault.id);
     if (result.error) {
       showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
       return;
     }
 
-    showToast({ title: 'Vault deleted', type: 'success', duration: 3000 });
+    showToast({ title: 'Vault archived', type: 'success', duration: 3000 });
+    setSelectedVault(null);
+  };
+
+  const handleUnarchiveVault = async () => {
+    if (!selectedVault) return;
+    const result = await unarchiveVault.mutateAsync(selectedVault.id);
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+      return;
+    }
+
+    showToast({ title: 'Vault unarchived', type: 'success', duration: 3000 });
     setSelectedVault(null);
   };
 
   return (
     <div>
       <VaultsHeader
-        totalCount={vaults?.length || 0}
+        totalCount={displayedVaults.length}
         showCreateForm={showCreateForm}
         onToggleCreate={() => setShowCreateForm((prev) => !prev)}
+        showArchived={showArchived}
+        onToggleShowArchived={() => setShowArchived((prev) => !prev)}
       />
 
       {showCreateForm && (
@@ -135,7 +163,7 @@ export default function VaultsPage() {
       )}
 
       <VaultsTable
-        vaults={vaults || []}
+        vaults={displayedVaults}
         onSelect={setSelectedVault}
       />
 
@@ -149,8 +177,10 @@ export default function VaultsPage() {
           isCreatingWallet={createWallet.isPending}
           onRename={handleRenameVault}
           onDelete={handleDeleteVault}
+          onUnarchive={handleUnarchiveVault}
           isRenaming={updateVault.isPending}
-          isDeleting={deleteVault.isPending}
+          isDeleting={archiveVault.isPending}
+          isUnarchiving={unarchiveVault.isPending}
           onClose={() => setSelectedVault(null)}
           frozenBalances={frozenBalancesQuery.data}
           frozenLoading={frozenBalancesQuery.isLoading}

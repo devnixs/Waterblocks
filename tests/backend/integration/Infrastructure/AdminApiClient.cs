@@ -61,11 +61,29 @@ public class AdminApiClient
         return await DeserializeResponse<List<VaultDto>>(response);
     }
 
+    public async Task<AdminResponse<List<VaultDto>>> GetVaultsAsync(bool includeArchived)
+    {
+        var response = await _client.GetAsync($"/admin/vaults?includeArchived={includeArchived.ToString().ToLowerInvariant()}");
+        return await DeserializeResponse<List<VaultDto>>(response);
+    }
+
     // Wallets
     public async Task<AdminResponse<WalletDto>> CreateWalletAsync(string vaultId, string assetId)
     {
         var response = await _client.PostAsJsonAsync($"/admin/vaults/{vaultId}/wallets", new { assetId });
         return await DeserializeResponse<WalletDto>(response);
+    }
+
+    public async Task<AdminResponse<bool>> DeleteVaultAsync(string vaultId)
+    {
+        var response = await _client.DeleteAsync($"/admin/vaults/{vaultId}");
+        return await DeserializeResponse<bool>(response);
+    }
+
+    public async Task<AdminResponse<bool>> UnarchiveVaultAsync(string vaultId)
+    {
+        var response = await _client.PostAsync($"/admin/vaults/{vaultId}/unarchive", null);
+        return await DeserializeResponse<bool>(response);
     }
 
     // Transactions

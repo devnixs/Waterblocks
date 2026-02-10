@@ -163,6 +163,8 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
             HiddenOnUI = vault.HiddenOnUI,
             CustomerRefId = vault.CustomerRefId,
             AutoFuel = vault.AutoFuel,
+            IsArchived = vault.IsArchived,
+            ArchivedAt = vault.ArchivedAt,
             Wallets = vault.Wallets.Select(w => new AdminWalletDto
             {
                 Id = w.Id,

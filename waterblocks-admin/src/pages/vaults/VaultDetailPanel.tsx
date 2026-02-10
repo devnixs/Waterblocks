@@ -13,8 +13,10 @@ type VaultDetailPanelProps = {
   isCreatingWallet: boolean;
   onRename: () => void;
   onDelete: () => void;
+  onUnarchive: () => void;
   isRenaming: boolean;
   isDeleting: boolean;
+  isUnarchiving: boolean;
   onClose: () => void;
   frozenBalances?: { assetId: string; amount: string }[];
   frozenLoading: boolean;
@@ -30,8 +32,10 @@ export function VaultDetailPanel({
   isCreatingWallet,
   onRename,
   onDelete,
+  onUnarchive,
   isRenaming,
   isDeleting,
+  isUnarchiving,
   onClose,
   frozenBalances,
   frozenLoading,
@@ -45,20 +49,32 @@ export function VaultDetailPanel({
       </div>
 
       <div className="flex gap-2 mb-6">
-        <button
-          className="btn btn-secondary"
-          onClick={onRename}
-          disabled={isRenaming}
-        >
-          Rename
-        </button>
-        <button
-          className="btn btn-danger"
-          onClick={onDelete}
-          disabled={isDeleting}
-        >
-          Delete
-        </button>
+        {vault.isArchived ? (
+          <button
+            className="btn btn-primary"
+            onClick={onUnarchive}
+            disabled={isUnarchiving}
+          >
+            Unarchive
+          </button>
+        ) : (
+          <>
+            <button
+              className="btn btn-secondary"
+              onClick={onRename}
+              disabled={isRenaming}
+            >
+              Rename
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={onDelete}
+              disabled={isDeleting}
+            >
+              Archive
+            </button>
+          </>
+        )}
       </div>
 
       <VaultInfoSection vault={vault} />
