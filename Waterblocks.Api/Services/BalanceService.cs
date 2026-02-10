@@ -53,11 +53,16 @@ public class BalanceService : IBalanceService
 {
     private readonly FireblocksDbContext _context;
     private readonly ILogger<BalanceService> _logger;
+    private readonly IWalletAddressService _walletAddressService;
 
-    public BalanceService(FireblocksDbContext context, ILogger<BalanceService> logger)
+    public BalanceService(
+        FireblocksDbContext context,
+        ILogger<BalanceService> logger,
+        IWalletAddressService walletAddressService)
     {
         _context = context;
         _logger = logger;
+        _walletAddressService = walletAddressService;
     }
 
     public async Task<BalanceResult> ReserveFundsAsync(Transaction transaction)
@@ -207,7 +212,7 @@ public class BalanceService : IBalanceService
         }
 
         // Credit destination wallet (may be in different workspace for cross-workspace transactions)
-        var destinationWallet = await GetWalletByAddressAsync(
+        var destinationWallet = await GetOrCreateWalletByDestinationAddressAsync(
             transaction.DestinationAddress,
             transaction.AssetId);
 
@@ -279,7 +284,7 @@ public class BalanceService : IBalanceService
     public async Task CreditIncomingAsync(Transaction transaction)
     {
         // Address-based lookup - no workspace filter needed since addresses are globally unique
-        var wallet = await GetWalletByAddressAsync(
+        var wallet = await GetOrCreateWalletByDestinationAddressAsync(
             transaction.DestinationAddress,
             transaction.AssetId);
 
@@ -316,11 +321,76 @@ public class BalanceService : IBalanceService
     }
 
     /// <summary>
+    /// Resolves destination wallet by exact asset/address and falls back to same-blockchain ownership.
+    /// If a matching vault is found on the same blockchain, creates the missing wallet for assetId.
+    /// </summary>
+    private async Task<Wallet?> GetOrCreateWalletByDestinationAddressAsync(string? address, string assetId)
+    {
+        var exactWallet = await GetWalletByAddressAsync(address, assetId);
+        if (exactWallet != null)
+        {
+            return exactWallet;
+        }
+
+        var blockchainWallet = await GetWalletByAddressOnSameBlockchainAsync(address, assetId);
+        if (blockchainWallet == null)
+        {
+            return null;
+        }
+
+        var destinationWallet = await GetOrCreateWalletAsync(blockchainWallet.VaultAccountId, assetId);
+        if (destinationWallet == null)
+        {
+            return null;
+        }
+
+        var destinationAsset = await _context.Assets.FindAsync(assetId);
+        if (destinationAsset == null)
+        {
+            return destinationWallet;
+        }
+
+        // Ensure the created wallet receives the shared chain address (ETH/USDC/USDT, etc.)
+        await _walletAddressService.EnsurePrimaryAddressAsync(
+            destinationWallet,
+            destinationAsset,
+            destinationWallet.VaultAccount?.WorkspaceId);
+
+        return destinationWallet;
+    }
+
+    private async Task<Wallet?> GetWalletByAddressOnSameBlockchainAsync(string? address, string assetId)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        var normalizedAddress = address.Trim();
+        var asset = await _context.Assets.FindAsync(assetId);
+        var blockchainId = asset?.NativeAsset ?? assetId;
+
+        return await _context.Addresses
+            .Include(a => a.Wallet)
+            .ThenInclude(w => w.VaultAccount)
+            .Where(a => a.AddressValue == normalizedAddress)
+            .Join(
+                _context.Assets.Where(a =>
+                    a.AssetId == blockchainId ||
+                    a.NativeAsset == blockchainId),
+                addressEntity => addressEntity.Wallet.AssetId,
+                chainAsset => chainAsset.AssetId,
+                (addressEntity, _) => addressEntity.Wallet)
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
     /// Finds a wallet by vault account ID and asset ID. No workspace filtering needed since vault IDs are globally unique.
     /// </summary>
     private async Task<Wallet?> GetWalletAsync(string vaultAccountId, string assetId)
     {
         return await _context.Wallets
+            .Include(w => w.Addresses)
             .Include(w => w.VaultAccount)
             .FirstOrDefaultAsync(w =>
                 w.VaultAccountId == vaultAccountId &&

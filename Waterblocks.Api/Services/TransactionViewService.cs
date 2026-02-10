@@ -110,14 +110,40 @@ public sealed class TransactionViewService : ITransactionViewService
             return new Dictionary<string, AddressOwnership>();
         }
 
+        var asset = await _context.Assets.FindAsync(assetId);
+        var blockchainId = asset?.NativeAsset ?? assetId;
+
         var addressEntities = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue)
-                        && a.Wallet.AssetId == assetId)
+            .Where(a => addressValues.Contains(a.AddressValue))
+            .Join(
+                _context.Assets.Where(a =>
+                    a.AssetId == blockchainId ||
+                    a.NativeAsset == blockchainId),
+                address => address.Wallet.AssetId,
+                chainAsset => chainAsset.AssetId,
+                (address, _) => address)
             .ToListAsync();
 
-        return BuildAddressOwnershipLookup(addressEntities);
+        var lookup = new Dictionary<string, AddressOwnership>();
+        foreach (var addressEntity in addressEntities)
+        {
+            var wallet = addressEntity.Wallet;
+            var vault = wallet?.VaultAccount;
+            if (wallet == null || vault == null)
+            {
+                continue;
+            }
+
+            var key = BuildAddressKey(assetId, addressEntity.AddressValue);
+            if (!lookup.ContainsKey(key))
+            {
+                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+        }
+
+        return lookup;
     }
 
     public AddressOwnership? ResolveOwnership(
