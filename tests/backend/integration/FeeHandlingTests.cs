@@ -15,6 +15,77 @@ public class FeeHandlingTests : IAsyncLifetime
     public Task DisposeAsync() => _fixture.DisposeAsync();
 
     [Fact]
+    public async Task Separate_Fee_Wallet_Is_AutoCreated_With_Deposit_Address()
+    {
+        // Arrange: create a custom token that pays fees in ETH.
+        var assetId = "WBUSD";
+        var createAssetResult = await _fixture.AdminClient.CreateAssetAsync(new CreateAdminAssetRequest
+        {
+            AssetId = assetId,
+            Name = "Waterblocks USD",
+            Symbol = "WBUSD",
+            Decimals = 6,
+            Type = "ERC20",
+            BlockchainType = "AccountBased",
+            NativeAsset = "ETH",
+            BaseFee = 0.01m,
+            FeeAssetId = "ETH",
+            IsActive = true,
+        });
+        createAssetResult.IsSuccess.Should().BeTrue("test asset should be created");
+
+        // Create a source vault with token wallet only.
+        var sourceVaultResponse = await _fixture.AdminClient.CreateVaultAsync("FeeWalletSourceVault");
+        sourceVaultResponse.IsSuccess.Should().BeTrue();
+        var sourceVaultId = sourceVaultResponse.Data!.Id;
+
+        var sourceTokenWalletResponse = await _fixture.AdminClient.CreateWalletAsync(sourceVaultId, assetId);
+        sourceTokenWalletResponse.IsSuccess.Should().BeTrue();
+        var sourceTokenAddress = sourceTokenWalletResponse.Data!.DepositAddress;
+
+        // Fund source wallet so outgoing token transaction can reserve transfer amount.
+        var fundingTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = assetId,
+            SourceAddress = "external-funder",
+            DestinationAddress = sourceTokenAddress,
+            Amount = "25",
+        });
+        fundingTx.IsSuccess.Should().BeTrue();
+
+        // Destination address must be valid EVM format for account-based assets.
+        var destinationVaultResponse = await _fixture.AdminClient.CreateVaultAsync("FeeWalletDestinationVault");
+        destinationVaultResponse.IsSuccess.Should().BeTrue();
+        var destinationVaultId = destinationVaultResponse.Data!.Id;
+        var destinationEthWalletResponse = await _fixture.AdminClient.CreateWalletAsync(destinationVaultId, "ETH");
+        destinationEthWalletResponse.IsSuccess.Should().BeTrue();
+        var destinationAddress = destinationEthWalletResponse.Data!.DepositAddress;
+
+        // Sanity: source vault should not have ETH wallet yet.
+        var sourceBeforeTx = await _fixture.AdminClient.GetVaultAsync(sourceVaultId);
+        sourceBeforeTx.Data!.Wallets.Should().NotContain(w => w.AssetId == "ETH");
+
+        // Act: create outgoing token transfer (fee is paid in ETH).
+        var outgoingTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = assetId,
+            SourceAddress = sourceTokenAddress,
+            DestinationAddress = destinationAddress,
+            Amount = "1",
+            FeeLevel = "MEDIUM",
+        });
+        outgoingTx.IsSuccess.Should().BeFalse("source vault has no ETH fee balance yet");
+        outgoingTx.Error!.Code.Should().Be("INSUFFICIENT_FEE_BALANCE");
+
+        // Assert: auto-created ETH fee wallet has a usable deposit address.
+        var sourceAfterTx = await _fixture.AdminClient.GetVaultAsync(sourceVaultId);
+        var ethFeeWallet = sourceAfterTx.Data!.Wallets.FirstOrDefault(w => w.AssetId == "ETH");
+        ethFeeWallet.Should().NotBeNull("token fee payment should auto-create an ETH fee wallet");
+        ethFeeWallet!.AddressCount.Should().BeGreaterThan(0, "auto-created fee wallet must include at least one address");
+        ethFeeWallet.DepositAddress.Should().NotBeNullOrWhiteSpace("auto-created fee wallet must expose a deposit address");
+    }
+
+    [Fact]
     public async Task Fees_Are_Deducted_From_Balance_When_Transaction_Completes()
     {
         // Arrange: Create vaults with ETH wallets

@@ -403,6 +403,7 @@ public class BalanceService : IBalanceService
     private async Task<Wallet?> GetOrCreateWalletAsync(string vaultAccountId, string assetId)
     {
         var wallet = await GetWalletAsync(vaultAccountId, assetId);
+        string? workspaceId = wallet?.VaultAccount?.WorkspaceId;
 
         if (wallet == null)
         {
@@ -414,6 +415,7 @@ public class BalanceService : IBalanceService
             {
                 return null;
             }
+            workspaceId = vault.WorkspaceId;
 
             wallet = new Wallet
             {
@@ -432,6 +434,18 @@ public class BalanceService : IBalanceService
             _logger.LogInformation(
                 "Created wallet for vault {VaultId} and asset {AssetId}",
                 vaultAccountId, assetId);
+        }
+
+        if (!wallet.Addresses.Any())
+        {
+            var asset = await _context.Assets.FindAsync(assetId);
+            if (asset != null)
+            {
+                await _walletAddressService.EnsurePrimaryAddressAsync(
+                    wallet,
+                    asset,
+                    workspaceId);
+            }
         }
 
         return wallet;
