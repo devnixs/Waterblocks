@@ -26,7 +26,7 @@ export default function WorkspacesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = confirm('Delete this workspace? This removes its vaults and transactions.');
+    const confirmed = confirm('Archive this workspace? It will be hidden but data is kept.');
     if (!confirmed) return;
 
     const result = await deleteWorkspace.mutateAsync(id);
@@ -35,7 +35,7 @@ export default function WorkspacesPage() {
       return;
     }
 
-    showToast({ title: 'Workspace deleted', type: 'success', duration: 2500 });
+    showToast({ title: 'Workspace archived', type: 'success', duration: 2500 });
   };
 
   if (isLoading) return <div className="p-8 text-center text-muted">Loading workspaces...</div>;
@@ -86,7 +86,7 @@ export default function WorkspacesPage() {
                 onClick={() => handleDelete(workspace.id)}
                 disabled={deleteWorkspace.isPending}
               >
-                Delete
+                Archive
               </button>
             </div>
             <div className="text-sm text-muted mb-3">

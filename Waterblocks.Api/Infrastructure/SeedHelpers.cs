@@ -24,7 +24,7 @@ internal static class SeedHelpers
         const string defaultWorkspaceName = "Default";
         const string defaultApiKey = "admin";
 
-        var workspace = db.Workspaces.FirstOrDefault();
+        var workspace = db.Workspaces.FirstOrDefault(w => !w.IsDeleted);
         if (workspace == null)
         {
             workspace = new Workspace

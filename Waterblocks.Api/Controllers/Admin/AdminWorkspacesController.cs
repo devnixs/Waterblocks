@@ -28,6 +28,7 @@ public class AdminWorkspacesController : AdminControllerBase
     public async Task<ActionResult<AdminResponse<List<AdminWorkspaceDto>>>> GetWorkspaces()
     {
         var workspaces = await _context.Workspaces
+            .Where(w => !w.IsDeleted)
             .Include(w => w.ApiKeys)
             .OrderBy(w => w.CreatedAt)
             .ToListAsync();
@@ -77,6 +78,7 @@ public class AdminWorkspacesController : AdminControllerBase
     public async Task<ActionResult<AdminResponse<bool>>> DeleteWorkspace(string id)
     {
         var workspace = await _context.Workspaces
+            .Where(w => !w.IsDeleted)
             .Include(w => w.ApiKeys)
             .FirstOrDefaultAsync(w => w.Id == id);
 
@@ -85,10 +87,12 @@ public class AdminWorkspacesController : AdminControllerBase
             return NotFound(AdminResponse<bool>.Failure("Workspace not found", "WORKSPACE_NOT_FOUND"));
         }
 
-        _context.Workspaces.Remove(workspace);
+        workspace.IsDeleted = true;
+        workspace.DeletedAt = DateTimeOffset.UtcNow;
+        workspace.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Deleted workspace {WorkspaceId}", id);
+        _logger.LogInformation("Soft-deleted workspace {WorkspaceId}", id);
 
         return Ok(AdminResponse<bool>.Success(true));
     }

@@ -194,7 +194,7 @@ namespace Waterblocks.Api.Migrations
                             AssetId = "BTC",
                             BaseFee = 0.0001m,
                             BlockchainType = 1,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 3, 11, 7, 38, 880, DateTimeKind.Unspecified).AddTicks(762), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 10, 14, 0, 0, 796, DateTimeKind.Unspecified).AddTicks(168), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 8,
                             FeeAssetId = "BTC",
                             IsActive = true,
@@ -208,7 +208,7 @@ namespace Waterblocks.Api.Migrations
                             AssetId = "ETH",
                             BaseFee = 0.002m,
                             BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 3, 11, 7, 38, 880, DateTimeKind.Unspecified).AddTicks(768), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 10, 14, 0, 0, 796, DateTimeKind.Unspecified).AddTicks(177), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 18,
                             FeeAssetId = "ETH",
                             IsActive = true,
@@ -222,7 +222,7 @@ namespace Waterblocks.Api.Migrations
                             AssetId = "USDT",
                             BaseFee = 0.005m,
                             BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 3, 11, 7, 38, 880, DateTimeKind.Unspecified).AddTicks(770), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 10, 14, 0, 0, 796, DateTimeKind.Unspecified).AddTicks(179), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 6,
                             FeeAssetId = "ETH",
                             IsActive = true,
@@ -236,7 +236,7 @@ namespace Waterblocks.Api.Migrations
                             AssetId = "USDC",
                             BaseFee = 0.005m,
                             BlockchainType = 0,
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 3, 11, 7, 38, 880, DateTimeKind.Unspecified).AddTicks(772), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 10, 14, 0, 0, 796, DateTimeKind.Unspecified).AddTicks(180), new TimeSpan(0, 0, 0, 0, 0)),
                             Decimals = 6,
                             FeeAssetId = "ETH",
                             IsActive = true,
@@ -479,6 +479,12 @@ namespace Waterblocks.Api.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -490,7 +496,8 @@ namespace Waterblocks.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Workspaces");
                 });

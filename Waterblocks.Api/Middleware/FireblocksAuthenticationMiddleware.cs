@@ -57,7 +57,7 @@ public class FireblocksAuthenticationMiddleware
             {
                 var workspaceExists = await db.Workspaces
                     .AsNoTracking()
-                    .AnyAsync(w => w.Id == workspaceHeader);
+                    .AnyAsync(w => w.Id == workspaceHeader && !w.IsDeleted);
                 if (workspaceExists)
                 {
                     workspaceContext.WorkspaceId = workspaceHeader;
@@ -68,6 +68,7 @@ public class FireblocksAuthenticationMiddleware
 
             var defaultWorkspaceId = await db.Workspaces
                 .AsNoTracking()
+                .Where(w => !w.IsDeleted)
                 .OrderBy(w => w.CreatedAt)
                 .Select(w => w.Id)
                 .FirstOrDefaultAsync();
@@ -102,7 +103,7 @@ public class FireblocksAuthenticationMiddleware
             {
                 var workspace = await db.ApiKeys
                     .AsNoTracking()
-                    .Where(k => k.Key == apiKey)
+                    .Where(k => k.Key == apiKey && !k.Workspace.IsDeleted)
                     .Select(k => new { k.WorkspaceId })
                     .FirstOrDefaultAsync();
 
@@ -121,6 +122,7 @@ public class FireblocksAuthenticationMiddleware
             {
                 var defaultWorkspaceId = await db.Workspaces
                     .AsNoTracking()
+                    .Where(w => !w.IsDeleted)
                     .OrderBy(w => w.CreatedAt)
                     .Select(w => w.Id)
                     .FirstOrDefaultAsync();

@@ -26,7 +26,9 @@ public class FireblocksDbContext : DbContext
         modelBuilder.Entity<Workspace>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Name).IsUnique();
+            entity.HasIndex(e => e.Name)
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false");
         });
 
         modelBuilder.Entity<ApiKey>(entity =>

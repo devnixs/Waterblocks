@@ -16,6 +16,10 @@ public class Workspace
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
     public ICollection<VaultAccount> VaultAccounts { get; set; } = new List<VaultAccount>();
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     public ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
