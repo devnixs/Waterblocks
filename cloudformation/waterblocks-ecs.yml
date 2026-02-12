@@ -300,7 +300,7 @@ Resources:
   EcsCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: Waterblocks
+      ClusterName: !Sub "Waterblocks-${AWS::StackName}"
 
   EcsTaskExecutionRole:
     Type: AWS::IAM::Role
@@ -318,19 +318,19 @@ Resources:
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/waterblocks-api
+      LogGroupName: !Sub "/ecs/${AWS::StackName}/waterblocks-api"
       RetentionInDays: 7
 
   FrontendLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/waterblocks-frontend
+      LogGroupName: !Sub "/ecs/${AWS::StackName}/waterblocks-frontend"
       RetentionInDays: 7
 
   ApiTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: waterblocks-api
+      Family: !Sub "${AWS::StackName}-waterblocks-api"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -360,7 +360,7 @@ Resources:
   FrontendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: waterblocks-frontend
+      Family: !Sub "${AWS::StackName}-waterblocks-frontend"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -435,7 +435,7 @@ Resources:
     DependsOn:
       - HttpsListener
     Properties:
-      ServiceName: waterblocks-api
+      ServiceName: !Sub "${AWS::StackName}-waterblocks-api"
       Cluster: !Ref EcsCluster
       DesiredCount: 1
       LaunchType: FARGATE
@@ -458,7 +458,7 @@ Resources:
     DependsOn:
       - HttpsListener
     Properties:
-      ServiceName: waterblocks-frontend
+      ServiceName: !Sub "${AWS::StackName}-waterblocks-frontend"
       Cluster: !Ref EcsCluster
       DesiredCount: 1
       LaunchType: FARGATE
