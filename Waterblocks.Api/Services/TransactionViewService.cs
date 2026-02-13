@@ -11,7 +11,7 @@ namespace Waterblocks.Api.Services;
 public interface ITransactionViewService
 {
     Task<HashSet<string>> GetWorkspaceAddressesAsync(string workspaceId);
-    IQueryable<Transaction> ApplyWorkspaceAddressFilter(IQueryable<Transaction> query, HashSet<string> addresses);
+    IQueryable<Transaction> ApplyWorkspaceAddressFilter(IQueryable<Transaction> query, string workspaceId);
     Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions, string workspaceId);
     Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(IEnumerable<Transaction> transactions, IEnumerable<string> workspaceIds);
     Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(string assetId, IEnumerable<string> addresses);
@@ -46,9 +46,28 @@ public sealed class TransactionViewService : ITransactionViewService
         return addresses.ToHashSet();
     }
 
-    public IQueryable<Transaction> ApplyWorkspaceAddressFilter(IQueryable<Transaction> query, HashSet<string> addresses)
+    public IQueryable<Transaction> ApplyWorkspaceAddressFilter(IQueryable<Transaction> query, string workspaceId)
     {
-        return query.Where(t => addresses.Contains(t.SourceAddress) || addresses.Contains(t.DestinationAddress));
+        if (string.IsNullOrWhiteSpace(workspaceId))
+        {
+            return query.Where(_ => false);
+        }
+
+        return query.Where(t =>
+            _context.Addresses
+                .Join(
+                    _context.Assets,
+                    address => address.Wallet.AssetId,
+                    asset => asset.AssetId,
+                    (address, asset) => new { Address = address, Asset = asset })
+                .Any(entry =>
+                    entry.Address.Wallet.VaultAccount.WorkspaceId == workspaceId &&
+                    entry.Address.Wallet.AssetId == t.AssetId &&
+                    (entry.Asset.IsCaseSensitive
+                        ? (entry.Address.AddressValue == t.SourceAddress ||
+                           entry.Address.AddressValue == t.DestinationAddress)
+                        : (entry.Address.AddressValue.ToLower() == (t.SourceAddress ?? string.Empty).ToLower() ||
+                           entry.Address.AddressValue.ToLower() == (t.DestinationAddress ?? string.Empty).ToLower()))));
     }
 
     public Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(
@@ -62,14 +81,8 @@ public sealed class TransactionViewService : ITransactionViewService
         IEnumerable<Transaction> transactions,
         IEnumerable<string> workspaceIds)
     {
-        var addressValues = transactions
-            .SelectMany(t => new[] { t.SourceAddress, t.DestinationAddress })
-            .Where(address => !string.IsNullOrWhiteSpace(address))
-            .Select(address => address!)
-            .Distinct()
-            .ToList();
-
-        if (addressValues.Count == 0)
+        var transactionList = transactions.ToList();
+        if (transactionList.Count == 0)
         {
             return new Dictionary<string, AddressOwnership>();
         }
@@ -85,14 +98,59 @@ public sealed class TransactionViewService : ITransactionViewService
             return new Dictionary<string, AddressOwnership>();
         }
 
+        var assetIds = transactionList
+            .Select(t => t.AssetId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+
+        if (assetIds.Count == 0)
+        {
+            return new Dictionary<string, AddressOwnership>();
+        }
+
+        var assetPolicies = await _context.Assets
+            .Where(a => assetIds.Contains(a.AssetId))
+            .Select(a => new { a.AssetId, a.IsCaseSensitive })
+            .ToDictionaryAsync(a => a.AssetId, a => a.IsCaseSensitive);
+
+        var requestedByAsset = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach (var transaction in transactionList)
+        {
+            var isCaseSensitive = assetPolicies.GetValueOrDefault(transaction.AssetId, true);
+            if (!requestedByAsset.TryGetValue(transaction.AssetId, out var requested))
+            {
+                requested = new HashSet<string>(StringComparer.Ordinal);
+                requestedByAsset[transaction.AssetId] = requested;
+            }
+
+            requested.Add(AddressComparison.Normalize(transaction.SourceAddress, isCaseSensitive));
+            requested.Add(AddressComparison.Normalize(transaction.DestinationAddress, isCaseSensitive));
+        }
+
         var addresses = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue)
-                        && workspaceIdList.Contains(a.Wallet.VaultAccount.WorkspaceId))
+            .Where(a =>
+                workspaceIdList.Contains(a.Wallet.VaultAccount.WorkspaceId) &&
+                assetIds.Contains(a.Wallet.AssetId))
             .ToListAsync();
 
-        return BuildAddressOwnershipLookup(addresses);
+        var filteredAddresses = addresses
+            .Where(address =>
+            {
+                var assetId = address.Wallet.AssetId;
+                if (!requestedByAsset.TryGetValue(assetId, out var requested))
+                {
+                    return false;
+                }
+
+                var isCaseSensitive = assetPolicies.GetValueOrDefault(assetId, true);
+                return requested.Contains(AddressComparison.Normalize(address.AddressValue, isCaseSensitive));
+            })
+            .ToList();
+
+        return BuildAddressOwnershipLookup(filteredAddresses, assetPolicies);
     }
 
     public async Task<IReadOnlyDictionary<string, AddressOwnership>> BuildAddressOwnershipLookupAsync(
@@ -111,12 +169,15 @@ public sealed class TransactionViewService : ITransactionViewService
         }
 
         var asset = await _context.Assets.FindAsync(assetId);
+        var isCaseSensitive = asset?.IsCaseSensitive ?? true;
         var blockchainId = asset?.NativeAsset ?? assetId;
+        var normalizedRequested = addressValues
+            .Select(address => AddressComparison.Normalize(address, isCaseSensitive))
+            .ToHashSet(StringComparer.Ordinal);
 
         var addressEntities = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue))
             .Join(
                 _context.Assets.Where(a =>
                     a.AssetId == blockchainId ||
@@ -136,10 +197,25 @@ public sealed class TransactionViewService : ITransactionViewService
                 continue;
             }
 
+            var normalizedAddress = AddressComparison.Normalize(addressEntity.AddressValue, isCaseSensitive);
+            if (!normalizedRequested.Contains(normalizedAddress))
+            {
+                continue;
+            }
+
             var key = BuildAddressKey(assetId, addressEntity.AddressValue);
             if (!lookup.ContainsKey(key))
             {
                 lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+
+            if (!isCaseSensitive)
+            {
+                var caseInsensitiveKey = BuildCaseInsensitiveAddressKey(assetId, addressEntity.AddressValue);
+                if (!lookup.ContainsKey(caseInsensitiveKey))
+                {
+                    lookup[caseInsensitiveKey] = new AddressOwnership(vault.Id, vault.Name);
+                }
             }
         }
 
@@ -156,8 +232,13 @@ public sealed class TransactionViewService : ITransactionViewService
             return null;
         }
 
-        return lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership)
-            ? ownership
+        if (lookup.TryGetValue(BuildAddressKey(assetId, address), out var ownership))
+        {
+            return ownership;
+        }
+
+        return lookup.TryGetValue(BuildCaseInsensitiveAddressKey(assetId, address), out var caseInsensitiveOwnership)
+            ? caseInsensitiveOwnership
             : null;
     }
 
@@ -303,7 +384,9 @@ public sealed class TransactionViewService : ITransactionViewService
         };
     }
 
-    private static IReadOnlyDictionary<string, AddressOwnership> BuildAddressOwnershipLookup(IEnumerable<Address> addresses)
+    private static IReadOnlyDictionary<string, AddressOwnership> BuildAddressOwnershipLookup(
+        IEnumerable<Address> addresses,
+        IReadOnlyDictionary<string, bool> assetPolicies)
     {
         var lookup = new Dictionary<string, AddressOwnership>();
         foreach (var address in addresses)
@@ -315,10 +398,20 @@ public sealed class TransactionViewService : ITransactionViewService
                 continue;
             }
 
+            var isCaseSensitive = assetPolicies.GetValueOrDefault(wallet.AssetId, true);
             var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
             if (!lookup.ContainsKey(key))
             {
                 lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+            }
+
+            if (!isCaseSensitive)
+            {
+                var caseInsensitiveKey = BuildCaseInsensitiveAddressKey(wallet.AssetId, address.AddressValue);
+                if (!lookup.ContainsKey(caseInsensitiveKey))
+                {
+                    lookup[caseInsensitiveKey] = new AddressOwnership(vault.Id, vault.Name);
+                }
             }
         }
 
@@ -327,7 +420,12 @@ public sealed class TransactionViewService : ITransactionViewService
 
     private static string BuildAddressKey(string assetId, string address)
     {
-        return $"{assetId}|{address}";
+        return AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: true);
+    }
+
+    private static string BuildCaseInsensitiveAddressKey(string assetId, string? address)
+    {
+        return AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: false);
     }
 }
 

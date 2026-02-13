@@ -15,6 +15,7 @@ type AssetEditPanelProps = {
     nativeAsset?: string;
     baseFee?: number;
     feeAssetId?: string;
+    isCaseSensitive: boolean;
     isActive: boolean;
   }) => void;
   onDeactivate: () => void;
@@ -40,6 +41,7 @@ export function AssetEditPanel({
   const [nativeAsset, setNativeAsset] = useState(asset.nativeAsset || '');
   const [baseFee, setBaseFee] = useState(String(asset.baseFee));
   const [feeAssetId, setFeeAssetId] = useState(asset.feeAssetId || '');
+  const [isCaseSensitive, setIsCaseSensitive] = useState(asset.isCaseSensitive);
   const [isActive, setIsActive] = useState(asset.isActive);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export function AssetEditPanel({
     setNativeAsset(asset.nativeAsset || '');
     setBaseFee(String(asset.baseFee));
     setFeeAssetId(asset.feeAssetId || '');
+    setIsCaseSensitive(asset.isCaseSensitive);
     setIsActive(asset.isActive);
   }, [asset]);
 
@@ -71,6 +74,7 @@ export function AssetEditPanel({
       nativeAsset: nativeAsset.trim() || undefined,
       baseFee: parsedBaseFee,
       feeAssetId: feeAssetId.trim() || undefined,
+      isCaseSensitive,
       isActive,
     });
   };
@@ -194,6 +198,19 @@ export function AssetEditPanel({
               />
             </div>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <h3 className="text-sm uppercase tracking-wider text-muted font-bold mb-4">Address Matching</h3>
+          <label className="toggle mb-4">
+            <input
+              type="checkbox"
+              checked={isCaseSensitive}
+              onChange={(e) => setIsCaseSensitive(e.target.checked)}
+            />
+            <span className="toggle-track" />
+            <span className="toggle-label">{isCaseSensitive ? 'Case-sensitive' : 'Case-insensitive'}</span>
+          </label>
         </div>
 
         <div className="mb-8">

@@ -6,6 +6,15 @@ namespace Waterblocks.Api.Infrastructure;
 
 public static class SeedData
 {
+    private static readonly HashSet<string> EvmNativeAssets = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ETH",
+        "MATIC_POLYGON",
+        "BNB_BSC",
+        "AVAX_C",
+        "BASECHAIN_ETH",
+    };
+
     public static void SeedDatabase(IServiceProvider services, Microsoft.Extensions.Logging.ILogger logger)
     {
         using var scope = services.CreateScope();
@@ -77,6 +86,7 @@ public static class SeedData
                 NativeAsset = string.IsNullOrWhiteSpace(seed.NativeAsset) ? null : seed.NativeAsset,
                 BaseFee = seed.BaseFee ?? 0,
                 FeeAssetId = string.IsNullOrWhiteSpace(seed.FuelAssetId) ? null : seed.FuelAssetId,
+                IsCaseSensitive = seed.IsCaseSensitive ?? InferCaseSensitivity(seed),
                 IsActive = true,
                 CreatedAt = DateTimeOffset.UtcNow,
             };
@@ -87,5 +97,21 @@ public static class SeedData
         }
 
         db.SaveChanges();
+    }
+
+    private static bool InferCaseSensitivity(AssetSeed seed)
+    {
+        if (!string.IsNullOrWhiteSpace(seed.ContractAddress) &&
+            seed.ContractAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(seed.NativeAsset) && EvmNativeAssets.Contains(seed.NativeAsset))
+        {
+            return false;
+        }
+
+        return true;
     }
 }

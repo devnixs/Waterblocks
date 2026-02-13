@@ -69,6 +69,13 @@ public class Asset
     [MaxLength(50)]
     public string? FeeAssetId { get; set; }
 
+    /// <summary>
+    /// Controls address matching policy for this asset.
+    /// true => address comparisons are case-sensitive.
+    /// false => address comparisons are case-insensitive.
+    /// </summary>
+    public bool IsCaseSensitive { get; set; } = true;
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

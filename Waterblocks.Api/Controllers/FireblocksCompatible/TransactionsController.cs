@@ -59,12 +59,9 @@ public class TransactionsController : ControllerBase
             throw FireblocksApiException.Unauthorized("Workspace is required");
         }
 
-        // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(_workspace.WorkspaceId!);
-
         var query = _transactionView.ApplyWorkspaceAddressFilter(
                 _context.Transactions.Include(t => t.VaultAccount),
-                workspaceAddresses)
+                _workspace.WorkspaceId!)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionState>(status, out var stateFilter))
@@ -116,12 +113,9 @@ public class TransactionsController : ControllerBase
     [HttpGet("external_tx_id/{externalTxId}")]
     public async Task<ActionResult<TransactionDto>> GetTransactionByExternalId(string externalTxId)
     {
-        // Filter by address ownership instead of WorkspaceId for cross-workspace support
-        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(_workspace.WorkspaceId!);
-
         var transaction = await _transactionView.ApplyWorkspaceAddressFilter(
                 _context.Transactions.Include(t => t.VaultAccount),
-                workspaceAddresses)
+                _workspace.WorkspaceId!)
             .FirstOrDefaultAsync(t => t.ExternalTxId == externalTxId);
 
         if (transaction == null)
@@ -385,7 +379,7 @@ public class TransactionsController : ControllerBase
         return assetId switch
         {
             "BTC" => address.StartsWith("bc1") || address.StartsWith("1") || address.StartsWith("3"),
-            "ETH" or "USDT" or "USDC" => address.StartsWith("0x") && address.Length == 42,
+            "ETH" or "USDT" or "USDC" => address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && address.Length == 42,
             _ => !string.IsNullOrWhiteSpace(address),
         };
     }
@@ -441,13 +435,33 @@ public class TransactionsController : ControllerBase
             return workspaceIds;
         }
 
-        var addressWorkspaces = await _context.Addresses
-            .Include(a => a.Wallet)
-            .ThenInclude(w => w.VaultAccount)
-            .Where(a => addressValues.Contains(a.AddressValue))
-            .Select(a => a.Wallet.VaultAccount.WorkspaceId)
-            .Distinct()
-            .ToListAsync();
+        var asset = await _context.Assets.FindAsync(transaction.AssetId);
+        var isCaseSensitive = asset?.IsCaseSensitive ?? true;
+        List<string> addressWorkspaces;
+        if (isCaseSensitive)
+        {
+            addressWorkspaces = await _context.Addresses
+                .Include(a => a.Wallet)
+                .ThenInclude(w => w.VaultAccount)
+                .Where(a => addressValues.Contains(a.AddressValue))
+                .Select(a => a.Wallet.VaultAccount.WorkspaceId)
+                .Distinct()
+                .ToListAsync();
+        }
+        else
+        {
+            var normalizedAddresses = addressValues
+                .Select(address => address.ToLowerInvariant())
+                .ToList();
+
+            addressWorkspaces = await _context.Addresses
+                .Include(a => a.Wallet)
+                .ThenInclude(w => w.VaultAccount)
+                .Where(a => normalizedAddresses.Contains(a.AddressValue.ToLower()))
+                .Select(a => a.Wallet.VaultAccount.WorkspaceId)
+                .Distinct()
+                .ToListAsync();
+        }
 
         foreach (var workspaceId in addressWorkspaces)
         {

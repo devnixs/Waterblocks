@@ -309,12 +309,25 @@ public class BalanceService : IBalanceService
             return null;
         }
 
-        var normalizedAddress = address.Trim();
+        var asset = await _context.Assets.FindAsync(assetId);
+        var isCaseSensitive = asset?.IsCaseSensitive ?? true;
+        var normalizedAddress = AddressComparison.Normalize(address, isCaseSensitive);
+
+        if (isCaseSensitive)
+        {
+            return await _context.Addresses
+                .Include(a => a.Wallet)
+                .ThenInclude(w => w.VaultAccount)
+                .Where(a => a.AddressValue == normalizedAddress
+                            && a.Wallet.AssetId == assetId)
+                .Select(a => a.Wallet)
+                .FirstOrDefaultAsync();
+        }
 
         return await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => a.AddressValue == normalizedAddress
+            .Where(a => a.AddressValue.ToLower() == normalizedAddress
                         && a.Wallet.AssetId == assetId)
             .Select(a => a.Wallet)
             .FirstOrDefaultAsync();
@@ -366,14 +379,31 @@ public class BalanceService : IBalanceService
             return null;
         }
 
-        var normalizedAddress = address.Trim();
         var asset = await _context.Assets.FindAsync(assetId);
+        var isCaseSensitive = asset?.IsCaseSensitive ?? true;
+        var normalizedAddress = AddressComparison.Normalize(address, isCaseSensitive);
         var blockchainId = asset?.NativeAsset ?? assetId;
+
+        if (isCaseSensitive)
+        {
+            return await _context.Addresses
+                .Include(a => a.Wallet)
+                .ThenInclude(w => w.VaultAccount)
+                .Where(a => a.AddressValue == normalizedAddress)
+                .Join(
+                    _context.Assets.Where(a =>
+                        a.AssetId == blockchainId ||
+                        a.NativeAsset == blockchainId),
+                    addressEntity => addressEntity.Wallet.AssetId,
+                    chainAsset => chainAsset.AssetId,
+                    (addressEntity, _) => addressEntity.Wallet)
+                .FirstOrDefaultAsync();
+        }
 
         return await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
-            .Where(a => a.AddressValue == normalizedAddress)
+            .Where(a => a.AddressValue.ToLower() == normalizedAddress)
             .Join(
                 _context.Assets.Where(a =>
                     a.AssetId == blockchainId ||

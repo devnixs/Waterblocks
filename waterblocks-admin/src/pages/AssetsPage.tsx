@@ -17,6 +17,7 @@ const emptyDraft = {
   nativeAsset: '',
   baseFee: '',
   feeAssetId: '',
+  isCaseSensitive: true,
   isActive: true,
 };
 
@@ -76,6 +77,7 @@ export default function AssetsPage() {
       nativeAsset: draft.nativeAsset.trim() || undefined,
       baseFee,
       feeAssetId: draft.feeAssetId.trim() || undefined,
+      isCaseSensitive: draft.isCaseSensitive,
       isActive: draft.isActive,
     });
 
@@ -98,6 +100,7 @@ export default function AssetsPage() {
     nativeAsset?: string;
     baseFee?: number;
     feeAssetId?: string;
+    isCaseSensitive: boolean;
     isActive: boolean;
   }) => {
     if (!selectedAsset) return;
@@ -226,6 +229,15 @@ export default function AssetsPage() {
             <label className="toggle" style={{ alignSelf: 'center' }}>
               <input
                 type="checkbox"
+                checked={draft.isCaseSensitive}
+                onChange={(e) => setDraft((prev) => ({ ...prev, isCaseSensitive: e.target.checked }))}
+              />
+              <span className="toggle-track" />
+              <span className="toggle-label">Case sensitive</span>
+            </label>
+            <label className="toggle" style={{ alignSelf: 'center' }}>
+              <input
+                type="checkbox"
                 checked={draft.isActive}
                 onChange={(e) => setDraft((prev) => ({ ...prev, isActive: e.target.checked }))}
               />
@@ -252,6 +264,7 @@ export default function AssetsPage() {
                 <th>Decimals</th>
                 <th>Type</th>
                 <th>Chain</th>
+                <th>Address Case</th>
                 <th>Status</th>
                 <th>Created</th>
               </tr>
@@ -269,6 +282,7 @@ export default function AssetsPage() {
                   <td>{asset.decimals}</td>
                   <td>{asset.type || '-'}</td>
                   <td>{asset.blockchainType}</td>
+                  <td>{asset.isCaseSensitive ? 'Sensitive' : 'Insensitive'}</td>
                   <td>
                     <span className={`inline-block px-2 py-0.5 text-xs rounded ${asset.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                       {asset.isActive ? 'Active' : 'Inactive'}

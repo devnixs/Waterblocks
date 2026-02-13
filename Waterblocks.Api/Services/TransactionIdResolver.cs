@@ -57,15 +57,13 @@ public sealed class TransactionIdResolver : ITransactionIdResolver
             return null;
         }
 
-        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(_workspace.WorkspaceId ?? string.Empty);
-
         IQueryable<Transaction> query = _context.Transactions;
         if (includeVaultAccount)
         {
             query = query.Include(t => t.VaultAccount);
         }
 
-        query = _transactionView.ApplyWorkspaceAddressFilter(query, workspaceAddresses);
+        query = _transactionView.ApplyWorkspaceAddressFilter(query, _workspace.WorkspaceId ?? string.Empty);
 
         return await query.FirstOrDefaultAsync(
             t => t.Id == rawId || (allowExternalId && t.ExternalTxId == rawId),

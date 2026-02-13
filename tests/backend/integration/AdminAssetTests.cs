@@ -28,12 +28,14 @@ public class AdminAssetTests : IClassFixture<IntegrationTestFixture>
             NativeAsset = "ETH",
             BaseFee = 0.001m,
             FeeAssetId = "ETH",
+            IsCaseSensitive = false,
             IsActive = true,
         });
 
         Assert.NotNull(createResponse.Data);
         Assert.Equal(assetId, createResponse.Data!.Id);
         Assert.Equal("Test Asset", createResponse.Data.Name);
+        Assert.False(createResponse.Data.IsCaseSensitive);
 
         var updateResponse = await _fixture.AdminClient.UpdateAssetAsync(assetId, new UpdateAdminAssetRequest
         {
@@ -43,12 +45,14 @@ public class AdminAssetTests : IClassFixture<IntegrationTestFixture>
             Type = "BASE_ASSET",
             BlockchainType = "AddressBased",
             BaseFee = 0.002m,
+            IsCaseSensitive = true,
         });
 
         Assert.NotNull(updateResponse.Data);
         Assert.Equal("Test Asset Updated", updateResponse.Data!.Name);
         Assert.Equal("TST2", updateResponse.Data.Symbol);
         Assert.Equal("AddressBased", updateResponse.Data.BlockchainType);
+        Assert.True(updateResponse.Data.IsCaseSensitive);
 
         var listResponse = await _fixture.AdminClient.GetAssetsAsync();
         Assert.NotNull(listResponse.Data);

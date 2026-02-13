@@ -173,6 +173,7 @@ export interface AdminAsset {
   nativeAsset?: string;
   baseFee: number;
   feeAssetId?: string;
+  isCaseSensitive: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -188,6 +189,7 @@ export interface CreateAdminAssetRequest {
   nativeAsset?: string;
   baseFee?: number;
   feeAssetId?: string;
+  isCaseSensitive?: boolean;
   isActive?: boolean;
 }
 
@@ -201,6 +203,7 @@ export interface UpdateAdminAssetRequest {
   nativeAsset?: string;
   baseFee?: number;
   feeAssetId?: string;
+  isCaseSensitive?: boolean;
   isActive?: boolean;
 }
 

@@ -67,11 +67,8 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             return failure;
         }
 
-        // Get all addresses belonging to vaults in the current workspace
-        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(workspaceId);
-
         // Find transactions where source OR destination address belongs to this workspace
-        var transactions = await _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceAddresses)
+        var transactions = await _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
@@ -94,11 +91,8 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         var safePageIndex = Math.Max(0, pageIndex);
         var safePageSize = Math.Clamp(pageSize, 1, 200);
 
-        // Get all addresses belonging to vaults in the current workspace
-        var workspaceAddresses = await _transactionView.GetWorkspaceAddressesAsync(workspaceId);
-
         // Find transactions where source OR destination address belongs to this workspace
-        var query = _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceAddresses);
+        var query = _transactionView.ApplyWorkspaceAddressFilter(_context.Transactions, workspaceId);
 
         var normalizedAsset = assetId?.Trim();
         if (!string.IsNullOrWhiteSpace(normalizedAsset))

@@ -166,7 +166,7 @@ public sealed class TransactionService : ITransactionService
             {
                 // Validate it belongs to this vault
                 var addressBelongsToVault = destinationWallet.Addresses
-                    .Any(a => a.AddressValue == explicitAddress);
+                    .Any(a => AddressComparison.Equals(a.AddressValue, explicitAddress, asset.IsCaseSensitive));
 
                 if (!addressBelongsToVault)
                 {
@@ -305,7 +305,7 @@ public sealed class TransactionService : ITransactionService
         return assetId switch
         {
             "BTC" => address.StartsWith("bc1") || address.StartsWith("1") || address.StartsWith("3"),
-            "ETH" or "USDT" or "USDC" => address.StartsWith("0x") && address.Length == 42,
+            "ETH" or "USDT" or "USDC" => address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && address.Length == 42,
             _ => !string.IsNullOrWhiteSpace(address),
         };
     }

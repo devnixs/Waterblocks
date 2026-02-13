@@ -315,6 +315,7 @@ public class AdminAssetDto
     public string? NativeAsset { get; set; }
     public decimal BaseFee { get; set; }
     public string? FeeAssetId { get; set; }
+    public bool IsCaseSensitive { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
@@ -331,6 +332,7 @@ public class CreateAdminAssetRequest
     public string? NativeAsset { get; set; }
     public decimal? BaseFee { get; set; }
     public string? FeeAssetId { get; set; }
+    public bool? IsCaseSensitive { get; set; }
     public bool? IsActive { get; set; }
 }
 
@@ -345,5 +347,6 @@ public class UpdateAdminAssetRequest
     public string? NativeAsset { get; set; }
     public decimal? BaseFee { get; set; }
     public string? FeeAssetId { get; set; }
+    public bool? IsCaseSensitive { get; set; }
     public bool? IsActive { get; set; }
 }

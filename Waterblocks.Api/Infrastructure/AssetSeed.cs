@@ -17,4 +17,5 @@ internal sealed class AssetSeed
     public string? NativeAsset { get; set; }
     public decimal? BaseFee { get; set; }
     public string? FuelAssetId { get; set; }
+    public bool? IsCaseSensitive { get; set; }
 }

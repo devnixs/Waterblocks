@@ -84,6 +84,7 @@ public class AdminAssetsController : AdminControllerBase
             NativeAsset = NormalizeOptionalId(request.NativeAsset),
             BaseFee = request.BaseFee ?? 0m,
             FeeAssetId = NormalizeOptionalId(request.FeeAssetId),
+            IsCaseSensitive = request.IsCaseSensitive ?? true,
             IsActive = request.IsActive ?? true,
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -189,6 +190,11 @@ public class AdminAssetsController : AdminControllerBase
             asset.FeeAssetId = NormalizeOptionalId(request.FeeAssetId);
         }
 
+        if (request.IsCaseSensitive.HasValue)
+        {
+            asset.IsCaseSensitive = request.IsCaseSensitive.Value;
+        }
+
         if (request.IsActive.HasValue)
         {
             asset.IsActive = request.IsActive.Value;
@@ -238,6 +244,7 @@ public class AdminAssetsController : AdminControllerBase
             NativeAsset = asset.NativeAsset,
             BaseFee = asset.BaseFee,
             FeeAssetId = asset.FeeAssetId,
+            IsCaseSensitive = asset.IsCaseSensitive,
             IsActive = asset.IsActive,
             CreatedAt = asset.CreatedAt,
         };
