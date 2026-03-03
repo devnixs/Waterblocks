@@ -1,6 +1,8 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
+ARG VITE_APP_COMMIT_HASH=local
+ENV VITE_APP_COMMIT_HASH=$VITE_APP_COMMIT_HASH
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .

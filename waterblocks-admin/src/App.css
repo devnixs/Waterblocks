@@ -50,6 +50,18 @@
   display: inline-block;
 }
 
+.build-version {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  background: rgba(51, 65, 85, 0.35);
+}
+
 .main {
   flex: 1;
   overflow: auto;

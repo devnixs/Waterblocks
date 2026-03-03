@@ -34,6 +34,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Compute build metadata
+        id: build-meta
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -69,6 +73,8 @@ jobs:
       - name: Build frontend
         run: npm run build
         working-directory: waterblocks-admin
+        env:
+          VITE_APP_COMMIT_HASH: ${{ steps.build-meta.outputs.short_sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -121,5 +127,7 @@ jobs:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta-admin.outputs.tags }}
           labels: ${{ steps.meta-admin.outputs.labels }}
+          build-args: |
+            VITE_APP_COMMIT_HASH=${{ steps.build-meta.outputs.short_sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

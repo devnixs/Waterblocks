@@ -23,6 +23,8 @@ const queryClient = new QueryClient({
   },
 });
 
+const buildCommitHash = import.meta.env.VITE_APP_COMMIT_HASH?.trim();
+
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,6 +87,11 @@ function AppContent() {
         <h1 className="brand">
           <img src={logo} alt="Waterblocks" />
           <span>Waterblocks Admin</span>
+          {buildCommitHash && (
+            <span className="build-version" title="Build commit hash">
+              {buildCommitHash}
+            </span>
+          )}
         </h1>
         <nav className="nav">
           <Link
