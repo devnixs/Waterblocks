@@ -127,6 +127,10 @@ Windows PowerShell equivalents:
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
+- Optional runtime workspace seeding is supported via environment variables:
+  - `SEED_WORKSPACE_1_NAME=Hot`
+  - `SEED_WORKSPACE_1_APIKEY=XXXX`
+  - Add more workspaces by incrementing the index (`SEED_WORKSPACE_2_*`, `SEED_WORKSPACE_3_*`, ...).
 - Admin UI reads `VITE_API_BASE_URL` from `waterblocks-admin/.env` (defaults to `http://localhost:5671`).
 
 ## Development (local)
