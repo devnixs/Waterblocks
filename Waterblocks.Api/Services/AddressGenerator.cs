@@ -29,6 +29,8 @@ public sealed class AddressGenerator : IAddressGenerator
 {
     private const int MaxGenerationAttempts = 5;
     private const int MemoTagLength = 20;
+    private const int CantonFingerprintLength = 68;
+    private const int CantonPartyHintLength = 5;
     // Character sets for different address formats
     private const string HexChars = "0123456789abcdef";
     private const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -163,6 +165,9 @@ public sealed class AddressGenerator : IAddressGenerator
 
             // Algorand - Base32, 58 characters
             "ALGO" => GenerateAlgorandAddress(),
+
+            // Canton - partyHint::fingerprint, fingerprint is 68 hex chars
+            "CANTON" => GenerateCantonAddress(),
 
             // Default: generate a hex-based address that looks like ETH
             _ => GenerateEthAddress(),
@@ -378,6 +383,13 @@ public sealed class AddressGenerator : IAddressGenerator
     {
         const string base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         return GenerateRandomString(base32Chars, 58);
+    }
+
+    private static string GenerateCantonAddress()
+    {
+        var fingerprint = GenerateRandomString(HexChars, CantonFingerprintLength);
+        var partyHint = fingerprint[..CantonPartyHintLength];
+        return $"{partyHint}::{fingerprint}";
     }
 
     private static string GenerateRandomString(string charset, int length)

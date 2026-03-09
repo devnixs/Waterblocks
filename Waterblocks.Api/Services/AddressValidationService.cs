@@ -64,6 +64,9 @@ public sealed class AddressValidationService : IAddressValidationService
             // Algorand - Base32, 58 characters
             "ALGO" => ValidateAlgorandAddress(address),
 
+            // Canton - partyHint::fingerprint where fingerprint is 68 hex chars
+            "CANTON" => ValidateCantonAddress(address),
+
             // Default: just check it's not empty
             _ => !string.IsNullOrWhiteSpace(address),
         };
@@ -236,6 +239,27 @@ public sealed class AddressValidationService : IAddressValidationService
     {
         // Algorand addresses are 58 Base32 characters
         return address.Length == 58 && IsValidBase32(address);
+    }
+
+    private static bool ValidateCantonAddress(string address)
+    {
+        var separatorIndex = address.IndexOf("::", StringComparison.Ordinal);
+        if (separatorIndex <= 0)
+        {
+            return false;
+        }
+
+        if (address.IndexOf("::", separatorIndex + 2, StringComparison.Ordinal) >= 0)
+        {
+            return false;
+        }
+
+        var partyHint = address[..separatorIndex];
+        var fingerprint = address[(separatorIndex + 2)..];
+
+        return !string.IsNullOrWhiteSpace(partyHint)
+               && fingerprint.Length == 68
+               && IsValidHex(fingerprint);
     }
 
     private static bool IsValidHex(string s)

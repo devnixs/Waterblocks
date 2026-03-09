@@ -25,6 +25,7 @@ public class AddressGenerationTests : IClassFixture<IntegrationTestFixture>
     [InlineData("ADA")]
     [InlineData("BNB_BSC")]
     [InlineData("MATIC_POLYGON")]
+    [InlineData("CANTON")]
     public void GeneratesValidAddresses(string assetId)
     {
         var vaultAddress = _generator.GenerateVaultAddress(assetId, 0);
@@ -74,5 +75,17 @@ public class AddressGenerationTests : IClassFixture<IntegrationTestFixture>
         var address = _generator.GenerateExternalAddress("BTC");
         var parsed = BitcoinAddress.Create(address, Network.Main);
         Assert.Equal(address, parsed.ToString());
+    }
+
+    [Fact]
+    public void GeneratesCantonAddressUsingFingerprintPrefixAsPartyHint()
+    {
+        var address = _generator.GenerateExternalAddress("CANTON");
+        var segments = address.Split("::");
+
+        Assert.Equal(2, segments.Length);
+        Assert.Equal(68, segments[1].Length);
+        Assert.Equal(segments[1][..5], segments[0]);
+        Assert.True(_validator.ValidateAddress("CANTON", address));
     }
 }
