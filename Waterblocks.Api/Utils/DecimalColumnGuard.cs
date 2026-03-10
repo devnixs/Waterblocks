@@ -69,7 +69,7 @@ public static class DecimalColumnGuard
 
     public static bool TryValidateNumeric36Scale18(decimal value, string fieldName, out string? errorMessage)
     {
-        if (GetScale(value) > NumericScale)
+        if (GetEffectiveScale(value) > NumericScale)
         {
             errorMessage = $"{fieldName} has too many decimal places. Maximum supported scale is 18.";
             return false;
@@ -93,9 +93,16 @@ public static class DecimalColumnGuard
         }
     }
 
-    private static int GetScale(decimal value)
+    private static int GetEffectiveScale(decimal value)
     {
-        return (decimal.GetBits(value)[3] >> 16) & 0x7F;
+        var rawScale = (decimal.GetBits(value)[3] >> 16) & 0x7F;
+        var normalized = value.ToString($"F{rawScale}", CultureInfo.InvariantCulture)
+            .TrimEnd('0')
+            .TrimEnd('.');
+        var separatorIndex = normalized.IndexOf('.');
+        return separatorIndex < 0
+            ? 0
+            : normalized.Length - separatorIndex - 1;
     }
 }
 
