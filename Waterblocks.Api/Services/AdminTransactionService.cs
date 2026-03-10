@@ -172,9 +172,9 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             return Failure<AdminTransactionDto>($"Asset {request.AssetId} not found", "ASSET_NOT_FOUND");
         }
 
-        if (!decimal.TryParse(request.Amount, out var amount) || amount <= 0)
+        if (!DecimalColumnGuard.TryParsePositiveNumeric36Scale18(request.Amount,"Amount", out var amount, out var amountError))
         {
-            return Failure<AdminTransactionDto>("Invalid amount", "INVALID_AMOUNT");
+            return Failure<AdminTransactionDto>(amountError!, "INVALID_AMOUNT");
         }
 
         // Validate hash uniqueness if provided
@@ -242,7 +242,11 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             : destinationOwnership!.VaultAccountId;
 
         // Calculate network fee
-        var networkFee = CalculateNetworkFee(request, asset);
+        var feeResult = TryCalculateNetworkFee(request, asset, out var networkFee, out var feeError);
+        if (!feeResult)
+        {
+            return Failure<AdminTransactionDto>(feeError!, "INVALID_NETWORK_FEE");
+        }
 
         // Determine fee currency (for tokens, fee is paid in native asset)
         var feeCurrency = asset.GetFeeAssetId();
@@ -260,6 +264,11 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
                     $"Amount ({requestedAmount}) must be greater than fee ({networkFee})",
                     "AMOUNT_BELOW_FEE");
             }
+        }
+
+        if (!TryValidateTransactionAmounts(requestedAmount, transferAmount, networkFee, out var amountValidationError))
+        {
+            return Failure<AdminTransactionDto>(amountValidationError!, "UNSAFE_DECIMAL_VALUE");
         }
 
         var transaction = new Transaction
@@ -293,31 +302,51 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         if (derivedType == "INCOMING")
         {
             transaction.State = ResolveInitialState(request.InitialState, TransactionState.COMPLETED);
-            if (transaction.State == TransactionState.COMPLETED)
-            {
-                transaction.Confirmations = 6;
-                await _balanceService.CreditIncomingAsync(transaction);
-            }
-
-            _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}",
-                transaction.Id, amount, request.AssetId);
         }
         else
         {
-            var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
-            if (!reserveResult.Success)
-            {
-                return Failure<AdminTransactionDto>(reserveResult.ErrorMessage!, reserveResult.ErrorCode!);
-            }
-
             transaction.State = ResolveInitialState(request.InitialState, TransactionState.SUBMITTED);
-
-            _logger.LogInformation("Created OUTGOING transaction {TxId} in state {State}",
-                transaction.Id, transaction.State);
         }
 
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
+        try
+        {
+            if (derivedType == "INCOMING")
+            {
+                if (transaction.State == TransactionState.COMPLETED)
+                {
+                    transaction.Confirmations = 6;
+                    await _balanceService.CreditIncomingAsync(transaction);
+                }
+
+                _logger.LogInformation("Created INCOMING transaction {TxId} for {Amount} {AssetId}",
+                    transaction.Id, amount, request.AssetId);
+            }
+            else
+            {
+                var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
+                if (!reserveResult.Success)
+                {
+                    return Failure<AdminTransactionDto>(reserveResult.ErrorMessage!, reserveResult.ErrorCode!);
+                }
+
+                _logger.LogInformation("Created OUTGOING transaction {TxId} in state {State}",
+                    transaction.Id, transaction.State);
+            }
+
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
+        }
+        catch (UnsafeNumericValueException ex)
+        {
+            return Failure<AdminTransactionDto>(ex.Message, "UNSAFE_DECIMAL_VALUE");
+        }
+        catch (OverflowException)
+        {
+            return Failure<AdminTransactionDto>(
+                "The transaction amount or resulting wallet balances are too large to store safely. Reduce the amount or fee and try again.",
+                "UNSAFE_DECIMAL_VALUE");
+        }
+
         var dto = await _transactionNotifier.NotifyUpsertAsync(transaction, workspaceId);
         return Success(dto);
     }
@@ -503,18 +532,34 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         return fallback;
     }
 
-    private static decimal CalculateNetworkFee(CreateAdminTransactionRequestDto request, Asset asset)
+    private static bool TryCalculateNetworkFee(
+        CreateAdminTransactionRequestDto request,
+        Asset asset,
+        out decimal networkFee,
+        out string? errorMessage)
     {
+        networkFee = 0m;
+        errorMessage = null;
+
         // If explicit network fee is provided, use it
         if (!string.IsNullOrEmpty(request.NetworkFee) &&
-            decimal.TryParse(request.NetworkFee, out var explicitFee))
+            !DecimalColumnGuard.TryParseNonNegativeNumeric36Scale18(
+                request.NetworkFee,
+                "Network fee",
+                out networkFee,
+                out errorMessage))
         {
-            return explicitFee;
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(request.NetworkFee))
+        {
+            return true;
         }
 
         if (string.IsNullOrWhiteSpace(request.FeeLevel))
         {
-            return 0m;
+            return true;
         }
 
         // Calculate based on fee level using asset's base fee
@@ -525,7 +570,37 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             _ => 1.5m, // MEDIUM is default
         };
 
-        return asset.BaseFee * multiplier;
+        networkFee = asset.BaseFee * multiplier;
+        return DecimalColumnGuard.TryValidateNumeric36Scale18(networkFee, "Network fee", out errorMessage);
+    }
+
+    private static bool TryValidateTransactionAmounts(
+        decimal requestedAmount,
+        decimal transferAmount,
+        decimal networkFee,
+        out string? errorMessage)
+    {
+        if (!DecimalColumnGuard.TryValidateNumeric36Scale18(requestedAmount, "Requested amount", out errorMessage))
+        {
+            return false;
+        }
+
+        if (!DecimalColumnGuard.TryValidateNumeric36Scale18(transferAmount, "Transfer amount", out errorMessage))
+        {
+            return false;
+        }
+
+        if (!DecimalColumnGuard.TryValidateNumeric36Scale18(networkFee, "Network fee", out errorMessage))
+        {
+            return false;
+        }
+
+        if (!DecimalColumnGuard.TryValidateNumeric36Scale18(networkFee, "Fee", out errorMessage))
+        {
+            return false;
+        }
+
+        return DecimalColumnGuard.TryValidateNumeric36Scale18(0m, "Service fee", out errorMessage);
     }
 
 }

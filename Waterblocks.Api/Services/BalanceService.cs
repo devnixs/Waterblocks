@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
 
@@ -129,7 +130,9 @@ public class BalanceService : IBalanceService
         }
 
         // Reserve the transfer amount
-        sourceWallet.Pending += transaction.Amount;
+        var newSourcePending = sourceWallet.Pending + transaction.Amount;
+        DecimalColumnGuard.EnsureNumeric36Scale18(newSourcePending, $"Pending balance for wallet {sourceWallet.Id}");
+        sourceWallet.Pending = newSourcePending;
         sourceWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
         _logger.LogInformation(
@@ -139,7 +142,9 @@ public class BalanceService : IBalanceService
         // Reserve fee separately if in different wallet
         if (hasSeparateFeeWallet && feeWallet != null && feeAmount > 0)
         {
-            feeWallet.Pending += feeAmount;
+            var newFeePending = feeWallet.Pending + feeAmount;
+            DecimalColumnGuard.EnsureNumeric36Scale18(newFeePending, $"Pending fee balance for wallet {feeWallet.Id}");
+            feeWallet.Pending = newFeePending;
             feeWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
@@ -149,7 +154,9 @@ public class BalanceService : IBalanceService
         else if (!hasSeparateFeeWallet && feeAmount > 0)
         {
             // Fee is in same asset, add to pending
-            sourceWallet.Pending += feeAmount;
+            newSourcePending = sourceWallet.Pending + feeAmount;
+            DecimalColumnGuard.EnsureNumeric36Scale18(newSourcePending, $"Pending balance for wallet {sourceWallet.Id}");
+            sourceWallet.Pending = newSourcePending;
 
             _logger.LogInformation(
                 "Reserved {Fee} {AssetId} for fee on transaction {TxId}. Total pending: {Pending}",
@@ -174,8 +181,12 @@ public class BalanceService : IBalanceService
         {
             var sourceVaultId = sourceWallet.VaultAccountId;
 
-            sourceWallet.Balance -= transaction.Amount;
-            sourceWallet.Pending -= transaction.Amount;
+            var newSourceBalance = sourceWallet.Balance - transaction.Amount;
+            var newSourcePending = sourceWallet.Pending - transaction.Amount;
+            DecimalColumnGuard.EnsureNumeric36Scale18(newSourceBalance, $"Balance for wallet {sourceWallet.Id}");
+            DecimalColumnGuard.EnsureNumeric36Scale18(newSourcePending, $"Pending balance for wallet {sourceWallet.Id}");
+            sourceWallet.Balance = newSourceBalance;
+            sourceWallet.Pending = newSourcePending;
             sourceWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
@@ -184,8 +195,12 @@ public class BalanceService : IBalanceService
 
             if (!hasSeparateFeeWallet && feeAmount > 0)
             {
-                sourceWallet.Balance -= feeAmount;
-                sourceWallet.Pending -= feeAmount;
+                newSourceBalance = sourceWallet.Balance - feeAmount;
+                newSourcePending = sourceWallet.Pending - feeAmount;
+                DecimalColumnGuard.EnsureNumeric36Scale18(newSourceBalance, $"Balance for wallet {sourceWallet.Id}");
+                DecimalColumnGuard.EnsureNumeric36Scale18(newSourcePending, $"Pending balance for wallet {sourceWallet.Id}");
+                sourceWallet.Balance = newSourceBalance;
+                sourceWallet.Pending = newSourcePending;
 
                 _logger.LogInformation(
                     "Deducted fee {Fee} {AssetId} from vault {VaultId}. New balance: {Balance}",
@@ -200,8 +215,12 @@ public class BalanceService : IBalanceService
 
                 if (feeWallet != null)
                 {
-                    feeWallet.Balance -= feeAmount;
-                    feeWallet.Pending -= feeAmount;
+                    var newFeeBalance = feeWallet.Balance - feeAmount;
+                    var newFeePending = feeWallet.Pending - feeAmount;
+                    DecimalColumnGuard.EnsureNumeric36Scale18(newFeeBalance, $"Balance for wallet {feeWallet.Id}");
+                    DecimalColumnGuard.EnsureNumeric36Scale18(newFeePending, $"Pending balance for wallet {feeWallet.Id}");
+                    feeWallet.Balance = newFeeBalance;
+                    feeWallet.Pending = newFeePending;
                     feeWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
                     _logger.LogInformation(
@@ -218,7 +237,9 @@ public class BalanceService : IBalanceService
 
         if (destinationWallet != null)
         {
-            destinationWallet.Balance += transaction.Amount;
+            var newDestinationBalance = destinationWallet.Balance + transaction.Amount;
+            DecimalColumnGuard.EnsureNumeric36Scale18(newDestinationBalance, $"Balance for wallet {destinationWallet.Id}");
+            destinationWallet.Balance = newDestinationBalance;
             destinationWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
@@ -246,15 +267,17 @@ public class BalanceService : IBalanceService
         var sourceVaultId = wallet.VaultAccountId;
 
         // Rollback transfer amount
-        wallet.Pending -= transaction.Amount;
+        var newPending = wallet.Pending - transaction.Amount;
 
         // Rollback fee if in same wallet
         if (!hasSeparateFeeWallet && feeAmount > 0)
         {
-            wallet.Pending -= feeAmount;
+            newPending -= feeAmount;
         }
 
-        if (wallet.Pending < 0) wallet.Pending = 0; // Safety guard
+        if (newPending < 0) newPending = 0; // Safety guard
+        DecimalColumnGuard.EnsureNumeric36Scale18(newPending, $"Pending balance for wallet {wallet.Id}");
+        wallet.Pending = newPending;
         wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
         _logger.LogInformation(
@@ -270,8 +293,10 @@ public class BalanceService : IBalanceService
 
             if (feeWallet != null)
             {
-                feeWallet.Pending -= feeAmount;
-                if (feeWallet.Pending < 0) feeWallet.Pending = 0; // Safety guard
+                var newFeePending = feeWallet.Pending - feeAmount;
+                if (newFeePending < 0) newFeePending = 0; // Safety guard
+                DecimalColumnGuard.EnsureNumeric36Scale18(newFeePending, $"Pending balance for wallet {feeWallet.Id}");
+                feeWallet.Pending = newFeePending;
                 feeWallet.UpdatedAt = DateTimeOffset.UtcNow;
 
                 _logger.LogInformation(
@@ -290,7 +315,9 @@ public class BalanceService : IBalanceService
 
         if (wallet != null)
         {
-            wallet.Balance += transaction.Amount;
+            var newBalance = wallet.Balance + transaction.Amount;
+            DecimalColumnGuard.EnsureNumeric36Scale18(newBalance, $"Balance for wallet {wallet.Id}");
+            wallet.Balance = newBalance;
             wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
             _logger.LogInformation(
