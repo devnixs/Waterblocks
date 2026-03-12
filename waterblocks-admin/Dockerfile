@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 
 WORKDIR /app
 ARG VITE_APP_COMMIT_HASH=local
