@@ -55,6 +55,11 @@ Parameters:
     Type: String
     Default: ""
     Description: Optional API base URL for the Admin UI (defaults to https://ApiDomain).
+  DatadogApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Optional Datadog API key for forwarding API logs.
   FargateCpu:
     Type: String
     Default: "256"
@@ -350,6 +355,8 @@ Resources:
               Value: !Sub "Host=${DbInstance.Endpoint.Address};Database=${PostgresDbName};Username=${PostgresUsername};Password=${PostgresPassword}"
             - Name: FRONTEND_ORIGIN
               Value: !Sub "https://${FrontendDomain}"
+            - Name: DATADOG_API_KEY
+              Value: !Ref DatadogApiKey
           LogConfiguration:
             LogDriver: awslogs
             Options:
