@@ -18,7 +18,7 @@ Log.Logger = CreateBootstrapLogger(builder.Configuration);
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
     ConfigureSerilog(loggerConfiguration, context.Configuration, services);
-});
+}, preserveStaticLogger: true);
 
 // Add services to the container.
 
