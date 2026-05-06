@@ -299,13 +299,20 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
                 ? "INCOMING"
                 : "TRANSFER";
 
+        var completeImmediately = ShouldCompleteImmediately(request.InitialState, request.CompleteImmediately);
+        var shouldCompleteOnCreate = completeImmediately && derivedType != "INCOMING";
+
         if (derivedType == "INCOMING")
         {
-            transaction.State = ResolveInitialState(request.InitialState, TransactionState.COMPLETED);
+            transaction.State = completeImmediately
+                ? TransactionState.COMPLETED
+                : ResolveInitialState(request.InitialState, TransactionState.COMPLETED);
         }
         else
         {
-            transaction.State = ResolveInitialState(request.InitialState, TransactionState.SUBMITTED);
+            transaction.State = shouldCompleteOnCreate
+                ? TransactionState.CONFIRMING
+                : ResolveInitialState(request.InitialState, TransactionState.SUBMITTED);
         }
 
         try
@@ -345,6 +352,19 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             return Failure<AdminTransactionDto>(
                 "The transaction amount or resulting wallet balances are too large to store safely. Reduce the amount or fee and try again.",
                 "UNSAFE_DECIMAL_VALUE");
+        }
+
+        if (shouldCompleteOnCreate)
+        {
+            var completionResult = await TransitionTransactionAsync(transaction, TransactionState.COMPLETED, workspaceId);
+            if (completionResult.Response.Error != null)
+            {
+                return Failure<AdminTransactionDto>(
+                    completionResult.Response.Error.Message,
+                    completionResult.Response.Error.Code);
+            }
+
+            return Success(await _transactionMapper.MapAsync(transaction, workspaceId));
         }
 
         var dto = await _transactionNotifier.NotifyUpsertAsync(transaction, workspaceId);
@@ -530,6 +550,18 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         }
 
         return fallback;
+    }
+
+    private static bool ShouldCompleteImmediately(string? initialState, bool? completeImmediately)
+    {
+        if (completeImmediately == true)
+        {
+            return true;
+        }
+
+        return !string.IsNullOrEmpty(initialState)
+            && Enum.TryParse<TransactionState>(initialState, out var parsed)
+            && parsed == TransactionState.COMPLETED;
     }
 
     private static bool TryCalculateNetworkFee(

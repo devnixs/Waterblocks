@@ -102,6 +102,59 @@ public class BalanceTrackingTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Outgoing_Transaction_Can_Complete_Immediately_On_Create()
+    {
+        var sourceVaultResponse = await _fixture.AdminClient.CreateVaultAsync("Source");
+        sourceVaultResponse.IsSuccess.Should().BeTrue();
+        var sourceVaultId = sourceVaultResponse.Data!.Id;
+
+        var sourceWalletResponse = await _fixture.AdminClient.CreateWalletAsync(sourceVaultId, "BTC");
+        sourceWalletResponse.IsSuccess.Should().BeTrue();
+        var sourceAddress = sourceWalletResponse.Data!.DepositAddress;
+
+        var destinationVaultResponse = await _fixture.AdminClient.CreateVaultAsync("Destination");
+        destinationVaultResponse.IsSuccess.Should().BeTrue();
+        var destinationVaultId = destinationVaultResponse.Data!.Id;
+
+        var destinationWalletResponse = await _fixture.AdminClient.CreateWalletAsync(destinationVaultId, "BTC");
+        destinationWalletResponse.IsSuccess.Should().BeTrue();
+        var destinationAddress = destinationWalletResponse.Data!.DepositAddress;
+
+        var fundingTx = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = "external-address",
+            DestinationAddress = sourceAddress,
+            Amount = "1",
+        });
+        fundingTx.IsSuccess.Should().BeTrue();
+
+        var createResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = sourceAddress,
+            DestinationAddress = destinationAddress,
+            Amount = "0.25",
+            CompleteImmediately = true,
+        });
+
+        createResponse.IsSuccess.Should().BeTrue();
+        createResponse.Data!.State.Should().Be("COMPLETED");
+
+        var sourceVaultAfter = await _fixture.AdminClient.GetVaultAsync(sourceVaultId);
+        sourceVaultAfter.IsSuccess.Should().BeTrue();
+        var sourceWalletAfter = sourceVaultAfter.Data!.Wallets.First(w => w.AssetId == "BTC");
+        decimal.Parse(sourceWalletAfter.Balance).Should().Be(0.75m);
+        decimal.Parse(sourceWalletAfter.Pending).Should().Be(0m);
+
+        var destinationVaultAfter = await _fixture.AdminClient.GetVaultAsync(destinationVaultId);
+        destinationVaultAfter.IsSuccess.Should().BeTrue();
+        var destinationWalletAfter = destinationVaultAfter.Data!.Wallets.First(w => w.AssetId == "BTC");
+        decimal.Parse(destinationWalletAfter.Balance).Should().Be(0.25m);
+        decimal.Parse(destinationWalletAfter.Pending).Should().Be(0m);
+    }
+
+    [Fact]
     public async Task Pending_Balance_Is_Rolled_Back_On_Transaction_Failure()
     {
         // Arrange: Create vault with BTC wallet and fund it

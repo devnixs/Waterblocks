@@ -301,6 +301,7 @@ public class CreateTransactionRequest
     public string? NetworkFee { get; set; }
     public string? FeeLevel { get; set; }
     public bool? TreatAsGrossAmount { get; set; }
+    public bool? CompleteImmediately { get; set; }
 }
 
 public class AdminAssetDto

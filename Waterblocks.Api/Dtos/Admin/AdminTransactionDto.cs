@@ -63,6 +63,11 @@ public class CreateAdminTransactionRequestDto
     /// If true, the fee is deducted from the amount. If false, fee is added to amount.
     /// </summary>
     public bool? TreatAsGrossAmount { get; set; }
+
+    /// <summary>
+    /// If true, outgoing transactions are created and immediately completed using the normal completion flow.
+    /// </summary>
+    public bool? CompleteImmediately { get; set; }
 }
 
 public class FailTransactionRequestDto
