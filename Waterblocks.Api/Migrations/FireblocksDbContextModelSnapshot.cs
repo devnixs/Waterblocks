@@ -485,6 +485,9 @@ namespace Waterblocks.Api.Migrations
 
             modelBuilder.Entity("Waterblocks.Api.Models.Workspace", b =>
                 {
+                    b.Property<bool>("AutoTransitionEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Id")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");

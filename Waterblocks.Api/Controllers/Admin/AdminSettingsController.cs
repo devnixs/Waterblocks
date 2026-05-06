@@ -2,17 +2,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Dtos.Admin;
-using Waterblocks.Api.Models;
+using Waterblocks.Api.Infrastructure;
 
 namespace Waterblocks.Api.Controllers.Admin;
 
 [ApiController]
 [Route("admin/settings")]
-public class AdminSettingsController : ControllerBase
+public class AdminSettingsController : AdminControllerBase
 {
     private readonly FireblocksDbContext _context;
 
-    public AdminSettingsController(FireblocksDbContext context)
+    public AdminSettingsController(FireblocksDbContext context, WorkspaceContext workspace)
+        : base(workspace)
     {
         _context = context;
     }
@@ -20,11 +21,24 @@ public class AdminSettingsController : ControllerBase
     [HttpGet("auto-transitions")]
     public async Task<ActionResult<AdminResponse<AdminAutoTransitionSettingsDto>>> GetAutoTransitions()
     {
-        var setting = await _context.AdminSettings.FirstOrDefaultAsync(s => s.Key == "AutoTransitionEnabled");
-        var enabled = setting != null && bool.TryParse(setting.Value, out var value) && value;
+        if (!TryGetWorkspaceId<AdminAutoTransitionSettingsDto>(out var workspaceId, out var failure))
+        {
+            return failure;
+        }
+
+        var enabled = await _context.Workspaces
+            .Where(w => !w.IsDeleted && w.Id == workspaceId)
+            .Select(w => (bool?)w.AutoTransitionEnabled)
+            .FirstOrDefaultAsync();
+
+        if (enabled == null)
+        {
+            return NotFound(AdminResponse<AdminAutoTransitionSettingsDto>.Failure("Workspace not found", "WORKSPACE_NOT_FOUND"));
+        }
+
         return Ok(AdminResponse<AdminAutoTransitionSettingsDto>.Success(new AdminAutoTransitionSettingsDto
         {
-            Enabled = enabled,
+            Enabled = enabled.Value,
         }));
     }
 
@@ -32,15 +46,21 @@ public class AdminSettingsController : ControllerBase
     public async Task<ActionResult<AdminResponse<AdminAutoTransitionSettingsDto>>> SetAutoTransitions(
         [FromBody] AdminAutoTransitionSettingsDto request)
     {
-        var setting = await _context.AdminSettings.FirstOrDefaultAsync(s => s.Key == "AutoTransitionEnabled");
-        if (setting == null)
+        if (!TryGetWorkspaceId<AdminAutoTransitionSettingsDto>(out var workspaceId, out var failure))
         {
-            setting = new AdminSetting { Key = "AutoTransitionEnabled" };
-            _context.AdminSettings.Add(setting);
+            return failure;
         }
 
-        setting.Value = request.Enabled.ToString();
-        setting.UpdatedAt = DateTimeOffset.UtcNow;
+        var workspace = await _context.Workspaces
+            .Where(w => !w.IsDeleted)
+            .FirstOrDefaultAsync(w => w.Id == workspaceId);
+        if (workspace == null)
+        {
+            return NotFound(AdminResponse<AdminAutoTransitionSettingsDto>.Failure("Workspace not found", "WORKSPACE_NOT_FOUND"));
+        }
+
+        workspace.AutoTransitionEnabled = request.Enabled;
+        workspace.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
 
         return Ok(AdminResponse<AdminAutoTransitionSettingsDto>.Success(new AdminAutoTransitionSettingsDto

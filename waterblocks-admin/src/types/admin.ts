@@ -217,6 +217,7 @@ export interface AdminApiKey {
 export interface AdminWorkspace {
   id: string;
   name: string;
+  autoTransitionEnabled: boolean;
   apiKeys: AdminApiKey[];
   createdAt: string;
   updatedAt: string;
@@ -224,6 +225,7 @@ export interface AdminWorkspace {
 
 export interface CreateWorkspaceRequest {
   name: string;
+  autoTransitionEnabled: boolean;
 }
 
 export interface AdminGeneratedAddress {

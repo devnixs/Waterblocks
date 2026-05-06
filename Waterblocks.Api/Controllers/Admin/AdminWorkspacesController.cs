@@ -50,6 +50,7 @@ public class AdminWorkspacesController : AdminControllerBase
         {
             Id = Guid.NewGuid().ToString(),
             Name = request.Name.Trim(),
+            AutoTransitionEnabled = request.AutoTransitionEnabled,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
         };
@@ -68,7 +69,11 @@ public class AdminWorkspacesController : AdminControllerBase
         _context.ApiKeys.Add(apiKey);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Created workspace {WorkspaceId} ({Name})", workspace.Id, workspace.Name);
+        _logger.LogInformation(
+            "Created workspace {WorkspaceId} ({Name}) with auto-transition {AutoTransitionEnabled}",
+            workspace.Id,
+            workspace.Name,
+            request.AutoTransitionEnabled);
 
         workspace.ApiKeys.Add(apiKey);
         return Ok(AdminResponse<AdminWorkspaceDto>.Success(MapToDto(workspace)));
@@ -103,6 +108,7 @@ public class AdminWorkspacesController : AdminControllerBase
         {
             Id = workspace.Id,
             Name = workspace.Name,
+            AutoTransitionEnabled = workspace.AutoTransitionEnabled,
             ApiKeys = workspace.ApiKeys.Select(k => new AdminApiKeyDto
             {
                 Id = k.Id,

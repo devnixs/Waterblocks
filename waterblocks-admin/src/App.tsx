@@ -41,6 +41,7 @@ function AppContent() {
   const realtimeStatus = useRealtimeUpdates(workspaceId);
   const autoTransitions = useAutoTransitions();
   const setAutoTransitions = useSetAutoTransitions();
+  const selectedWorkspace = workspaces.data?.find((workspace) => workspace.id === workspaceId);
 
   const persistWorkspaceId = (id: string) => {
     try {
@@ -146,10 +147,15 @@ function AppContent() {
               type="checkbox"
               checked={autoTransitions.data?.enabled ?? false}
               onChange={(e) => setAutoTransitions.mutate(e.target.checked)}
-              disabled={setAutoTransitions.isPending || autoTransitions.isLoading}
+              disabled={!workspaceId || setAutoTransitions.isPending || autoTransitions.isLoading}
+              title={
+                selectedWorkspace
+                  ? `Auto-transition for ${selectedWorkspace.name}`
+                  : 'Select a workspace to configure auto-transition'
+              }
             />
             <span className="toggle-track" />
-            <span className="toggle-label">Auto-transition</span>
+            <span className="toggle-label">Auto-transition (workspace)</span>
           </label>
           <span
             className="realtime-status"

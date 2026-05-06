@@ -39,6 +39,7 @@ internal static class SeedHelpers
                 Name = defaultWorkspaceName,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
+                AutoTransitionEnabled = true,
             };
             db.Workspaces.Add(workspace);
             db.SaveChanges();
@@ -109,6 +110,7 @@ internal static class SeedHelpers
                     Name = entry.Name,
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow,
+                    AutoTransitionEnabled = true,
                 };
                 db.Workspaces.Add(workspace);
                 workspacesByName[workspace.Name] = workspace;

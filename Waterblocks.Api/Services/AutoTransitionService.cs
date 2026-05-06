@@ -36,19 +36,22 @@ public class AutoTransitionService : BackgroundService
                 var db = scope.ServiceProvider.GetRequiredService<FireblocksDbContext>();
                 var transactionView = scope.ServiceProvider.GetRequiredService<ITransactionViewService>();
 
-                var setting = await db.AdminSettings
+                var enabledWorkspaceIds = await db.Workspaces
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Key == "AutoTransitionEnabled", stoppingToken);
+                    .Where(w => !w.IsDeleted && w.AutoTransitionEnabled)
+                    .Select(w => w.Id)
+                    .ToListAsync(stoppingToken);
 
-                var enabled = setting != null && bool.TryParse(setting.Value, out var value) && value;
-                if (!enabled)
+                if (enabledWorkspaceIds.Count == 0)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                     continue;
                 }
 
                 var transactions = await db.Transactions
-                    .Where(t => _stateMachine.NonTerminalStates.Contains(t.State))
+                    .Where(t => _stateMachine.NonTerminalStates.Contains(t.State)
+                        && t.WorkspaceId != null
+                        && enabledWorkspaceIds.Contains(t.WorkspaceId))
                     .OrderBy(t => t.CreatedAt)
                     .ToListAsync(stoppingToken);
 
@@ -137,7 +140,7 @@ public class AutoTransitionService : BackgroundService
                 _logger.LogError(ex, "Auto-transition loop failed");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
     }
 

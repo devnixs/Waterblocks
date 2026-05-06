@@ -4,6 +4,7 @@ public class AdminWorkspaceDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public bool AutoTransitionEnabled { get; set; }
     public List<AdminApiKeyDto> ApiKeys { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -20,4 +21,5 @@ public class AdminApiKeyDto
 public class CreateWorkspaceRequestDto
 {
     public string Name { get; set; } = string.Empty;
+    public bool AutoTransitionEnabled { get; set; }
 }

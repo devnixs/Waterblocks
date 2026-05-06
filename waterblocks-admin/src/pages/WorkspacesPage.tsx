@@ -8,6 +8,7 @@ export default function WorkspacesPage() {
   const deleteWorkspace = useDeleteWorkspace();
   const { showToast } = useToast();
   const [name, setName] = useState('');
+  const [autoTransitionEnabled, setAutoTransitionEnabled] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -15,13 +16,17 @@ export default function WorkspacesPage() {
       return;
     }
 
-    const result = await createWorkspace.mutateAsync({ name: name.trim() });
+    const result = await createWorkspace.mutateAsync({
+      name: name.trim(),
+      autoTransitionEnabled,
+    });
     if (result.error) {
       showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
       return;
     }
 
     setName('');
+    setAutoTransitionEnabled(false);
     showToast({ title: 'Workspace created', type: 'success', duration: 2500 });
   };
 
@@ -55,21 +60,33 @@ export default function WorkspacesPage() {
         className="card mb-6"
       >
         <h3 className="mb-4 text-lg font-semibold">Create Workspace</h3>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Workspace name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex-1"
-          />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={createWorkspace.isPending}
-          >
-            Create
-          </button>
+        <div className="grid gap-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Workspace name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="flex-1"
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={createWorkspace.isPending}
+            >
+              Create
+            </button>
+          </div>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={autoTransitionEnabled}
+              onChange={(e) => setAutoTransitionEnabled(e.target.checked)}
+              disabled={createWorkspace.isPending}
+            />
+            <span className="toggle-track" />
+            <span className="toggle-label">Enable auto-transition for this workspace</span>
+          </label>
         </div>
       </form>
 
@@ -91,6 +108,9 @@ export default function WorkspacesPage() {
             </div>
             <div className="text-sm text-muted mb-3">
               Created {new Date(workspace.createdAt).toLocaleString()}
+            </div>
+            <div className="text-sm text-muted mb-3">
+              Auto-transition: {workspace.autoTransitionEnabled ? 'Enabled' : 'Disabled'}
             </div>
             <div>
               <div className="text-xs uppercase tracking-wider text-muted font-bold mb-2">API Keys</div>
