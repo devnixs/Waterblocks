@@ -127,6 +127,7 @@ Windows PowerShell equivalents:
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
+- Set `DATADOG_API_KEY` to enable Datadog log shipping from the API. Optional overrides: `Datadog__Url`, `Datadog__Service`, `Datadog__Source`, and `Datadog__Tags__0`.
 - Optional runtime workspace seeding is supported via environment variables:
   - `SEED_WORKSPACE_1_NAME=Hot`
   - `SEED_WORKSPACE_1_APIKEY=XXXX`

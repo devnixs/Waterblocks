@@ -4,22 +4,21 @@ using Waterblocks.Api.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Sinks.Datadog.Logs;
 using Serilog.Sinks.SystemConsole.Themes;
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-        .Build())
-    .Enrich.FromLogContext()
-    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-    .CreateLogger();
+const string DefaultDatadogUrl = "https://http-intake.logs.datadoghq.com";
+const string DefaultDatadogService = "waterblocks-api";
+const string DefaultDatadogSource = "aspnetcore";
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Replace default logging with Serilog
-builder.Host.UseSerilog();
+// Configure Serilog early so startup failures are logged too.
+Log.Logger = CreateBootstrapLogger(builder.Configuration);
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    ConfigureSerilog(loggerConfiguration, context.Configuration, services);
+});
 
 // Add services to the container.
 
@@ -78,18 +77,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<Waterblocks.Api.Middleware.HttpTrafficLoggingMiddleware>();
+
 // Add Fireblocks error handling middleware first to catch all exceptions
 app.UseMiddleware<Waterblocks.Api.Middleware.FireblocksErrorMapperMiddleware>();
-
-// Enable request logging with Serilog
-app.UseSerilogRequestLogging(options =>
-{
-    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
-    {
-        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
-        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
-    };
-});
 
 // Add Fireblocks authentication middleware
 app.UseMiddleware<Waterblocks.Api.Middleware.FireblocksAuthenticationMiddleware>();
@@ -109,6 +100,11 @@ try
 {
     SeedData.SeedDatabase(app.Services, app.Logger);
 
+    if (!string.IsNullOrWhiteSpace(GetDatadogApiKey(app.Configuration)))
+    {
+        Log.Information("Datadog log shipping enabled");
+    }
+
     Log.Information("Starting Waterblocks API");
     app.Run();
 }
@@ -122,3 +118,66 @@ finally
     Log.CloseAndFlush();
 }
 
+static Serilog.ILogger CreateBootstrapLogger(IConfiguration configuration)
+{
+    var loggerConfiguration = new LoggerConfiguration();
+    ConfigureSerilog(loggerConfiguration, configuration);
+    return loggerConfiguration.CreateBootstrapLogger();
+}
+
+static void ConfigureSerilog(
+    LoggerConfiguration loggerConfiguration,
+    IConfiguration configuration,
+    IServiceProvider? services = null)
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(theme: AnsiConsoleTheme.Code);
+
+    if (services is not null)
+    {
+        loggerConfiguration.ReadFrom.Services(services);
+    }
+
+    ConfigureDatadogSink(loggerConfiguration, configuration);
+}
+
+static void ConfigureDatadogSink(LoggerConfiguration loggerConfiguration, IConfiguration configuration)
+{
+    var apiKey = GetDatadogApiKey(configuration);
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        return;
+    }
+
+    var tags = configuration.GetSection("Datadog:Tags").Get<string[]>() ?? [];
+    loggerConfiguration.WriteTo.DatadogLogs(
+        apiKey: apiKey,
+        source: configuration["Datadog:Source"] ?? DefaultDatadogSource,
+        service: configuration["Datadog:Service"] ?? DefaultDatadogService,
+        host: Environment.MachineName,
+        tags: tags,
+        configuration: new DatadogConfiguration(url: configuration["Datadog:Url"] ?? DefaultDatadogUrl));
+}
+
+static string? GetDatadogApiKey(IConfiguration configuration)
+{
+    return FirstNonEmpty(
+        configuration["Datadog:ApiKey"],
+        configuration["DATADOG_API_KEY"],
+        configuration["DD_API_KEY"]);
+}
+
+static string? FirstNonEmpty(params string?[] values)
+{
+    foreach (var value in values)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value.Trim();
+        }
+    }
+
+    return null;
+}
