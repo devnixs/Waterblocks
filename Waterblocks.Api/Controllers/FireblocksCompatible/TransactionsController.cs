@@ -52,7 +52,8 @@ public class TransactionsController : ControllerBase
         [FromQuery] string? status = null,
         [FromQuery] int limit = 200,
         [FromQuery] string? before = null,
-        [FromQuery] string? after = null)
+    [FromQuery] string? after = null,
+    [FromQuery] string? txHash = null)
     {
         if (string.IsNullOrEmpty(_workspace.WorkspaceId))
         {
@@ -68,6 +69,12 @@ public class TransactionsController : ControllerBase
         {
             query = query.Where(t => t.State == stateFilter);
         }
+
+    if (!string.IsNullOrWhiteSpace(txHash))
+    {
+        var normalizedHash = txHash.Trim();
+        query = query.Where(t => t.Hash == normalizedHash);
+    }
 
         if (!string.IsNullOrWhiteSpace(before))
         {

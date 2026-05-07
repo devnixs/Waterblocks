@@ -146,4 +146,46 @@ public class AdminTransactionHashTests : IClassFixture<IntegrationTestFixture>
         Assert.Equal(66, createResponse.Data.Hash!.Length);
         Assert.Matches("^0x[a-f0-9]{64}$", createResponse.Data.Hash);
     }
+
+    [Fact]
+    public async Task FireblocksTransactionsQueryByTxHashReturnsOnlyMatchingTransaction()
+    {
+        var vaultResponse = await _fixture.AdminClient.CreateVaultAsync("Hash Filter Vault");
+        Assert.NotNull(vaultResponse.Data);
+        var vaultId = vaultResponse.Data!.Id;
+
+        var walletResponse = await _fixture.AdminClient.CreateWalletAsync(vaultId, "BTC");
+        Assert.NotNull(walletResponse.Data);
+        var depositAddress = walletResponse.Data!.DepositAddress;
+
+        var matchingHash = "1111111111111111111111111111111111111111111111111111111111111111";
+        var otherHash = "2222222222222222222222222222222222222222222222222222222222222222";
+
+        var matchingResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = "external-btc-address-1",
+            DestinationAddress = depositAddress,
+            Amount = "1.0",
+            Hash = matchingHash,
+        });
+        Assert.NotNull(matchingResponse.Data);
+
+        var otherResponse = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            SourceAddress = "external-btc-address-2",
+            DestinationAddress = depositAddress,
+            Amount = "2.0",
+            Hash = otherHash,
+        });
+        Assert.NotNull(otherResponse.Data);
+
+        var transactions = await _fixture.FireblocksClient.GetTransactionsAsync(matchingHash);
+
+        Assert.NotNull(transactions);
+        var matches = Assert.Single(transactions!);
+        Assert.Equal(matchingResponse.Data!.Id, matches.Id);
+        Assert.Equal(matchingHash, matches.TxHash);
+    }
 }

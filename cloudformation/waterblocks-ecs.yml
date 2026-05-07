@@ -209,7 +209,7 @@ Resources:
       VPCSecurityGroups:
         - !Ref RdsSecurityGroup
       DBSubnetGroupName: !Ref DbSubnetGroup
-      BackupRetentionPeriod: 0
+      BackupRetentionPeriod: 7
       DeletionProtection: false
 
   Alb:

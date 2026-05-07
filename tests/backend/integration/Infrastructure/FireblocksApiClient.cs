@@ -90,9 +90,12 @@ public class FireblocksApiClient
         return await response.Content.ReadFromJsonAsync<FireblocksCreateTransactionResponse>(_jsonOptions);
     }
 
-    public async Task<List<FireblocksTransactionDto>?> GetTransactionsAsync()
+    public async Task<List<FireblocksTransactionDto>?> GetTransactionsAsync(string? txHash = null)
     {
-        var response = await _client.GetAsync("/transactions");
+        var path = string.IsNullOrWhiteSpace(txHash)
+            ? "/transactions"
+            : $"/transactions?txHash={Uri.EscapeDataString(txHash)}";
+        var response = await _client.GetAsync(path);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<List<FireblocksTransactionDto>>(_jsonOptions);
     }
