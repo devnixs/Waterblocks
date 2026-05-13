@@ -165,16 +165,17 @@ public sealed class TransactionService : ITransactionService
             if (!string.IsNullOrWhiteSpace(explicitAddress))
             {
                 // Validate it belongs to this vault
-                var addressBelongsToVault = destinationWallet.Addresses
-                    .Any(a => AddressComparison.Equals(a.AddressValue, explicitAddress, asset.IsCaseSensitive));
+                var canonicalAddress = destinationWallet.Addresses
+                    .FirstOrDefault(a => AddressComparison.Equals(a.AddressValue, explicitAddress, asset.IsCaseSensitive))
+                    ?.AddressValue;
 
-                if (!addressBelongsToVault)
+                if (canonicalAddress == null)
                 {
                     throw new ArgumentException(
                         $"Address {explicitAddress} does not belong to vault {destinationVaultId}");
                 }
 
-                destinationAddress = explicitAddress;
+                destinationAddress = canonicalAddress;
             }
             else
             {
@@ -195,6 +196,8 @@ public sealed class TransactionService : ITransactionService
             {
                 throw new ArgumentException($"Invalid destination address format for asset {request.AssetId}");
             }
+
+            destinationAddress = await ResolveCanonicalKnownAddressAsync(asset, destinationAddress);
         }
 
         // Final validation: ensure destination address is not empty
@@ -308,6 +311,37 @@ public sealed class TransactionService : ITransactionService
             "ETH" or "USDT" or "USDC" => address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && address.Length == 42,
             _ => !string.IsNullOrWhiteSpace(address),
         };
+    }
+
+    private async Task<string> ResolveCanonicalKnownAddressAsync(Asset asset, string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return address;
+        }
+
+        var normalizedAddress = AddressComparison.Normalize(address, asset.IsCaseSensitive);
+        var blockchainId = asset.NativeAsset ?? asset.AssetId;
+
+        var addresses = _context.Addresses
+            .Include(a => a.Wallet)
+            .Join(
+                _context.Assets.Where(a => a.AssetId == blockchainId || a.NativeAsset == blockchainId),
+                addressEntity => addressEntity.Wallet.AssetId,
+                chainAsset => chainAsset.AssetId,
+                (addressEntity, _) => addressEntity);
+
+        var canonicalAddress = asset.IsCaseSensitive
+            ? await addresses
+                .Where(a => a.AddressValue == address)
+                .Select(a => a.AddressValue)
+                .FirstOrDefaultAsync()
+            : await addresses
+                .Where(a => a.AddressValue.ToLower() == normalizedAddress)
+                .Select(a => a.AddressValue)
+                .FirstOrDefaultAsync();
+
+        return canonicalAddress ?? address;
     }
 }
 

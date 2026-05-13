@@ -43,6 +43,7 @@ public class AddressCaseSensitivityTests : IAsyncLifetime
         var transactionResponse = await admin.GetTransactionAsync(txId);
         transactionResponse.IsSuccess.Should().BeTrue();
         transactionResponse.Data!.DestinationType.Should().Be("INTERNAL");
+        transactionResponse.Data.DestinationAddress.Should().Be(canonicalAddress);
 
         var vaultDetails = await admin.GetVaultAsync(vaultResponse.Data.Id);
         vaultDetails.IsSuccess.Should().BeTrue();
@@ -100,9 +101,9 @@ public class AddressCaseSensitivityTests : IAsyncLifetime
 
         var receiverTransactions = await receiverFireblocks.GetTransactionsAsync();
         receiverTransactions.Should().NotBeNull();
-        receiverTransactions!.Should().Contain(t => t.DestinationAddress == receiverTypedAddress);
+        receiverTransactions!.Should().Contain(t => t.DestinationAddress == receiverCanonicalAddress);
 
-        var receiverPerspective = receiverTransactions!.First(t => t.DestinationAddress == receiverTypedAddress);
+        var receiverPerspective = receiverTransactions!.First(t => t.DestinationAddress == receiverCanonicalAddress);
         receiverPerspective.Destination!.Type.Should().Be("VAULT_ACCOUNT");
 
         var completeResponse = await senderAdmin.CompleteTransactionFullCycleAsync(createResponse!.Id);

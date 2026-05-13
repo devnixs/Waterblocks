@@ -230,6 +230,16 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         var sourceInternal = sourceOwnership != null;
         var destinationInternal = destinationOwnership != null;
 
+        if (sourceInternal)
+        {
+            sourceAddress = await ResolveCanonicalInternalAddressAsync(asset, sourceAddress!, sourceOwnership!.VaultAccountId);
+        }
+
+        if (destinationInternal)
+        {
+            destinationAddress = await ResolveCanonicalInternalAddressAsync(asset, destinationAddress!, destinationOwnership!.VaultAccountId);
+        }
+
         if (!sourceInternal && !destinationInternal)
         {
             return Failure<AdminTransactionDto>(
@@ -633,6 +643,33 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         }
 
         return DecimalColumnGuard.TryValidateNumeric36Scale18(0m, "Service fee", out errorMessage);
+    }
+
+    private async Task<string> ResolveCanonicalInternalAddressAsync(Asset asset, string address, string vaultAccountId)
+    {
+        var normalizedAddress = AddressComparison.Normalize(address, asset.IsCaseSensitive);
+        var blockchainId = asset.NativeAsset ?? asset.AssetId;
+
+        var addresses = _context.Addresses
+            .Include(a => a.Wallet)
+            .Join(
+                _context.Assets.Where(a => a.AssetId == blockchainId || a.NativeAsset == blockchainId),
+                addressEntity => addressEntity.Wallet.AssetId,
+                chainAsset => chainAsset.AssetId,
+                (addressEntity, _) => addressEntity)
+            .Where(a => a.Wallet.VaultAccountId == vaultAccountId);
+
+        var canonicalAddress = asset.IsCaseSensitive
+            ? await addresses
+                .Where(a => a.AddressValue == address)
+                .Select(a => a.AddressValue)
+                .FirstOrDefaultAsync()
+            : await addresses
+                .Where(a => a.AddressValue.ToLower() == normalizedAddress)
+                .Select(a => a.AddressValue)
+                .FirstOrDefaultAsync();
+
+        return canonicalAddress ?? address;
     }
 
 }
