@@ -60,6 +60,12 @@ export function TransactionDetailPanel({
             <span className="text-muted">Created</span>
             <span>{new Date(transaction.createdAt).toLocaleString()}</span>
           </div>
+          {transaction.initiatedBy && (
+            <div className="flex justify-between">
+              <span className="text-muted">Initiated By</span>
+              <span className="text-mono">{transaction.initiatedBy}</span>
+            </div>
+          )}
         </div>
       </div>
 

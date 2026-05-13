@@ -3,6 +3,7 @@ import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, u
 import { adminApi } from '../api/adminClient';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import type { AdminTransaction } from '../types/admin';
 import { BulkConfirmDialog } from './transactions/BulkConfirmDialog';
 import { CreateTransactionForm, type FeeLevel } from './transactions/CreateTransactionForm';
@@ -50,10 +51,11 @@ export default function TransactionsPage() {
   const { data: feeEstimates, isLoading: feeEstimatesLoading } = useEstimateFee(assetId || undefined);
 
   const transition = useTransitionTransaction();
-  
+
   const createTransaction = useCreateTransaction();
-  
+
   const { showToast } = useToast();
+  const { email: currentUserEmail } = useCurrentUser();
   
   const resolveVaultAddress = (vaultId: string, asset: string) => {
     if (!vaultId || !asset) return '';
@@ -431,6 +433,7 @@ export default function TransactionsPage() {
       hash: hash.trim() || undefined,
       feeLevel: feeLevel,
       treatAsGrossAmount: treatAsGrossAmount,
+      initiatedBy: currentUserEmail || undefined,
     });
 
     if (result.error) {

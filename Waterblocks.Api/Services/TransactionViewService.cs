@@ -381,6 +381,7 @@ public sealed class TransactionViewService : ITransactionViewService
             Confirmations = transaction.Confirmations,
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt,
+            InitiatedBy = transaction.InitiatedBy,
         };
     }
 

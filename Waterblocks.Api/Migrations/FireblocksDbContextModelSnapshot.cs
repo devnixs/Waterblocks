@@ -306,6 +306,10 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("InitiatedBy")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<bool>("IsFrozen")
                         .HasColumnType("boolean");
 

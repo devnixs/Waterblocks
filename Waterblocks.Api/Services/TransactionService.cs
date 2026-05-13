@@ -265,6 +265,7 @@ public sealed class TransactionService : ITransactionService
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
             Hash = TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
+            InitiatedBy = _workspace.ApiKey,
         };
 
         var reserveResult = await _balanceService.ReserveFundsAsync(transaction);

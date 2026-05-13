@@ -1053,3 +1053,97 @@ tr:hover td {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+/* --- Login Gate --- */
+.login-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.login-gate-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 12px;
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.login-gate-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+}
+
+.login-gate-subtitle {
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.login-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.login-gate-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.login-gate-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.login-gate-error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.login-gate-submit {
+  width: 100%;
+  padding: var(--space-3);
+}
+
+/* --- User info in header --- */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  transition: all 0.15s;
+}
+
+.btn-logout:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
