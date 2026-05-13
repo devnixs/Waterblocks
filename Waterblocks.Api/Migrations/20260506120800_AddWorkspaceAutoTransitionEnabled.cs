@@ -1,13 +1,10 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Waterblocks.Api.Infrastructure.Db;
 
 #nullable disable
 
 namespace Waterblocks.Api.Migrations
 {
-    [DbContext(typeof(FireblocksDbContext))]
-    [Migration("20260506120800_AddWorkspaceAutoTransitionEnabled")]
+    /// <inheritdoc />
     public partial class AddWorkspaceAutoTransitionEnabled : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
