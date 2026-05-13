@@ -9,8 +9,10 @@ import WorkspacesPage from './pages/WorkspacesPage';
 import AssetsPage from './pages/AssetsPage';
 import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
+import { LoginGate } from './components/LoginGate';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useRealtimeUpdates } from './hooks/useRealtimeUpdates';
+import { useCurrentUser } from './hooks/useCurrentUser';
 import { useAutoTransitions, useSetAutoTransitions, useWorkspaces } from './api/queries';
 import './App.css';
 
@@ -29,6 +31,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const { email, login, logout, isLoggedIn } = useCurrentUser();
   const [workspaceId, setWorkspaceId] = useState(() => {
     try {
       return localStorage.getItem('workspaceId') || '';
@@ -81,6 +84,10 @@ function AppContent() {
     { key: '4', handler: () => navigate('/assets'), description: 'Navigate to Assets' },
     { key: '?', handler: () => setShowShortcuts(true), description: 'Show keyboard shortcuts' },
   ]);
+
+  if (!isLoggedIn) {
+    return <LoginGate onLogin={login} />;
+  }
 
   return (
     <div className="app">
@@ -163,6 +170,12 @@ function AppContent() {
             title={`Realtime: ${realtimeStatus}`}
           >
             {realtimeStatus}
+          </span>
+          <span className="user-info">
+            {email}
+            <button className="btn-logout" onClick={logout} title="Logout">
+              Logout
+            </button>
           </span>
         </nav>
       </header>

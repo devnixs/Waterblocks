@@ -117,6 +117,7 @@ public class FireblocksAuthenticationMiddleware
                 }
 
                 workspaceContext.WorkspaceId = workspace.WorkspaceId;
+                workspaceContext.ApiKey = apiKey;
             }
             else
             {

@@ -27,6 +27,7 @@ public class AdminTransactionDto
     public int Confirmations { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public string? InitiatedBy { get; set; }
 }
 
 public class AdminTransactionsPageDto
@@ -68,6 +69,11 @@ public class CreateAdminTransactionRequestDto
     /// If true, outgoing transactions are created and immediately completed using the normal completion flow.
     /// </summary>
     public bool? CompleteImmediately { get; set; }
+
+    /// <summary>
+    /// Email address of the admin UI user who initiated this transaction.
+    /// </summary>
+    public string? InitiatedBy { get; set; }
 }
 
 public class FailTransactionRequestDto

@@ -32,6 +32,7 @@ export interface AdminTransaction {
   confirmations: number;
   createdAt: string;
   updatedAt: string;
+  initiatedBy?: string;
 }
 
 export interface AdminTransactionsPage {
@@ -65,6 +66,7 @@ export interface CreateTransactionRequest {
   networkFee?: string;
   feeLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   treatAsGrossAmount?: boolean;
+  initiatedBy?: string;
 }
 
 export interface EstimateFeeRequest {

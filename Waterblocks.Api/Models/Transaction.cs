@@ -80,6 +80,12 @@ public class Transaction
     [MaxLength(100)]
     public string? CustomerRefId { get; set; }
 
+    /// <summary>
+    /// Email of the admin UI user who initiated the transaction, or the API key used for Fireblocks API calls.
+    /// </summary>
+    [MaxLength(500)]
+    public string? InitiatedBy { get; set; }
+
     [MaxLength(50)]
     public string Operation { get; set; } = "TRANSFER";
 

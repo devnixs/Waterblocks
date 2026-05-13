@@ -301,6 +301,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             Hash = !string.IsNullOrWhiteSpace(providedHash)
                 ? providedHash
                 : TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
+            InitiatedBy = request.InitiatedBy?.Trim(),
         };
 
         var derivedType = sourceInternal && !destinationInternal
