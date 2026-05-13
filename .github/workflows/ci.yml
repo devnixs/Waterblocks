@@ -95,11 +95,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}/api
-        tags: |
-          type=sha,prefix={{branch}}-,enable=${{ github.event_name != 'pull_request' }}
-          type=ref,event=branch
-          type=ref,event=pr
-          type=raw,value=latest,enable={{is_default_branch}}
+          tags: |
+            type=sha,prefix={{branch}}-,enable=${{ github.event_name != 'pull_request' }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push API Docker image
         uses: docker/build-push-action@v5
