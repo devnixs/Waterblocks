@@ -8,7 +8,6 @@ description: >
   reset spec checkboxes, uncheck a spec file, or wipe all spec progress. Trigger even
   when the user says things like "I want to redo story 5", "story 12 needs to go back
   to TODO", "clear all the checkboxes in the specs", or "reset story 3 to its initial state".
-disable-model-invocation: true
 ---
 
 The full instructions for this skill live in `.common-ai/skills/reset-story-or-spec/SKILL.md`. Read that file now and follow its workflow. Do not act on this stub alone — the canonical file is the authoritative source.
