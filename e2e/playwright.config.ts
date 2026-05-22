@@ -29,6 +29,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       env: {
         ASPNETCORE_ENVIRONMENT: 'Development',
+        FRONTEND_ORIGIN: frontendUrl,
         ConnectionStrings__DefaultConnection:
           process.env.ConnectionStrings__DefaultConnection ?? defaultConnectionString,
       },

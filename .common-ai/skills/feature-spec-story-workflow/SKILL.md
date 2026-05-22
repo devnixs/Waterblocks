@@ -44,7 +44,7 @@ Follow this workflow whenever the task is feature creation or feature modificati
 - Match the local story format if one already exists. Reuse local headings and tone instead of inventing a new template.
 - Each story must reference the exact spec file or files and stable requirement IDs that were updated for that slice.
 - Each story must explicitly say that completion requires checking the referenced spec items from `- [ ]` to `- [X]` when the work is actually done.
-- Each behavior-changing story must mention all three verification activities that need to be performed for that feature: Playwright coverage, the manual Chrome DevTools browser test, and the full e2e regression run.
+- Each behavior-changing story must mention the verification activities that apply to that feature: Playwright coverage for user-visible browser behavior, back-end integration coverage for back-end behavior changes, and the full e2e regression run.
 - All implementation items inside a story file must be written as `- [ ]` checkboxes. They start unchecked and are checked off (`- [X]`) as each item is completed during implementation.
 - Story filenames must end with a status suffix: `_TODO` when first created, `_IN_PROGRESS` once work has begun, and `_COMPLETE` when all items are checked and verification has passed. Rename the file as the status changes.
 - Keep story filenames in the form `NN-slug.story_STATUS.md`; do not reuse story numbers.
@@ -58,23 +58,25 @@ Follow this workflow whenever the task is feature creation or feature modificati
 - Use spec frontmatter dependencies to decide which neighboring specs need review for cross-cutting changes.
 - For large changes, create multiple stories that each reference the exact spec IDs they own. Avoid one broad story that points at an entire spec file unless the entire file is genuinely in scope.
 
-## Require Three Verification Activities
+## Require Appropriate Verification Activities
 
-Every behavior-changing story must require all three of the following before it can be considered complete. None of them is optional polish for user-facing behavior.
+Every behavior-changing story must require the verification that matches the behavior being changed. Automated coverage is preferred for repeatability; manual browser checks are useful only when the story genuinely needs exploratory visual or interaction confirmation.
 
 ### 1. Playwright Coverage
 
-- Each behavior-changing story must add or extend Playwright coverage for the new feature or bugfix.
+- Each story that changes user-visible browser behavior must add or extend Playwright coverage for the new feature or bugfix.
 - Place the test in the repository's established Playwright location (for example `e2e/tests/`) and follow local naming and structure conventions.
 - The test must exercise the actual user-visible behavior described in the spec items the story references, not just internal implementation details.
 - The story must describe what the Playwright coverage should cover in concrete terms (route, setup, actions, assertions).
 - The Playwright coverage must pass before the story is marked complete.
 
-### 2. Manual Chrome DevTools Browser Test
+### 2. Back-End Integration Coverage
 
-- The required manual browser test must be described inside each story in concrete terms. Name the route, user actions, and expected outcome.
-- The manual browser test must be performed using the Chrome DevTools MCP browser instance, not just by reading code or relying on automated tests.
-- A story is not complete until that manual browser verification has been executed and the feature behaves as expected.
+- Each story that changes back-end behavior must add or extend a back-end integration test that exercises the changed API, persistence, service behavior, or cross-component contract.
+- Place the test in the repository's established back-end integration test location (for example `tests/backend/integration/`) and follow local naming and structure conventions.
+- The test must exercise the observable behavior described in the spec items the story references, not just internal implementation details.
+- The story must describe what the integration coverage should cover in concrete terms (endpoint or service entry point, setup data, actions, assertions).
+- The back-end integration coverage must pass before the story is marked complete.
 
 ### 3. Full E2E Regression Run
 
@@ -92,24 +94,27 @@ Each story should cover:
 - Relevant specs
 - Exact stable requirement IDs for the referenced spec items
 - Acceptance notes or implementation constraints when needed
-- Playwright test plan: which file is added or extended, what it covers, what assertions it makes
-- Browser test instructions with concrete manual steps using Chrome DevTools MCP
+- Playwright test plan when user-visible browser behavior changes: which file is added or extended, what it covers, what assertions it makes
+- Back-end integration test plan when back-end behavior changes: which file is added or extended, what entry point it exercises, what setup and assertions it uses
+- Optional browser test instructions when manual visual or interaction confirmation is genuinely useful
 - Full e2e regression instructions: exact command to run the full suite
-- Completion rule stating all four conditions:
+- Completion rule stating the applicable conditions:
   1. referenced spec items are checked to `- [X]`
-  2. the Playwright coverage has been added or extended and passes
-  3. the Chrome DevTools manual browser test has been run and passed
-  4. the full e2e test suite has been run and all tests pass
+  2. required Playwright coverage has been added or extended and passes when user-visible browser behavior changed
+  3. required back-end integration coverage has been added or extended and passes when back-end behavior changed
+  4. optional manual browser verification has been run when the story explicitly calls for it
+  5. the full e2e test suite has been run and all tests pass
 
 ## Suggested Wording Patterns
 
 Use wording like:
 
 - `Relevant Specs`: list exact `specs/...` paths and stable IDs such as `TOOLS-001`
-- `Playwright Test`: describe the new test file/case, the user flow it drives, and the assertions it makes
-- `Browser Test`: describe the route, setup, clicks, typing, gestures, collaboration steps, and expected visible result
+- `Playwright Test`: when user-visible browser behavior changes, describe the new test file/case, the user flow it drives, and the assertions it makes
+- `Back-End Integration Test`: when back-end behavior changes, describe the new integration test file/case, the endpoint or service entry point it exercises, setup data, and assertions
+- `Browser Test`: only when useful, describe the route, setup, clicks, typing, gestures, collaboration steps, and expected visible result
 - `E2E Regression`: name the command (e.g. `npx playwright test`) and require the entire suite to pass
-- `Completion Rule`: `This story is complete only when the referenced spec IDs have been checked - [X], the new Playwright test described below has been added or extended and passes, the manual Chrome DevTools browser test described below has been run successfully, and the full e2e test suite passes with no regressions.`
+- `Completion Rule`: `This story is complete only when the referenced spec IDs have been checked - [X], the required Playwright coverage for browser behavior has been added or extended and passes, the required back-end integration coverage for back-end behavior has been added or extended and passes, any explicitly requested manual browser verification has passed, and the full e2e test suite passes with no regressions.`
 
 ## Workflow Validation
 
