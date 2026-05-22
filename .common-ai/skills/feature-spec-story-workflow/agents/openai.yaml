@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Spec Story Workflow"
+  short_description: "Update specs first, then draft stories."
+  default_prompt: "Use $feature-spec-story-workflow to prepare specs and implementation stories for a feature change."

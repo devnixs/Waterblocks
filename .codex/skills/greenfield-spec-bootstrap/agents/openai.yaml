@@ -1,0 +1,4 @@
+interface:
+  display_name: "Greenfield Spec Bootstrap"
+  short_description: "Bootstrap an empty repo into a React + .NET spec-driven workflow with initial specs and stories."
+  default_prompt: "Use $greenfield-spec-bootstrap to set up a brand new React + .NET project from an empty repo, including specs, stories, validation, and Playwright e2e scaffolding."

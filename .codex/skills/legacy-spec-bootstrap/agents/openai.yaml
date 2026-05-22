@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Spec Bootstrap"
+  short_description: "Bootstrap specs and stories from a legacy codebase"
+  default_prompt: "Inventory this legacy codebase and create a reviewed spec/story bootstrap plan with source references, confidence levels, and validation steps."
