@@ -1,4 +1,5 @@
 name: CI
+run-name: "Build, Test and push docker images - ${{ github.ref_name }}"
 
 on:
   push:
@@ -12,7 +13,7 @@ permissions:
   packages: write
 
 jobs:
-  build-test-and-docker:
+  build-test-and-docker-build:
     runs-on: ubuntu-latest
 
     services:
