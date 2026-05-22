@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -118,7 +118,7 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push API Docker image
+      - name: Build and optionally push API Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -141,7 +141,7 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Admin UI Docker image
+      - name: Build and optionally push Admin UI Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./waterblocks-admin
