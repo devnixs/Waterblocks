@@ -193,6 +193,10 @@ public class BalanceTrackingTests : IAsyncLifetime
         var failResult = await _fixture.AdminClient.FailTransactionAsync(outgoingTx.Data!.Id, "NETWORK_ERROR");
         failResult.IsSuccess.Should().BeTrue();
 
+        var fireblocksTransaction = await _fixture.FireblocksClient.GetTransactionAsync(outgoingTx.Data.Id);
+        fireblocksTransaction!.Status.Should().Be("FAILED");
+        fireblocksTransaction.SubStatus.Should().Be("DROPPED_BY_BLOCKCHAIN");
+
         // Assert: Verify pending is rolled back and balance is unchanged
         var vaultAfterFail = await _fixture.AdminClient.GetVaultAsync(vaultId);
         var walletAfterFail = vaultAfterFail.Data!.Wallets.First(w => w.AssetId == "BTC");

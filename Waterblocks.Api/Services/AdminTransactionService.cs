@@ -483,6 +483,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         await _balanceService.RollbackTransactionAsync(transaction);
 
         transaction.State = TransactionState.FAILED;
+        transaction.SubStatus = "DROPPED_BY_BLOCKCHAIN";
         transaction.FailureReason = reason ?? "NETWORK_ERROR";
         transaction.UpdatedAt = DateTimeOffset.UtcNow;
 
