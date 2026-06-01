@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reset Story or Spec"
+  short_description: "Uncheck all boxes and reset story/spec files to their TODO state."
+  default_prompt: "Use $reset-story-or-spec to reset a story or spec file back to its initial unchecked state."

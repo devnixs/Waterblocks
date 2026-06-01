@@ -1,0 +1,11 @@
+{
+  "name": "project-root",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Root workflow orchestrator for spec and story validation",
+  "scripts": {
+    "generate:story-map": "node scripts/generate-story-map.js",
+    "validate:workflow": "node scripts/validate-workflow.js"
+  },
+  "type": "commonjs"
+}

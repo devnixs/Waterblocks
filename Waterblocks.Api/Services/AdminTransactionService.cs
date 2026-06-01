@@ -243,7 +243,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         if (!sourceInternal && !destinationInternal)
         {
             return Failure<AdminTransactionDto>(
-                "At least one side of the transaction must be INTERNAL",
+                "You are trying to create a transaction from an external address to another external address. Are you sure the destination address exists?",
                 "INVALID_TRANSACTION_SCOPE");
         }
 
@@ -483,6 +483,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         await _balanceService.RollbackTransactionAsync(transaction);
 
         transaction.State = TransactionState.FAILED;
+        transaction.SubStatus = "DROPPED_BY_BLOCKCHAIN";
         transaction.FailureReason = reason ?? "NETWORK_ERROR";
         transaction.UpdatedAt = DateTimeOffset.UtcNow;
 

@@ -1,8 +1,9 @@
 name: CI
+run-name: "Build, Test and push docker images - ${{ github.ref_name }}"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -12,7 +13,7 @@ permissions:
   packages: write
 
 jobs:
-  build-test-and-docker:
+  build-test-and-docker-build:
     runs-on: ubuntu-latest
 
     services:
@@ -66,6 +67,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: waterblocks-admin/package-lock.json
 
+      - name: Validate specs and stories
+        run: npm run validate:workflow
+
       - name: Install frontend deps
         run: npm ci
         working-directory: waterblocks-admin
@@ -75,6 +79,20 @@ jobs:
         working-directory: waterblocks-admin
         env:
           VITE_APP_COMMIT_HASH: ${{ steps.build-meta.outputs.short_sha }}
+
+      - name: Install e2e deps
+        run: npm install
+        working-directory: e2e
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: e2e
+
+      - name: Run Playwright smoke tests
+        run: npm test
+        working-directory: e2e
+        env:
+          ConnectionStrings__DefaultConnection: "Host=127.0.0.1;Port=5432;Database=postgres;Username=postgres;Password=postgres;Include Error Detail=True"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -101,7 +119,7 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push API Docker image
+      - name: Build and optionally push API Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -119,12 +137,12 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/admin
           tags: |
-            type=sha,prefix={{branch}}-
+            type=sha,prefix={{branch}}-,enable=${{ github.event_name != 'pull_request' }}
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Admin UI Docker image
+      - name: Build and optionally push Admin UI Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./waterblocks-admin

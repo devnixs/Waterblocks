@@ -30,7 +30,7 @@ public class AssetsController : ControllerBase
             Name = string.IsNullOrWhiteSpace(a.Symbol) ? a.Name : a.Symbol,
             Symbol = a.Symbol,
             Decimals = a.Decimals,
-            Type = a.Type,
+            Type = a.Type ?? "OTHER",
             ContractAddress = a.ContractAddress,
             NativeAsset = a.NativeAsset,
         }).ToList();

@@ -36,7 +36,5 @@ Thumbs.db
 *.db-wal
 
 _bmad-output
-.claude
-.codex
 Waterblocks.Api/artifacts/
 tests/backend/integration/artifacts/

@@ -1,0 +1,15 @@
+{
+  "name": "waterblocks-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Root workflow orchestrator for spec and story validation.",
+  "type": "commonjs",
+  "scripts": {
+    "validate:spec-ids": "node scripts/validate-spec-ids.js",
+    "validate:spec-frontmatter": "node scripts/validate-spec-frontmatter.js",
+    "validate:stories": "node scripts/validate-stories.js",
+    "validate:workflow": "npm run validate",
+    "validate": "npm run validate:spec-ids && npm run validate:spec-frontmatter && npm run validate:stories",
+    "generate:story-map": "node scripts/generate-story-map.js"
+  }
+}
