@@ -108,27 +108,30 @@ public class AutoTransitionService : BackgroundService
                 if (updated.Count > 0)
                 {
                     await db.SaveChangesAsync(stoppingToken);
-                    var updatedWorkspaces = updated
-                        .Select(t => t.WorkspaceId)
-                        .Where(id => !string.IsNullOrWhiteSpace(id))
-                        .Select(id => id!)
-                        .Distinct()
-                        .ToList();
+                    var allWorkspaceIds = await db.Workspaces
+                        .AsNoTracking()
+                        .Where(workspace => !workspace.IsDeleted)
+                        .Select(workspace => workspace.Id)
+                        .ToListAsync(stoppingToken);
 
-                    var addressLookup = await transactionView.BuildAddressOwnershipLookupAsync(updated, updatedWorkspaces);
+                    var addressLookup = await transactionView.BuildAddressOwnershipLookupAsync(updated, allWorkspaceIds);
+                    var notifiedWorkspaces = new HashSet<string>(StringComparer.Ordinal);
+
                     foreach (var tx in updated)
                     {
-                        if (string.IsNullOrWhiteSpace(tx.WorkspaceId))
+                        var recipientWorkspaceIds = GetRecipientWorkspaceIds(tx, addressLookup);
+                        foreach (var workspaceId in recipientWorkspaceIds)
                         {
-                            continue;
-                        }
+                            notifiedWorkspaces.Add(workspaceId);
 
-                        await _hub.Clients.Group(tx.WorkspaceId).SendAsync(
-                            "transactionUpserted",
-                            transactionView.MapToAdminDto(tx, addressLookup, tx.WorkspaceId),
-                            stoppingToken);
+                            await _hub.Clients.Group(workspaceId).SendAsync(
+                                "transactionUpserted",
+                                transactionView.MapToAdminDto(tx, addressLookup, workspaceId),
+                                stoppingToken);
+                        }
                     }
-                    foreach (var workspaceId in updatedWorkspaces)
+
+                    foreach (var workspaceId in notifiedWorkspaces)
                     {
                         await _hub.Clients.Group(workspaceId).SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
                         await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated", cancellationToken: stoppingToken);
@@ -145,6 +148,54 @@ public class AutoTransitionService : BackgroundService
 
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
+    }
+
+    private static IReadOnlyCollection<string> GetRecipientWorkspaceIds(
+        Transaction transaction,
+        IReadOnlyDictionary<string, AddressOwnership> addressLookup)
+    {
+        var recipients = new HashSet<string>(StringComparer.Ordinal);
+        var sourceOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
+        var destinationOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
+
+        if (!string.IsNullOrWhiteSpace(transaction.WorkspaceId))
+        {
+            recipients.Add(transaction.WorkspaceId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(sourceOwnership?.WorkspaceId))
+        {
+            recipients.Add(sourceOwnership.WorkspaceId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(destinationOwnership?.WorkspaceId))
+        {
+            recipients.Add(destinationOwnership.WorkspaceId);
+        }
+
+        return recipients;
+    }
+
+    private static AddressOwnership? ResolveOwnership(
+        IReadOnlyDictionary<string, AddressOwnership> addressLookup,
+        string assetId,
+        string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        if (addressLookup.TryGetValue(AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: true), out var ownership))
+        {
+            return ownership;
+        }
+
+        return addressLookup.TryGetValue(
+            AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: false),
+            out var caseInsensitiveOwnership)
+            ? caseInsensitiveOwnership
+            : null;
     }
 
 }

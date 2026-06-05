@@ -7,6 +7,11 @@ type Workspace = {
   name: string;
 };
 
+type PendingTransactionsSummary = {
+  count: number;
+  items: Array<{ id: string }>;
+};
+
 type AdminEnvelope<T> = {
   data: T;
   error?: { message: string; code: string } | null;
@@ -44,6 +49,10 @@ async function apiPost<T>(
 
 async function getWorkspaces(request: APIRequestContext) {
   return apiGet<Workspace[]>(request, '/admin/workspaces');
+}
+
+async function getPendingTransactionsSummary(request: APIRequestContext) {
+  return apiGet<PendingTransactionsSummary>(request, '/admin/transactions/pending-summary');
 }
 
 async function createWorkspace(request: APIRequestContext, name: string) {
@@ -107,6 +116,7 @@ test('shows all-workspaces pending transactions in the header dropdown and navig
   request,
 }) => {
   await ensureDefaultWorkspace(request);
+  const initialPendingSummary = await getPendingTransactionsSummary(request);
 
   const senderWorkspace = await createWorkspace(request, `Pending Sender ${Date.now()}`);
   const receiverWorkspace = await createWorkspace(request, `Pending Receiver ${Date.now()}`);
@@ -146,7 +156,9 @@ test('shows all-workspaces pending transactions in the header dropdown and navig
   await primeAdminSession(page, receiverWorkspace.id);
   await page.goto('/transactions');
 
-  const pendingTrigger = page.getByRole('button', { name: '2 pending transactions' });
+  const pendingTrigger = page.getByRole('button', {
+    name: `${initialPendingSummary.count + 2} pending transactions`,
+  });
   await expect(pendingTrigger).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.workspace-select')).toHaveValue(receiverWorkspace.id);
 
@@ -177,8 +189,65 @@ test('shows all-workspaces pending transactions in the header dropdown and navig
 
   await cancelTransaction(request, senderWorkspace.id, crossWorkspaceTransaction.id);
 
-  await expect(page.getByRole('button', { name: '1 pending transactions' })).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: '1 pending transactions' }).click();
+  const updatedPendingTrigger = page.getByRole('button', {
+    name: `${initialPendingSummary.count + 1} pending transactions`,
+  });
+  await expect(updatedPendingTrigger).toBeVisible({ timeout: 15_000 });
+  await updatedPendingTrigger.click();
   await expect(page.locator('.pending-transactions-dropdown')).toBeVisible();
   await expect(page.locator('.pending-transactions-dropdown')).not.toContainText(receiverWorkspace.name);
+});
+
+test('shows a new cross-workspace transaction in the selected workspace list without a reload', async ({
+  page,
+  request,
+}) => {
+  await ensureDefaultWorkspace(request);
+
+  const senderWorkspace = await createWorkspace(request, `Realtime Sender ${Date.now()}`);
+  const receiverWorkspace = await createWorkspace(request, `Realtime Receiver ${Date.now()}`);
+
+  const senderVault = await createVault(request, senderWorkspace.id, 'Realtime Sender Vault');
+  const receiverVault = await createVault(request, receiverWorkspace.id, 'Realtime Receiver Vault');
+  const senderWallet = await createWallet(request, senderWorkspace.id, senderVault.id, 'BTC');
+  const receiverWallet = await createWallet(request, receiverWorkspace.id, receiverVault.id, 'BTC');
+
+  const senderAddress = senderWallet.depositAddress;
+  const receiverAddress = receiverWallet.depositAddress;
+  expect(senderAddress).toBeTruthy();
+  expect(receiverAddress).toBeTruthy();
+
+  await primeAdminSession(page, receiverWorkspace.id);
+  await page.goto('/transactions');
+  await expect(page.locator('.workspace-select')).toHaveValue(receiverWorkspace.id);
+
+  await createTransaction(request, senderWorkspace.id, {
+    assetId: 'BTC',
+    sourceAddress: 'external-funder',
+    destinationAddress: senderAddress,
+    amount: '10',
+  });
+
+  const createdTransaction = await createTransaction(request, senderWorkspace.id, {
+    assetId: 'BTC',
+    sourceAddress: senderAddress,
+    destinationAddress: receiverAddress,
+    amount: '3.5',
+    initialState: 'SUBMITTED',
+  });
+
+  const [, rawTransactionId] = createdTransaction.id.split('::');
+  const receiverTransactionId = `${receiverWorkspace.id}::${rawTransactionId}`;
+  const transactionRow = page.locator('tbody tr')
+    .filter({ hasText: '3.5000' })
+    .filter({ hasText: 'Realtime Receiver Vault' });
+
+  await expect(transactionRow).toBeVisible({ timeout: 15_000 });
+  await expect(transactionRow).toContainText('SUBMITTED');
+  await expect(transactionRow).toContainText('BTC');
+
+  await transactionRow.click();
+  await expect(page).toHaveURL(new RegExp(`/transactions/${encodeURIComponent(receiverTransactionId)}$`));
+  await expect(page.locator('.detail-panel')).toContainText(receiverTransactionId);
+  await expect(page.locator('.detail-panel')).toContainText(receiverAddress!);
 });

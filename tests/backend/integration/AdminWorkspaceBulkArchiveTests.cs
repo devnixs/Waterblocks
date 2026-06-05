@@ -1,3 +1,7 @@
+using System.Collections.Concurrent;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Waterblocks.Api.Infrastructure.Db;
@@ -123,5 +127,70 @@ public class AdminWorkspaceBulkArchiveTests : IClassFixture<IntegrationTestFixtu
 
         Assert.False(storedWorkspaces[defaultWorkspace.Data!.Id].IsDeleted);
         Assert.False(storedWorkspaces[alphaWorkspace.Data!.Id].IsDeleted);
+    }
+
+    [Fact]
+    public async Task WorkspaceRealtime_EmitsAdminWideEvent_WhenVisibleWorkspaceListChanges()
+    {
+        using var factory = _fixture.CreateFactory(new Dictionary<string, string?>
+        {
+            ["ARCHIVE_ALL_WORKSPACES_ENABLED"] = "true",
+        });
+        var client = new AdminApiClient(factory.CreateClient());
+
+        var receivedEvents = new ConcurrentQueue<DateTimeOffset>();
+        var firstEvent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondEvent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thirdEvent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var connection = BuildHubConnection(factory, workspaceId: null);
+        connection.On("workspacesUpdated", () =>
+        {
+            receivedEvents.Enqueue(DateTimeOffset.UtcNow);
+            if (receivedEvents.Count == 1)
+            {
+                firstEvent.TrySetResult();
+            }
+            else if (receivedEvents.Count == 2)
+            {
+                secondEvent.TrySetResult();
+            }
+            else
+            {
+                thirdEvent.TrySetResult();
+            }
+        });
+
+        await connection.StartAsync();
+
+        var createdWorkspace = await client.CreateWorkspaceAsync($"Realtime-{Guid.NewGuid():N}"[..18]);
+        createdWorkspace.IsSuccess.Should().BeTrue();
+        await firstEvent.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        var archivedWorkspace = await client.CreateWorkspaceAsync($"Archive-{Guid.NewGuid():N}"[..17]);
+        archivedWorkspace.IsSuccess.Should().BeTrue();
+        await secondEvent.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        var archiveResponse = await client.ArchiveAllWorkspacesAsync();
+        archiveResponse.IsSuccess.Should().BeTrue();
+        await thirdEvent.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        receivedEvents.Count.Should().BeGreaterOrEqualTo(3);
+    }
+
+    private static HubConnection BuildHubConnection(TestWebApplicationFactory factory, string? workspaceId)
+    {
+        var hubPath = string.IsNullOrWhiteSpace(workspaceId)
+            ? "/hubs/admin"
+            : $"/hubs/admin?workspaceId={Uri.EscapeDataString(workspaceId)}";
+        var hubUrl = new Uri(factory.Server.BaseAddress!, hubPath);
+
+        return new HubConnectionBuilder()
+            .WithUrl(hubUrl, options =>
+            {
+                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
     }
 }

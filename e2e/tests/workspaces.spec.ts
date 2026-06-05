@@ -27,6 +27,13 @@ async function createWorkspace(request: APIRequestContext, name: string) {
   return body.data;
 }
 
+async function archiveWorkspace(request: APIRequestContext, workspaceId: string) {
+  const response = await request.delete(`${apiUrl}/admin/workspaces/${encodeURIComponent(workspaceId)}`);
+  expect(response.ok()).toBeTruthy();
+  const body = await response.json() as { data: boolean };
+  expect(body.data).toBeTruthy();
+}
+
 async function ensureDefaultWorkspace(request: APIRequestContext) {
   const existing = await getWorkspaces(request);
   const defaultWorkspace = existing.find((workspace) => workspace.name === 'Default');
@@ -115,4 +122,27 @@ test('hides the bulk archive button when the runtime config does not enable it',
   await expect(
     page.getByRole('button', { name: 'Archive all workspaces' })
   ).toHaveCount(0);
+});
+
+test('updates the workspace selector and page cards live when workspaces change', async ({
+  page,
+  request,
+}) => {
+  const defaultWorkspace = await ensureDefaultWorkspace(request);
+  const liveWorkspaceName = `Live Workspace ${Date.now()}`;
+
+  await primeAdminSession(page, defaultWorkspace.id, true);
+  await page.goto('/workspaces');
+  await expect(workspaceCardById(page, defaultWorkspace.id)).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.workspace-select')).toHaveValue(defaultWorkspace.id);
+
+  const createdWorkspace = await createWorkspace(request, liveWorkspaceName);
+
+  await expect(workspaceCard(page, liveWorkspaceName)).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.workspace-select')).toContainText(liveWorkspaceName);
+
+  await archiveWorkspace(request, createdWorkspace.id);
+
+  await expect(workspaceCard(page, liveWorkspaceName)).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.locator('.workspace-select')).not.toContainText(liveWorkspaceName);
 });

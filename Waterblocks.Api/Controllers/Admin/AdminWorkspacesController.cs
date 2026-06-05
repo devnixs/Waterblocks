@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.SignalR;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Dtos.Admin;
+using Waterblocks.Api.Hubs;
 using Waterblocks.Api.Models;
 
 namespace Waterblocks.Api.Controllers.Admin;
@@ -15,17 +17,20 @@ public class AdminWorkspacesController : AdminControllerBase
     private readonly FireblocksDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AdminWorkspacesController> _logger;
+    private readonly IHubContext<AdminHub> _hub;
 
     public AdminWorkspacesController(
         FireblocksDbContext context,
         IConfiguration configuration,
         ILogger<AdminWorkspacesController> logger,
+        IHubContext<AdminHub> hub,
         WorkspaceContext workspace)
         : base(workspace)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _hub = hub;
     }
 
     [HttpGet]
@@ -80,6 +85,7 @@ public class AdminWorkspacesController : AdminControllerBase
             request.AutoTransitionEnabled);
 
         workspace.ApiKeys.Add(apiKey);
+        await NotifyWorkspacesUpdatedAsync();
         return Ok(AdminResponse<AdminWorkspaceDto>.Success(MapToDto(workspace)));
     }
 
@@ -101,6 +107,7 @@ public class AdminWorkspacesController : AdminControllerBase
 
         _logger.LogInformation("Soft-deleted workspace {WorkspaceId}", id);
 
+        await NotifyWorkspacesUpdatedAsync();
         return Ok(AdminResponse<bool>.Success(true));
     }
 
@@ -128,7 +135,17 @@ public class AdminWorkspacesController : AdminControllerBase
 
         _logger.LogInformation("Bulk soft-deleted {WorkspaceCount} workspaces", workspaces.Count);
 
+        if (workspaces.Count > 0)
+        {
+            await NotifyWorkspacesUpdatedAsync();
+        }
+
         return Ok(AdminResponse<bool>.Success(true));
+    }
+
+    private Task NotifyWorkspacesUpdatedAsync()
+    {
+        return _hub.Clients.Group(AdminHub.WorkspacesGroup).SendAsync("workspacesUpdated");
     }
 
     private static void SoftDeleteWorkspace(Workspace workspace, DateTimeOffset deletedAt)

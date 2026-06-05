@@ -60,6 +60,10 @@ export function useRealtimeUpdates(workspaceId?: string) {
       queryClient.invalidateQueries({ queryKey: ['pendingTransactionsSummary'] });
     });
 
+    connection.on('workspacesUpdated', () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    });
+
     const scheduleReconnect = () => {
       if (stoppedRef.current) return;
       setStatus('reconnecting');
