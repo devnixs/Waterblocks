@@ -131,6 +131,7 @@ public sealed class TransactionViewService : ITransactionViewService
         var addresses = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
+            .ThenInclude(v => v.Workspace)
             .Where(a =>
                 workspaceIdList.Contains(a.Wallet.VaultAccount.WorkspaceId) &&
                 assetIds.Contains(a.Wallet.AssetId))
@@ -178,6 +179,7 @@ public sealed class TransactionViewService : ITransactionViewService
         var addressEntities = await _context.Addresses
             .Include(a => a.Wallet)
             .ThenInclude(w => w.VaultAccount)
+            .ThenInclude(v => v.Workspace)
             .Join(
                 _context.Assets.Where(a =>
                     a.AssetId == blockchainId ||
@@ -206,7 +208,12 @@ public sealed class TransactionViewService : ITransactionViewService
             var key = BuildAddressKey(assetId, addressEntity.AddressValue);
             if (!lookup.ContainsKey(key))
             {
-                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+                lookup[key] = new AddressOwnership(
+                    vault.Id,
+                    vault.Name,
+                    vault.WorkspaceId,
+                    vault.Workspace.Name,
+                    addressEntity.Description);
             }
 
             if (!isCaseSensitive)
@@ -214,7 +221,12 @@ public sealed class TransactionViewService : ITransactionViewService
                 var caseInsensitiveKey = BuildCaseInsensitiveAddressKey(assetId, addressEntity.AddressValue);
                 if (!lookup.ContainsKey(caseInsensitiveKey))
                 {
-                    lookup[caseInsensitiveKey] = new AddressOwnership(vault.Id, vault.Name);
+                    lookup[caseInsensitiveKey] = new AddressOwnership(
+                        vault.Id,
+                        vault.Name,
+                        vault.WorkspaceId,
+                        vault.Workspace.Name,
+                        addressEntity.Description);
                 }
             }
         }
@@ -403,7 +415,12 @@ public sealed class TransactionViewService : ITransactionViewService
             var key = BuildAddressKey(wallet.AssetId, address.AddressValue);
             if (!lookup.ContainsKey(key))
             {
-                lookup[key] = new AddressOwnership(vault.Id, vault.Name);
+                lookup[key] = new AddressOwnership(
+                    vault.Id,
+                    vault.Name,
+                    vault.WorkspaceId,
+                    vault.Workspace.Name,
+                    address.Description);
             }
 
             if (!isCaseSensitive)
@@ -411,7 +428,12 @@ public sealed class TransactionViewService : ITransactionViewService
                 var caseInsensitiveKey = BuildCaseInsensitiveAddressKey(wallet.AssetId, address.AddressValue);
                 if (!lookup.ContainsKey(caseInsensitiveKey))
                 {
-                    lookup[caseInsensitiveKey] = new AddressOwnership(vault.Id, vault.Name);
+                    lookup[caseInsensitiveKey] = new AddressOwnership(
+                        vault.Id,
+                        vault.Name,
+                        vault.WorkspaceId,
+                        vault.Workspace.Name,
+                        address.Description);
                 }
             }
         }
@@ -430,4 +452,9 @@ public sealed class TransactionViewService : ITransactionViewService
     }
 }
 
-public sealed record AddressOwnership(string VaultAccountId, string VaultAccountName);
+public sealed record AddressOwnership(
+    string VaultAccountId,
+    string VaultAccountName,
+    string WorkspaceId,
+    string WorkspaceName,
+    string? AddressDescription);

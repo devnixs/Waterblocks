@@ -133,6 +133,9 @@ public class AutoTransitionService : BackgroundService
                         await _hub.Clients.Group(workspaceId).SendAsync("transactionsUpdated", cancellationToken: stoppingToken);
                         await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated", cancellationToken: stoppingToken);
                     }
+
+                    await _hub.Clients.Group(AdminHub.PendingTransactionsGroup)
+                        .SendAsync("pendingTransactionsUpdated", cancellationToken: stoppingToken);
                 }
             }
             catch (Exception ex)

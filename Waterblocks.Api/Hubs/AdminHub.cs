@@ -4,8 +4,12 @@ namespace Waterblocks.Api.Hubs;
 
 public class AdminHub : Hub
 {
+    public const string PendingTransactionsGroup = "pending-transactions";
+
     public override async Task OnConnectedAsync()
     {
+        await Groups.AddToGroupAsync(Context.ConnectionId, PendingTransactionsGroup);
+
         var workspaceId = Context.GetHttpContext()?.Request.Query["workspaceId"].FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(workspaceId))
         {
@@ -17,6 +21,8 @@ public class AdminHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, PendingTransactionsGroup);
+
         var workspaceId = Context.GetHttpContext()?.Request.Query["workspaceId"].FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(workspaceId))
         {

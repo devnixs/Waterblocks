@@ -3,6 +3,7 @@ import type {
   AdminResponse,
   AdminTransaction,
   AdminTransactionsPage,
+  PendingTransactionsSummary,
   AdminVault,
   CreateTransactionRequest,
   FailTransactionRequest,
@@ -32,8 +33,12 @@ function getWorkspaceId() {
   }
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<AdminResponse<T>> {
-  const workspaceId = endpoint.startsWith('/admin') ? getWorkspaceId() : '';
+async function fetchApi<T>(
+  endpoint: string,
+  options?: RequestInit,
+  includeWorkspaceHeader = endpoint.startsWith('/admin'),
+): Promise<AdminResponse<T>> {
+  const workspaceId = includeWorkspaceHeader ? getWorkspaceId() : '';
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -76,6 +81,10 @@ export const adminApi = {
     if (params.hash) search.set('hash', params.hash);
 
     return fetchApi(`/admin/transactions/paged?${search.toString()}`);
+  },
+
+  async getPendingTransactionsSummary(): Promise<AdminResponse<PendingTransactionsSummary>> {
+    return fetchApi('/admin/transactions/pending-summary', undefined, false);
   },
 
   async getTransaction(id: string): Promise<AdminResponse<AdminTransaction>> {
@@ -252,6 +261,10 @@ export const adminApi = {
 
   async deleteWorkspace(id: string): Promise<AdminResponse<boolean>> {
     return fetchApi(`/admin/workspaces/${id}`, { method: 'DELETE' });
+  },
+
+  async archiveAllWorkspaces(): Promise<AdminResponse<boolean>> {
+    return fetchApi('/admin/workspaces/archive-all', { method: 'POST' });
   },
 
   // Fee estimation (uses Fireblocks-compatible endpoint)

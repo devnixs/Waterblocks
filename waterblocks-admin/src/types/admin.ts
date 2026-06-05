@@ -42,6 +42,27 @@ export interface AdminTransactionsPage {
   pageSize: number;
 }
 
+export interface PendingTransactionSummaryItem {
+  id: string;
+  amount: string;
+  assetId: string;
+  state: TransactionState;
+  sourceWorkspaceId?: string;
+  sourceWorkspaceName?: string;
+  sourceAddressName?: string;
+  sourceAddress?: string;
+  destinationWorkspaceId?: string;
+  destinationWorkspaceName?: string;
+  destinationAddressName?: string;
+  destinationAddress: string;
+  createdAt: string;
+}
+
+export interface PendingTransactionsSummary {
+  count: number;
+  items: PendingTransactionSummaryItem[];
+}
+
 export type TransactionState =
   | 'SUBMITTED'
   | 'PENDING_SIGNATURE'

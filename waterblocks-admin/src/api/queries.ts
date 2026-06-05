@@ -60,6 +60,17 @@ export function useTransactionsPaged(params: {
   });
 }
 
+export function usePendingTransactionsSummary() {
+  return useQuery({
+    queryKey: ['pendingTransactionsSummary'],
+    queryFn: async () => {
+      const response = await adminApi.getPendingTransactionsSummary();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || { count: 0, items: [] };
+    },
+  });
+}
+
 export function useTransaction(id: string) {
   const workspaceId = getWorkspaceId();
   return useQuery({
@@ -337,6 +348,16 @@ export function useDeleteWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.deleteWorkspace(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    },
+  });
+}
+
+export function useArchiveAllWorkspaces() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => adminApi.archiveAllWorkspaces(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     },

@@ -1,5 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTransactionsPaged, useTransitionTransaction, useCreateTransaction, useVaults, useAssets, useEstimateFee, useAdminAssets } from '../api/queries';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  useTransactionsPaged,
+  useTransitionTransaction,
+  useCreateTransaction,
+  useVaults,
+  useAssets,
+  useEstimateFee,
+  useAdminAssets,
+  useTransaction,
+} from '../api/queries';
 import { adminApi } from '../api/adminClient';
 import { useToast } from '../components/ToastProvider';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -15,6 +25,8 @@ import { TransactionsTable } from './transactions/TransactionsTable';
 import type { TransactionEndpointType } from './transactions/types';
 
 export default function TransactionsPage() {
+  const navigate = useNavigate();
+  const { transactionId } = useParams();
   const [selectedTx, setSelectedTx] = useState<AdminTransaction | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
@@ -49,6 +61,7 @@ export default function TransactionsPage() {
   const { data: assets } = useAssets();
   const { data: adminAssets } = useAdminAssets();
   const { data: feeEstimates, isLoading: feeEstimatesLoading } = useEstimateFee(assetId || undefined);
+  const routeTransaction = useTransaction(transactionId || '');
 
   const transition = useTransitionTransaction();
 
@@ -135,6 +148,18 @@ export default function TransactionsPage() {
     }
   }, [pagedTransactions, selectedTx]);
 
+  useEffect(() => {
+    if (!transactionId) {
+      return;
+    }
+
+    if (routeTransaction.data) {
+      setSelectedTx(routeTransaction.data);
+    } else if (routeTransaction.error) {
+      setSelectedTx(null);
+    }
+  }, [transactionId, routeTransaction.data, routeTransaction.error]);
+
   useKeyboardShortcuts(
     [
       {
@@ -161,7 +186,7 @@ export default function TransactionsPage() {
         key: 'Enter',
         handler: () => {
           if (selectedIndex >= 0 && pagedTransactions[selectedIndex]) {
-            setSelectedTx(pagedTransactions[selectedIndex]);
+            openTransaction(pagedTransactions[selectedIndex]);
           }
         },
         description: 'Open detail panel',
@@ -526,6 +551,18 @@ export default function TransactionsPage() {
     return actions;
   };
 
+  const openTransaction = (transaction: AdminTransaction) => {
+    setSelectedTx(transaction);
+    navigate(`/transactions/${encodeURIComponent(transaction.id)}`);
+  };
+
+  const closeTransactionPanel = () => {
+    setSelectedTx(null);
+    if (transactionId) {
+      navigate('/transactions');
+    }
+  };
+
   return (
     <div>
       <TransactionsHeader
@@ -611,7 +648,7 @@ export default function TransactionsPage() {
         transactions={pagedTransactions}
         selectedIds={selectedIds}
         selectedIndex={selectedIndex}
-        onSelect={setSelectedTx}
+        onSelect={openTransaction}
         onToggleSelection={toggleSelection}
         onToggleAll={(checked) => {
           if (checked && pagedTransactions.length > 0) {
@@ -634,7 +671,7 @@ export default function TransactionsPage() {
       {selectedTx && (
         <TransactionDetailPanel
           transaction={selectedTx}
-          onClose={() => setSelectedTx(null)}
+          onClose={closeTransactionPanel}
           getAvailableActions={getAvailableActions}
           onTransition={handleTransition}
         />

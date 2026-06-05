@@ -283,6 +283,113 @@ textarea:focus {
   border-color: rgba(239, 68, 68, 0.2);
 }
 
+.pending-transactions {
+  position: relative;
+}
+
+.pending-transactions-trigger {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-md);
+  color: #bfdbfe;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.pending-transactions-trigger:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #dbeafe;
+}
+
+.pending-transactions-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  width: min(32rem, 80vw);
+  max-height: 24rem;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  z-index: 200;
+}
+
+.pending-transaction-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-3);
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.pending-transaction-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.pending-transaction-row + .pending-transaction-row {
+  margin-top: var(--space-2);
+}
+
+.pending-transaction-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pending-transaction-amount {
+  font-weight: 700;
+}
+
+.pending-transaction-path {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.pending-transaction-endpoint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.pending-transaction-label {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pending-transaction-address {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.pending-transactions-empty {
+  color: var(--text-secondary);
+  padding: var(--space-4);
+  text-align: center;
+}
+
 /* --- Tables --- */
 table {
   width: 100%;
