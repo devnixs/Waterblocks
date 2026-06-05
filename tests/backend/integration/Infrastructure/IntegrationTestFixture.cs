@@ -149,6 +149,12 @@ public class IntegrationTestFixture : IAsyncLifetime
         return client;
     }
 
+    public TestWebApplicationFactory CreateFactory(
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null)
+    {
+        return new TestWebApplicationFactory(_database!.ConnectionString, configurationOverrides);
+    }
+
     public async Task DisposeAsync()
     {
         HttpClient?.Dispose();

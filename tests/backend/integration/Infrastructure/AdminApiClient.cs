@@ -42,6 +42,18 @@ public class AdminApiClient
         return await DeserializeResponse<List<WorkspaceDto>>(response);
     }
 
+    public async Task<AdminResponse<bool>> DeleteWorkspaceAsync(string workspaceId)
+    {
+        var response = await _client.DeleteAsync($"/admin/workspaces/{workspaceId}");
+        return await DeserializeResponse<bool>(response);
+    }
+
+    public async Task<AdminResponse<bool>> ArchiveAllWorkspacesAsync()
+    {
+        var response = await _client.PostAsync("/admin/workspaces/archive-all", null);
+        return await DeserializeResponse<bool>(response);
+    }
+
     // Vaults
     public async Task<AdminResponse<VaultDto>> CreateVaultAsync(string name)
     {
@@ -103,6 +115,27 @@ public class AdminApiClient
     {
         var response = await _client.GetAsync("/admin/transactions");
         return await DeserializeResponse<List<TransactionDto>>(response);
+    }
+
+    public async Task<AdminResponse<PendingTransactionsSummaryDto>> GetPendingTransactionsSummaryAsync()
+    {
+        var workspaceHeader = _client.DefaultRequestHeaders.Contains("X-Workspace-Id")
+            ? _client.DefaultRequestHeaders.GetValues("X-Workspace-Id").FirstOrDefault()
+            : null;
+
+        _client.DefaultRequestHeaders.Remove("X-Workspace-Id");
+        try
+        {
+            var response = await _client.GetAsync("/admin/transactions/pending-summary");
+            return await DeserializeResponse<PendingTransactionsSummaryDto>(response);
+        }
+        finally
+        {
+            if (!string.IsNullOrWhiteSpace(workspaceHeader))
+            {
+                _client.DefaultRequestHeaders.Add("X-Workspace-Id", workspaceHeader);
+            }
+        }
     }
 
     // Assets
@@ -287,6 +320,29 @@ public class TransactionStateDto
 {
     public string Id { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
+}
+
+public class PendingTransactionsSummaryDto
+{
+    public int Count { get; set; }
+    public List<PendingTransactionSummaryItemDto> Items { get; set; } = new();
+}
+
+public class PendingTransactionSummaryItemDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Amount { get; set; } = "0";
+    public string AssetId { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string? SourceWorkspaceId { get; set; }
+    public string? SourceWorkspaceName { get; set; }
+    public string? SourceAddressName { get; set; }
+    public string? SourceAddress { get; set; }
+    public string? DestinationWorkspaceId { get; set; }
+    public string? DestinationWorkspaceName { get; set; }
+    public string? DestinationAddressName { get; set; }
+    public string DestinationAddress { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
 }
 
 public class CreateTransactionRequest

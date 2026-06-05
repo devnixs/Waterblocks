@@ -38,6 +38,29 @@ public class AdminTransactionsPageDto
     public int PageSize { get; set; }
 }
 
+public class PendingTransactionsSummaryDto
+{
+    public int Count { get; set; }
+    public List<PendingTransactionSummaryItemDto> Items { get; set; } = new();
+}
+
+public class PendingTransactionSummaryItemDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Amount { get; set; } = "0";
+    public string AssetId { get; set; } = string.Empty;
+    public string State { get; set; } = "SUBMITTED";
+    public string? SourceWorkspaceId { get; set; }
+    public string? SourceWorkspaceName { get; set; }
+    public string? SourceAddressName { get; set; }
+    public string? SourceAddress { get; set; }
+    public string? DestinationWorkspaceId { get; set; }
+    public string? DestinationWorkspaceName { get; set; }
+    public string? DestinationAddressName { get; set; }
+    public string DestinationAddress { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
 public class CreateAdminTransactionRequestDto
 {
     public string? Type { get; set; } = "OUTGOING"; // optional, derived from source/destination

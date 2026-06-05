@@ -1,14 +1,22 @@
 import { useState } from 'react';
-import { useWorkspaces, useCreateWorkspace, useDeleteWorkspace } from '../api/queries';
+import {
+  useWorkspaces,
+  useCreateWorkspace,
+  useDeleteWorkspace,
+  useArchiveAllWorkspaces,
+} from '../api/queries';
 import { useToast } from '../components/ToastProvider';
+import { getArchiveAllWorkspacesEnabled } from '../config/runtimeConfig';
 
 export default function WorkspacesPage() {
   const { data: workspaces, isLoading, error } = useWorkspaces();
   const createWorkspace = useCreateWorkspace();
   const deleteWorkspace = useDeleteWorkspace();
+  const archiveAllWorkspaces = useArchiveAllWorkspaces();
   const { showToast } = useToast();
   const [name, setName] = useState('');
   const [autoTransitionEnabled, setAutoTransitionEnabled] = useState(false);
+  const archiveAllWorkspacesEnabled = getArchiveAllWorkspacesEnabled();
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -43,6 +51,21 @@ export default function WorkspacesPage() {
     showToast({ title: 'Workspace archived', type: 'success', duration: 2500 });
   };
 
+  const handleArchiveAll = async () => {
+    const confirmed = confirm(
+      'Archive all workspaces except Default? Archived workspaces are hidden but data is kept.'
+    );
+    if (!confirmed) return;
+
+    const result = await archiveAllWorkspaces.mutateAsync();
+    if (result.error) {
+      showToast({ title: `Error: ${result.error.message}`, type: 'error', duration: 5000 });
+      return;
+    }
+
+    showToast({ title: 'Workspaces archived', type: 'success', duration: 2500 });
+  };
+
   if (isLoading) return <div className="p-8 text-center text-muted">Loading workspaces...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
@@ -50,6 +73,15 @@ export default function WorkspacesPage() {
     <div>
       <div className="flex-between mb-4">
         <h2>Workspaces <span className="text-muted text-sm">({workspaces?.length || 0})</span></h2>
+        {archiveAllWorkspacesEnabled && (
+          <button
+            className="btn btn-danger"
+            onClick={handleArchiveAll}
+            disabled={archiveAllWorkspaces.isPending}
+          >
+            Archive all workspaces
+          </button>
+        )}
       </div>
 
       <form

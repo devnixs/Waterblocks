@@ -34,5 +34,6 @@ public sealed class AdminTransactionNotifier : IAdminTransactionNotifier
     {
         await _hub.Clients.Group(workspaceId).SendAsync("transactionsUpdated");
         await _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated");
+        await _hub.Clients.Group(AdminHub.PendingTransactionsGroup).SendAsync("pendingTransactionsUpdated");
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Admin;
 using Waterblocks.Api.Infrastructure;
@@ -11,6 +12,7 @@ public interface IAdminTransactionService
 {
     Task<AdminServiceResult<List<AdminTransactionDto>>> GetTransactionsAsync();
     Task<AdminServiceResult<AdminTransactionsPageDto>> GetTransactionsPagedAsync(int pageIndex, int pageSize, string? assetId, string? transactionId, string? hash);
+    Task<AdminServiceResult<PendingTransactionsSummaryDto>> GetPendingTransactionsSummaryAsync();
     Task<AdminServiceResult<AdminTransactionDto>> GetTransactionAsync(string id);
     Task<AdminServiceResult<AdminTransactionDto>> CreateTransactionAsync(CreateAdminTransactionRequestDto request);
     Task<AdminServiceResult<TransactionStateDto>> ApproveAsync(string id);
@@ -141,6 +143,48 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         };
 
         return Success(page);
+    }
+
+    public async Task<AdminServiceResult<PendingTransactionsSummaryDto>> GetPendingTransactionsSummaryAsync()
+    {
+        var activeWorkspaces = await _context.Workspaces
+            .AsNoTracking()
+            .Where(workspace => !workspace.IsDeleted)
+            .Select(workspace => new { workspace.Id, workspace.Name })
+            .ToListAsync();
+
+        if (activeWorkspaces.Count == 0)
+        {
+            return Success(new PendingTransactionsSummaryDto());
+        }
+
+        var activeWorkspaceIds = activeWorkspaces
+            .Select(workspace => workspace.Id)
+            .ToList();
+
+        var pendingTransactions = await _context.Transactions
+            .AsNoTracking()
+            .Where(transaction => TransactionStateMachine.Instance.NonTerminalStates.Contains(transaction.State))
+            .OrderByDescending(transaction => transaction.CreatedAt)
+            .ToListAsync();
+
+        if (pendingTransactions.Count == 0)
+        {
+            return Success(new PendingTransactionsSummaryDto());
+        }
+
+        var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(pendingTransactions, activeWorkspaceIds);
+        var items = pendingTransactions
+            .Select(transaction => MapPendingSummaryItem(transaction, addressLookup))
+            .Where(item => item != null)
+            .Select(item => item!)
+            .ToList();
+
+        return Success(new PendingTransactionsSummaryDto
+        {
+            Count = items.Count,
+            Items = items,
+        });
     }
 
     public async Task<AdminServiceResult<AdminTransactionDto>> GetTransactionAsync(string id)
@@ -672,6 +716,58 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
                 .FirstOrDefaultAsync();
 
         return canonicalAddress ?? address;
+    }
+
+    private static PendingTransactionSummaryItemDto? MapPendingSummaryItem(
+        Transaction transaction,
+        IReadOnlyDictionary<string, AddressOwnership> addressLookup)
+    {
+        var sourceOwnership = ResolveSummaryOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
+        var destinationOwnership = ResolveSummaryOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
+        var navigationWorkspaceId = sourceOwnership?.WorkspaceId ?? destinationOwnership?.WorkspaceId;
+        if (string.IsNullOrWhiteSpace(navigationWorkspaceId))
+        {
+            return null;
+        }
+
+        return new PendingTransactionSummaryItemDto
+        {
+            Id = TransactionCompositeId.Build(navigationWorkspaceId, transaction.Id),
+            Amount = transaction.Amount.ToString("F18", CultureInfo.InvariantCulture),
+            AssetId = transaction.AssetId,
+            State = transaction.State.ToString(),
+            SourceWorkspaceId = sourceOwnership?.WorkspaceId,
+            SourceWorkspaceName = sourceOwnership?.WorkspaceName,
+            SourceAddressName = sourceOwnership?.AddressDescription,
+            SourceAddress = transaction.SourceAddress,
+            DestinationWorkspaceId = destinationOwnership?.WorkspaceId,
+            DestinationWorkspaceName = destinationOwnership?.WorkspaceName,
+            DestinationAddressName = destinationOwnership?.AddressDescription,
+            DestinationAddress = transaction.DestinationAddress,
+            CreatedAt = transaction.CreatedAt,
+        };
+    }
+
+    private static AddressOwnership? ResolveSummaryOwnership(
+        IReadOnlyDictionary<string, AddressOwnership> addressLookup,
+        string assetId,
+        string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        if (addressLookup.TryGetValue(AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: true), out var ownership))
+        {
+            return ownership;
+        }
+
+        return addressLookup.TryGetValue(
+            AddressComparison.BuildAssetAddressKey(assetId, address, isCaseSensitive: false),
+            out var caseInsensitiveOwnership)
+            ? caseInsensitiveOwnership
+            : null;
     }
 
 }

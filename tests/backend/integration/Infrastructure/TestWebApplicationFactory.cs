@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Waterblocks.Api.Infrastructure.Db;
 
@@ -12,14 +13,26 @@ namespace Waterblocks.IntegrationTests.Infrastructure;
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
+    private readonly IReadOnlyDictionary<string, string?> _configurationOverrides;
 
-    public TestWebApplicationFactory(string connectionString)
+    public TestWebApplicationFactory(
+        string connectionString,
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null)
     {
         _connectionString = connectionString;
+        _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        if (_configurationOverrides.Count > 0)
+        {
+            builder.ConfigureAppConfiguration((_, configurationBuilder) =>
+            {
+                configurationBuilder.AddInMemoryCollection(_configurationOverrides);
+            });
+        }
+
         builder.ConfigureServices(services =>
         {
             // Remove the existing DbContext registration

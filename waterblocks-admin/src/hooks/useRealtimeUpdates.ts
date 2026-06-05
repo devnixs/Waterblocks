@@ -56,6 +56,10 @@ export function useRealtimeUpdates(workspaceId?: string) {
       queryClient.invalidateQueries({ queryKey: ['vault', workspaceId] });
     });
 
+    connection.on('pendingTransactionsUpdated', () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingTransactionsSummary'] });
+    });
+
     const scheduleReconnect = () => {
       if (stoppedRef.current) return;
       setStatus('reconnecting');

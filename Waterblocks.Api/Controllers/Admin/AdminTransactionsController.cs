@@ -37,6 +37,12 @@ public class AdminTransactionsController : AdminControllerBase
             .ToActionResult(this);
     }
 
+    [HttpGet("pending-summary")]
+    public async Task<ActionResult<AdminResponse<PendingTransactionsSummaryDto>>> GetPendingTransactionsSummary()
+    {
+        return (await _transactionService.GetPendingTransactionsSummaryAsync()).ToActionResult(this);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<AdminResponse<AdminTransactionDto>>> GetTransaction(string id)
     {

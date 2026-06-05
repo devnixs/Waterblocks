@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Dtos.Admin;
@@ -12,15 +13,18 @@ namespace Waterblocks.Api.Controllers.Admin;
 public class AdminWorkspacesController : AdminControllerBase
 {
     private readonly FireblocksDbContext _context;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AdminWorkspacesController> _logger;
 
     public AdminWorkspacesController(
         FireblocksDbContext context,
+        IConfiguration configuration,
         ILogger<AdminWorkspacesController> logger,
         WorkspaceContext workspace)
         : base(workspace)
     {
         _context = context;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -92,14 +96,46 @@ public class AdminWorkspacesController : AdminControllerBase
             return NotFound(AdminResponse<bool>.Failure("Workspace not found", "WORKSPACE_NOT_FOUND"));
         }
 
-        workspace.IsDeleted = true;
-        workspace.DeletedAt = DateTimeOffset.UtcNow;
-        workspace.UpdatedAt = DateTimeOffset.UtcNow;
+        SoftDeleteWorkspace(workspace, DateTimeOffset.UtcNow);
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Soft-deleted workspace {WorkspaceId}", id);
 
         return Ok(AdminResponse<bool>.Success(true));
+    }
+
+    [HttpPost("archive-all")]
+    public async Task<ActionResult<AdminResponse<bool>>> ArchiveAllWorkspaces()
+    {
+        if (!_configuration.GetValue<bool>("ARCHIVE_ALL_WORKSPACES_ENABLED"))
+        {
+            return BadRequest(AdminResponse<bool>.Failure(
+                "Archive all workspaces is disabled",
+                "FEATURE_DISABLED"));
+        }
+
+        var archivedAt = DateTimeOffset.UtcNow;
+        var workspaces = await _context.Workspaces
+            .Where(w => !w.IsDeleted && w.Name != "Default")
+            .ToListAsync();
+
+        foreach (var workspace in workspaces)
+        {
+            SoftDeleteWorkspace(workspace, archivedAt);
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Bulk soft-deleted {WorkspaceCount} workspaces", workspaces.Count);
+
+        return Ok(AdminResponse<bool>.Success(true));
+    }
+
+    private static void SoftDeleteWorkspace(Workspace workspace, DateTimeOffset deletedAt)
+    {
+        workspace.IsDeleted = true;
+        workspace.DeletedAt = deletedAt;
+        workspace.UpdatedAt = deletedAt;
     }
 
     private static AdminWorkspaceDto MapToDto(Workspace workspace)
