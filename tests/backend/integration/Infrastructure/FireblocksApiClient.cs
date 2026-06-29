@@ -82,6 +82,24 @@ public class FireblocksApiClient
         return await response.Content.ReadFromJsonAsync<FireblocksVaultAssetDto>(_jsonOptions);
     }
 
+    // Addresses
+    public async Task<FireblocksPaginatedAddressesResponse?> GetAddressesPaginatedAsync(
+        string vaultAccountId,
+        string assetId,
+        int count,
+        string? after = null)
+    {
+        var path = $"/vault/accounts/{vaultAccountId}/{assetId}/addresses_paginated?count={count}";
+        if (!string.IsNullOrEmpty(after))
+        {
+            path += $"&after={Uri.EscapeDataString(after)}";
+        }
+
+        var response = await _client.GetAsync(path);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<FireblocksPaginatedAddressesResponse>(_jsonOptions);
+    }
+
     // Transactions
     public async Task<FireblocksCreateTransactionResponse?> CreateTransactionAsync(FireblocksCreateTransactionRequest request)
     {
@@ -216,6 +234,25 @@ public class FireblocksTransferPeerPathResponse
     public string? Id { get; set; }
     public string? Name { get; set; }
     public string SubType { get; set; } = string.Empty;
+}
+
+public class FireblocksPaginatedAddressesResponse
+{
+    public List<FireblocksPaginatedAddressDto> Addresses { get; set; } = new();
+    public FireblocksPaginatedAddressPagingDto Paging { get; set; } = new();
+}
+
+public class FireblocksPaginatedAddressDto
+{
+    public string Address { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int Bip44AddressIndex { get; set; }
+}
+
+public class FireblocksPaginatedAddressPagingDto
+{
+    public string Before { get; set; } = string.Empty;
+    public string After { get; set; } = string.Empty;
 }
 
 public class FireblocksCreateVaultAssetResponse

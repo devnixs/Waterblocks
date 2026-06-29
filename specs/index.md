@@ -63,7 +63,7 @@ This index lists every spec file in this repository. Each entry shows its area, 
 - Area: `testing-and-qa`
 - Owners: `qa`, `backend`
 - ID prefix: `TEST`
-- Blurb: Integration test harness (per-test isolated Postgres + `WebApplicationFactory<Program>` + workspace/API-key bootstrap) and the integration tests covering address case sensitivity, address generation, admin asset/transaction CRUD and validation, balance tracking, cross-asset address resolution, fee handling, vault archiving, wallet address sharing, and workspace isolation.
+- Blurb: Integration test harness (per-test isolated Postgres + `WebApplicationFactory<Program>` + workspace/API-key bootstrap) and the integration tests covering address case sensitivity, address generation, address pagination (the `addresses_paginated` infinite-loop regression), admin asset/transaction CRUD and validation, balance tracking, cross-asset address resolution, fee handling, vault archiving, wallet address sharing, and workspace isolation.
 
 ## Deployment & Ops
 

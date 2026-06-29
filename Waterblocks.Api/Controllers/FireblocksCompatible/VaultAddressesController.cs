@@ -142,30 +142,25 @@ public class VaultAddressesController : ControllerBase
             .ThenBy(a => a.Id)
             .ToList();
 
-        // Apply cursor-based pagination
-        IEnumerable<Address> filteredAddresses = allAddresses;
-
-        if (!string.IsNullOrEmpty(after))
-        {
-            // Parse the after cursor (using BIP44 index as cursor)
-            if (int.TryParse(after, out var afterIndex))
-            {
-                filteredAddresses = filteredAddresses.Where(a => (a.Bip44AddressIndex ?? int.MaxValue) > afterIndex);
-            }
-        }
-
-        if (!string.IsNullOrEmpty(before))
-        {
-            // Parse the before cursor (using BIP44 index as cursor)
-            if (int.TryParse(before, out var beforeIndex))
-            {
-                filteredAddresses = filteredAddresses.Where(a => (a.Bip44AddressIndex ?? int.MaxValue) < beforeIndex);
-            }
-        }
-
+        // Offset-based cursor pagination. The BIP44 index is NOT a safe cursor:
+        // it is nullable (e.g. the "Permanent" address has no index) and not
+        // guaranteed unique, so using it as a cursor can produce a non-advancing
+        // cursor that loops forever. The offset is derived purely from position
+        // in the stable ordering above, so it always advances and terminates.
         var pageSize = count ?? limit;
-        var addresses = filteredAddresses
+
+        var offset = 0;
+        if (!string.IsNullOrEmpty(after) && int.TryParse(after, out var parsedOffset) && parsedOffset > 0)
+        {
+            offset = Math.Min(parsedOffset, allAddresses.Count);
+        }
+
+        var page = allAddresses
+            .Skip(offset)
             .Take(pageSize)
+            .ToList();
+
+        var addresses = page
             .Select(a => new VaultWalletAddressDto
             {
                 AssetId = assetId,
@@ -180,15 +175,16 @@ public class VaultAddressesController : ControllerBase
                 Bip44AddressIndex = a.Bip44AddressIndex ?? 0,
             }).ToList();
 
-        // Calculate pagination cursors
+        var nextOffset = offset + page.Count;
+        var hasMore = nextOffset < allAddresses.Count;
+
+        // Calculate pagination cursors. `After` is only set when more pages
+        // remain, and strictly increases, so the client loop is guaranteed to
+        // terminate.
         var paging = new PagingDto
         {
-            Before = addresses.Count > 0
-                ? addresses.First().Bip44AddressIndex.ToString()
-                : string.Empty,
-            After = addresses.Count > 0 && addresses.Count == pageSize
-                ? addresses.Last().Bip44AddressIndex.ToString()
-                : string.Empty,
+            Before = offset > 0 ? offset.ToString() : string.Empty,
+            After = hasMore ? nextOffset.ToString() : string.Empty,
         };
 
         var response = new PaginatedAddressResponseDto
