@@ -33,16 +33,28 @@ Parameters:
   PostgresUsername:
     Type: String
     Default: postgres
-    Description: RDS PostgreSQL master username.
+    Description: RDS PostgreSQL master username. When restoring from a snapshot this must match the credentials stored in the snapshot (it is only used to build the connection string).
   PostgresPassword:
     Type: String
     NoEcho: true
     MinLength: 8
-    Description: RDS PostgreSQL master password.
+    Description: RDS PostgreSQL master password. When restoring from a snapshot this must match the credentials stored in the snapshot (it is only used to build the connection string).
   PostgresDbName:
     Type: String
     Default: waterblocks
-    Description: RDS PostgreSQL database name.
+    Description: RDS PostgreSQL database name. When restoring from a snapshot this must match the database name inside the snapshot (it is only used to build the connection string).
+  PostgresSnapshotIdentifier:
+    Type: String
+    Default: ""
+    Description: >-
+      Optional RDS snapshot to restore the database from (snapshot name for a manual snapshot in this
+      account/region, or a full ARN for automated/shared snapshots). Leave empty to create an empty
+      instance from scratch. When set, DBName / master credentials / engine version / allocated storage
+      come from the snapshot and the corresponding parameters are only used for the connection string.
+  PostgresAllocatedStorage:
+    Type: String
+    Default: "20"
+    Description: Allocated storage in GiB (ignored when restoring from a snapshot).
   BasicAuthUsername:
     Type: String
     Description: Basic auth username for the Admin UI.
@@ -79,6 +91,8 @@ Parameters:
 
 Conditions:
   UseCustomFrontendApiBaseUrl: !Not [!Equals [!Ref FrontendApiBaseUrl, ""]]
+  RestoreFromSnapshot: !Not [!Equals [!Ref PostgresSnapshotIdentifier, ""]]
+  CreateNewDatabase: !Equals [!Ref PostgresSnapshotIdentifier, ""]
 
 Resources:
   InternetGateway:
@@ -199,12 +213,18 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       Engine: postgres
-      EngineVersion: "16"
+      # Engine version, storage size, DB name and master credentials are inherited from the
+      # snapshot when PostgresSnapshotIdentifier is set, so they must be omitted in that case.
+      EngineVersion: !If [CreateNewDatabase, "16", !Ref "AWS::NoValue"]
       DBInstanceClass: !Ref PostgresInstanceType
-      AllocatedStorage: 20
-      DBName: !Ref PostgresDbName
-      MasterUsername: !Ref PostgresUsername
-      MasterUserPassword: !Ref PostgresPassword
+      AllocatedStorage: !If [CreateNewDatabase, !Ref PostgresAllocatedStorage, !Ref "AWS::NoValue"]
+      DBName: !If [CreateNewDatabase, !Ref PostgresDbName, !Ref "AWS::NoValue"]
+      MasterUsername: !If [CreateNewDatabase, !Ref PostgresUsername, !Ref "AWS::NoValue"]
+      MasterUserPassword: !If [CreateNewDatabase, !Ref PostgresPassword, !Ref "AWS::NoValue"]
+      DBSnapshotIdentifier: !If
+        - RestoreFromSnapshot
+        - !Ref PostgresSnapshotIdentifier
+        - !Ref "AWS::NoValue"
       PubliclyAccessible: false
       VPCSecurityGroups:
         - !Ref RdsSecurityGroup
@@ -496,3 +516,9 @@ Outputs:
   PostgresEndpoint:
     Description: RDS endpoint address
     Value: !GetAtt DbInstance.Endpoint.Address
+  PostgresSource:
+    Description: Whether the database was created empty or restored from a snapshot.
+    Value: !If
+      - RestoreFromSnapshot
+      - !Sub "restored-from-snapshot:${PostgresSnapshotIdentifier}"
+      - created-from-scratch
