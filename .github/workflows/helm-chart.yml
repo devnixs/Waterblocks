@@ -1,0 +1,67 @@
+name: Helm chart
+
+run-name: "Helm chart - ${{ github.ref_name }}"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "helm/**"
+      - ".github/workflows/helm-chart.yml"
+  pull_request:
+    paths:
+      - "helm/**"
+      - ".github/workflows/helm-chart.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - name: Lint chart
+        run: helm lint helm/waterblocks
+
+      - name: Render templates
+        run: helm template waterblocks helm/waterblocks --namespace waterblocks
+
+  publish:
+    needs: lint
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - name: Package chart
+        id: package
+        run: |
+          helm package helm/waterblocks --destination packaging/
+          CHART_VERSION="$(helm show chart helm/waterblocks | awk '/^version:/ { print $2 }')"
+          echo "version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          ls -la packaging/
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push chart to OCI registry
+        env:
+          CHART_OCI_REGISTRY: oci://ghcr.io/${{ github.repository }}/charts
+        run: |
+          helm push "packaging/waterblocks-${{ steps.package.outputs.version }}.tgz" "${CHART_OCI_REGISTRY}"

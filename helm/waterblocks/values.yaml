@@ -1,0 +1,81 @@
+nameOverride: ""
+fullnameOverride: ""
+
+namespace:
+  # When false (default), create the namespace with: helm install ... --namespace waterblocks --create-namespace
+  # Set true only if you want Helm to manage the Namespace resource (avoid toggling off later — Helm may delete it).
+  create: false
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    # Either set existingSecret (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DefaultConnection), or username/password/database below.
+    existingSecret: ""
+    username: postgres
+    password: postgres
+    database: waterblocks
+  persistence:
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+
+# Used when postgres.enabled is false — existing PostgreSQL (RDS, Cloud SQL, in-cluster, etc.)
+externalDatabase:
+  # Pre-created Secret with the API connection string (recommended for production)
+  existingSecret: ""
+  secretKey: DefaultConnection
+  # If existingSecret is empty, the chart creates a Secret from the fields below
+  host: ""
+  port: 5432
+  database: waterblocks
+  username: postgres
+  password: ""
+  # Run pg_isready against externalDatabase.host before starting the API
+  waitForReady: true
+
+api:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/devnixs/waterblocks/api
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+
+admin:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/devnixs/waterblocks/admin
+    tag: latest
+    pullPolicy: IfNotPresent
+  config:
+    # Browser-visible API URL. Leave empty to use http://<ingress.hosts.api> when Ingress is enabled.
+    apiBaseUrl: ""
+    archiveAllWorkspacesEnabled: "false"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    # limits:
+    #   memory: 128Mi
+
+ingress:
+  enabled: true
+  # IngressClass resource name on the cluster (e.g. nginx for ingress-nginx, traefik for Traefik).
+  # Must match an existing IngressClass; leave empty only if your controller ignores ingressClassName.
+  className: nginx
+  annotations: {}
+  hosts:
+    admin: admin.waterblocks.local
+    api: api.waterblocks.local
