@@ -61,7 +61,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Push chart to OCI registry
-        env:
-          CHART_OCI_REGISTRY: oci://ghcr.io/${{ github.repository }}/charts
         run: |
-          helm push "packaging/waterblocks-${{ steps.package.outputs.version }}.tgz" "${CHART_OCI_REGISTRY}"
+          REPO_LC="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          helm push "packaging/waterblocks-${{ steps.package.outputs.version }}.tgz" \
+            "oci://ghcr.io/${REPO_LC}/charts"
