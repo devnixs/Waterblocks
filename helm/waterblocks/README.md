@@ -30,7 +30,7 @@ helm upgrade --install waterblocks helm/waterblocks \
 
 On each push to `main` that changes `helm/`, CI packages the chart and publishes it to:
 
-`oci://ghcr.io/devnixs/Waterblocks/charts/waterblocks`
+`oci://ghcr.io/devnixs/waterblocks/charts/waterblocks`
 
 Check the chart version in `helm/waterblocks/Chart.yaml`, then:
 
