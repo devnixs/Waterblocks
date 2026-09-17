@@ -1,0 +1,19 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "waterblocks.postgres.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "waterblocks.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "waterblocks.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+{{- end }}

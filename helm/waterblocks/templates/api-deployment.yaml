@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "waterblocks.api.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "waterblocks.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "waterblocks.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        {{- include "waterblocks.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+    spec:
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        - name: wait-for-postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "waterblocks.postgres.secretName" . }}
+                  key: POSTGRES_USER
+            - name: PGHOST
+              value: {{ include "waterblocks.postgres.fullname" . }}
+            - name: PGPORT
+              value: "5432"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER"; do
+                echo "waiting for postgres..."
+                sleep 2
+              done
+      {{- else if and .Values.externalDatabase.waitForReady .Values.externalDatabase.host }}
+      initContainers:
+        - name: wait-for-postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.externalDatabase.username | quote }}
+            - name: PGHOST
+              value: {{ .Values.externalDatabase.host | quote }}
+            - name: PGPORT
+              value: {{ .Values.externalDatabase.port | default 5432 | quote }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$POSTGRES_USER"; do
+                echo "waiting for external postgres..."
+                sleep 2
+              done
+      {{- end }}
+      containers:
+        - name: api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "waterblocks.database.secretName" . }}
+                  key: {{ include "waterblocks.database.secretKey" . }}
+          readinessProbe:
+            httpGet:
+              path: /Health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /Health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}

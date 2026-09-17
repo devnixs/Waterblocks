@@ -1,0 +1,31 @@
+Waterblocks has been installed.
+
+Namespace: {{ .Release.Namespace }}
+Release:   {{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+
+Add to /etc/hosts (or DNS), pointing at your Ingress controller:
+
+  {{ .Values.ingress.hosts.admin }}
+  {{ .Values.ingress.hosts.api }}
+
+  Admin UI: http://{{ .Values.ingress.hosts.admin }}
+  API:      http://{{ .Values.ingress.hosts.api }}  (health: /Health)
+
+  API_BASE_URL for the admin UI: {{ include "waterblocks.admin.apiBaseUrl" . }}
+
+{{- else }}
+
+Ingress is disabled. Port-forward example:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "waterblocks.api.fullname" . }} 5671:8080
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "waterblocks.admin.fullname" . }} 5173:80
+
+  Set admin.config.apiBaseUrl to http://localhost:5671 and upgrade the release.
+
+{{- end }}
+
+Images:
+  API:   {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+  Admin: {{ .Values.admin.image.repository }}:{{ .Values.admin.image.tag }}
