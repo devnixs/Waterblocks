@@ -338,13 +338,6 @@ export default function TransactionsPage() {
   }, [sourceType, isBtcFamily]);
 
   useEffect(() => {
-    if (sourceType === 'SOURCELESS_EXCHANGE' && destinationType !== 'VAULT') {
-      setDestinationType('VAULT');
-      setDestinationAddress('');
-    }
-  }, [sourceType, destinationType]);
-
-  useEffect(() => {
     if (!isMemoBased && destinationTag) {
       setDestinationTag('');
     }
@@ -618,10 +611,6 @@ export default function TransactionsPage() {
             setSourceType(type);
             if (type === 'VAULT' || type === 'EXTERNAL_RANDOM' || type === 'SOURCELESS_EXCHANGE') {
               setSourceAddress('');
-            }
-            if (type === 'SOURCELESS_EXCHANGE') {
-              setDestinationType('VAULT');
-              setDestinationAddress('');
             }
           }}
           sourceAddress={sourceAddress}

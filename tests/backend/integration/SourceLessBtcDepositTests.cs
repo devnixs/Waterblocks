@@ -81,6 +81,59 @@ public class SourceLessBtcDepositTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SourceLess_Btc_Deposit_Can_Target_A_Secondary_Owned_Address()
+    {
+        var vault = await _fixture.AdminClient.CreateVaultAsync("Multi-address BTC Deposit");
+        var primaryWallet = await _fixture.AdminClient.CreateWalletAsync(vault.Data!.Id, "BTC");
+        var secondaryWallet = await _fixture.AdminClient.CreateWalletAsync(vault.Data.Id, "BTC");
+
+        primaryWallet.IsSuccess.Should().BeTrue();
+        secondaryWallet.IsSuccess.Should().BeTrue();
+        secondaryWallet.Data!.DepositAddress.Should().NotBe(primaryWallet.Data!.DepositAddress);
+
+        var created = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            DestinationAddress = secondaryWallet.Data.DepositAddress,
+            Amount = "0.25",
+            NetworkFee = "0",
+            IsSourceAddressUnavailable = true,
+            TransactionIndex = 7,
+        });
+
+        created.IsSuccess.Should().BeTrue(created.Error?.Message);
+
+        var fireblocks = await _fixture.FireblocksClient.GetTransactionAsync(created.Data!.Id);
+        fireblocks!.DestinationAddress.Should().Be(secondaryWallet.Data.DepositAddress);
+        fireblocks.Destination!.Id.Should().Be(vault.Data.Id);
+        fireblocks.Destination.Type.Should().Be("VAULT_ACCOUNT");
+
+        var vaultAfter = await _fixture.AdminClient.GetVaultAsync(vault.Data.Id);
+        var primaryAfter = vaultAfter.Data!.Wallets.Single(wallet =>
+            wallet.DepositAddress == primaryWallet.Data.DepositAddress);
+        var secondaryAfter = vaultAfter.Data.Wallets.Single(wallet =>
+            wallet.DepositAddress == secondaryWallet.Data.DepositAddress);
+
+        decimal.Parse(primaryAfter.Balance).Should().Be(0);
+        decimal.Parse(secondaryAfter.Balance).Should().Be(0.25m);
+    }
+
+    [Fact]
+    public async Task SourceLess_Btc_Deposit_Rejects_Unowned_Destination_Address()
+    {
+        var created = await _fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "BTC",
+            DestinationAddress = "bc1qunownedexternaldestination",
+            Amount = "0.25",
+            IsSourceAddressUnavailable = true,
+        });
+
+        created.IsSuccess.Should().BeFalse();
+        created.Error!.Code.Should().Be("SOURCELESS_DESTINATION_REQUIRED");
+    }
+
+    [Fact]
     public async Task SourceLess_Deposit_Rejects_Unsupported_Asset()
     {
         var vault = await _fixture.AdminClient.CreateVaultAsync("ETH Deposit");

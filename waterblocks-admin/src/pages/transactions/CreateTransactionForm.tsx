@@ -215,7 +215,7 @@ export function CreateTransactionForm({
                 className="w-1/3"
               >
                 <option value="VAULT">Existing Vault</option>
-                <option value="ONE_TIME" disabled={isSourceLessExchange}>One-time address</option>
+                <option value="ONE_TIME">One-time address</option>
               </select>
               {destinationType === 'ONE_TIME' ? (
                 <input
