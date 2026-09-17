@@ -220,6 +220,7 @@ test('shows a new cross-workspace transaction in the selected workspace list wit
   await primeAdminSession(page, receiverWorkspace.id);
   await page.goto('/transactions');
   await expect(page.locator('.workspace-select')).toHaveValue(receiverWorkspace.id);
+  await expect(page.getByTitle('Realtime: connected')).toBeVisible({ timeout: 15_000 });
 
   await createTransaction(request, senderWorkspace.id, {
     assetId: 'BTC',
