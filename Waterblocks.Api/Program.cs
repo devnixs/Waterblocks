@@ -24,7 +24,9 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 
 // Configure database
 builder.Services.AddDbContext<FireblocksDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsql => npgsql.EnableRetryOnFailure(5)));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

@@ -7,4 +7,5 @@ public enum TransferPeerType
 {
     VAULT_ACCOUNT,
     ONE_TIME_ADDRESS,
+    UNKNOWN,
 }

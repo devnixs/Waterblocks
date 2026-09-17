@@ -29,6 +29,22 @@ public class Transaction
     [MaxLength(500)]
     public string SourceAddress { get; set; } = string.Empty;
 
+    /// <summary>
+    /// True when Fireblocks cannot identify the external source of a BTC deposit.
+    /// </summary>
+    public bool IsSourceAddressUnavailable { get; set; }
+
+    /// <summary>
+    /// Fireblocks output ordinal for transactions that share an on-chain hash.
+    /// </summary>
+    public int? TransactionIndex { get; set; }
+
+    [MaxLength(100)]
+    public string? BlockHeight { get; set; }
+
+    [MaxLength(100)]
+    public string? BlockHash { get; set; }
+
     [Required]
     [Column(TypeName = "decimal(36,18)")]
     public decimal Amount { get; set; }

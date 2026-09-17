@@ -10,6 +10,7 @@ depends_on:
 ## API Contract
 
 - [X] INT-001: `Fireblocks.swagger.yml` (OpenAPI 3.0, `Fireblocks API v1.5.0`, server `https://api.fireblocks.io/v1`) is the canonical source of truth for the Fireblocks-compatible API surface (vault accounts, vault assets/wallets, addresses, transactions, supported assets, fee estimation, etc.). Every endpoint under `/v1/*` exposed by Waterblocks MUST match this spec for HTTP method, path, request body shape, response schema, and error envelope (default `$ref: '#/components/responses/Error'`). The file is a manually corrected copy of the Fireblocks-provided swagger (header comment notes inaccuracies and enum-exhaustiveness fixes applied locally). Source: `Fireblocks.swagger.yml:1-3323`. Confidence: high.
+- [X] INT-002: For source-less BTC exchange deposits, Waterblocks mirrors the observed Fireblocks transaction contract: the peer type enum serializes `UNKNOWN`; the source peer has empty id/subType and name `External`; `sourceAddress` remains empty; and `index` plus completed `blockInfo` are returned from persisted simulation data. This special response applies only to transactions explicitly created as source-less and does not alter normal one-time-address or vault source mapping.
 
 ## SignalR (Realtime)
 

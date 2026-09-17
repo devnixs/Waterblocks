@@ -14,6 +14,7 @@ export interface AdminTransaction {
   assetId: string;
   sourceType: 'EXTERNAL' | 'INTERNAL';
   sourceAddress?: string;
+  isSourceAddressUnavailable: boolean;
   sourceVaultAccountName?: string;
   destinationType: 'EXTERNAL' | 'INTERNAL';
   destinationVaultAccountName?: string;
@@ -22,6 +23,9 @@ export interface AdminTransaction {
   destinationTag?: string;
   state: TransactionState;
   hash?: string;
+  transactionIndex?: number;
+  blockHeight?: string;
+  blockHash?: string;
   fee: string;
   networkFee: string;
   feeCurrency?: string;
@@ -84,6 +88,10 @@ export interface CreateTransactionRequest {
   destinationTag?: string;
   initialState?: string;
   hash?: string;
+  isSourceAddressUnavailable?: boolean;
+  transactionIndex?: number;
+  blockHeight?: string;
+  blockHash?: string;
   networkFee?: string;
   feeLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   treatAsGrossAmount?: boolean;

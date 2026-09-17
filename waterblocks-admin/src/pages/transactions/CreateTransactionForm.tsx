@@ -27,6 +27,12 @@ type CreateTransactionFormProps = {
   setAmount: SetState<string>;
   hash: string;
   setHash: SetState<string>;
+  transactionIndex: string;
+  setTransactionIndex: SetState<string>;
+  blockHeight: string;
+  setBlockHeight: SetState<string>;
+  blockHash: string;
+  setBlockHash: SetState<string>;
   feeLevel: FeeLevel;
   setFeeLevel: SetState<FeeLevel>;
   treatAsGrossAmount: boolean;
@@ -71,6 +77,12 @@ export function CreateTransactionForm({
   setAmount,
   hash,
   setHash,
+  transactionIndex,
+  setTransactionIndex,
+  blockHeight,
+  setBlockHeight,
+  blockHash,
+  setBlockHash,
   feeLevel,
   setFeeLevel,
   treatAsGrossAmount,
@@ -84,6 +96,8 @@ export function CreateTransactionForm({
 }: CreateTransactionFormProps) {
   const selectedAsset = assets.find((a) => a.id === assetId);
   const symbol = selectedAsset?.symbol || assetId || '';
+  const isBtcFamily = (selectedAsset?.nativeAsset || selectedAsset?.id || '').toUpperCase() === 'BTC';
+  const isSourceLessExchange = sourceType === 'SOURCELESS_EXCHANGE';
   const assetsByBlockchain = assets.reduce<Record<string, Asset[]>>((acc, asset) => {
     const blockchain = (asset.nativeAsset || asset.id || 'OTHER').trim();
     if (!acc[blockchain]) {
@@ -100,6 +114,7 @@ export function CreateTransactionForm({
     .sort((a, b) => a.blockchain.localeCompare(b.blockchain));
 
   const getNetworkFee = (level: FeeLevel): string => {
+    if (isSourceLessExchange) return '0';
     if (!feeEstimates) return '0';
     const estimate = feeEstimates[level.toLowerCase() as 'low' | 'medium' | 'high'];
     return estimate?.networkFee || '0';
@@ -157,6 +172,9 @@ export function CreateTransactionForm({
                 <option value="VAULT">Existing Vault</option>
                 <option value="ONE_TIME">One-time address</option>
                 <option value="EXTERNAL_RANDOM">External (Random address)</option>
+                {isBtcFamily && (
+                  <option value="SOURCELESS_EXCHANGE">Coinbase / exchange (no source address)</option>
+                )}
               </select>
               {sourceType === 'ONE_TIME' ? (
                 <input
@@ -176,6 +194,10 @@ export function CreateTransactionForm({
                     assetId={assetId}
                   />
                 </div>
+              ) : sourceType === 'SOURCELESS_EXCHANGE' ? (
+                <div className="w-2/3 text-sm text-muted border border-blue-700 rounded px-3 py-2 bg-blue-900/20">
+                  Fireblocks will return an UNKNOWN external source with an empty source address.
+                </div>
               ) : (
                 <div className="w-2/3 text-sm text-muted border border-gray-700 rounded px-3 py-2 bg-gray-900/40">
                   Random external address will be generated on submit.
@@ -193,7 +215,7 @@ export function CreateTransactionForm({
                 className="w-1/3"
               >
                 <option value="VAULT">Existing Vault</option>
-                <option value="ONE_TIME">One-time address</option>
+                <option value="ONE_TIME" disabled={isSourceLessExchange}>One-time address</option>
               </select>
               {destinationType === 'ONE_TIME' ? (
                 <input
@@ -336,6 +358,41 @@ export function CreateTransactionForm({
             BTC: 64 hex chars (no prefix) • ETH: 0x + 64 hex chars
           </p>
         </div>
+
+        {isSourceLessExchange && (
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-muted mb-1">Output index</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={transactionIndex}
+                onChange={(e) => setTransactionIndex(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-muted mb-1">Block height</label>
+              <input
+                type="text"
+                value={blockHeight}
+                onChange={(e) => setBlockHeight(e.target.value)}
+                placeholder="967336"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-muted mb-1">Block hash</label>
+              <input
+                type="text"
+                value={blockHash}
+                onChange={(e) => setBlockHash(e.target.value)}
+                placeholder="Block hash"
+                className="font-mono text-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 mt-6 justify-end">

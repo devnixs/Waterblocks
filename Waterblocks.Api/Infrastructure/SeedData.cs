@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
@@ -19,9 +20,48 @@ public static class SeedData
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<FireblocksDbContext>();
-        db.Database.Migrate();
+        MigrateWithRetry(db, logger);
         SeedHelpers.SeedWorkspaces(db, logger);
         SeedAssets(db, logger);
+    }
+
+    private static void MigrateWithRetry(
+        FireblocksDbContext db,
+        Microsoft.Extensions.Logging.ILogger logger,
+        int maxAttempts = 10,
+        int delayMilliseconds = 2000)
+    {
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                db.Database.Migrate();
+                return;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && IsTransientStartupFailure(ex))
+            {
+                logger.LogWarning(
+                    ex,
+                    "Database not ready (attempt {Attempt}/{MaxAttempts}); retrying in {DelayMs}ms",
+                    attempt,
+                    maxAttempts,
+                    delayMilliseconds);
+                Thread.Sleep(delayMilliseconds);
+            }
+        }
+    }
+
+    private static bool IsTransientStartupFailure(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is SocketException or TimeoutException or Npgsql.NpgsqlException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void SeedAssets(FireblocksDbContext db, Microsoft.Extensions.Logging.ILogger logger)

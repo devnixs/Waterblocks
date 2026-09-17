@@ -261,18 +261,24 @@ public sealed class TransactionViewService : ITransactionViewService
     {
         var createdAtUnix = (decimal)transaction.CreatedAt.ToUnixTimeMilliseconds();
         var lastUpdatedUnix = (decimal)transaction.UpdatedAt.ToUnixTimeMilliseconds();
-        var amountStr = transaction.Amount.ToString(CultureInfo.InvariantCulture);
-        var networkFeeStr = transaction.NetworkFee.ToString(CultureInfo.InvariantCulture);
-        var serviceFeeStr = transaction.ServiceFee.ToString(CultureInfo.InvariantCulture);
+        var amountStr = transaction.Amount.ToString("G29", CultureInfo.InvariantCulture);
+        var requestedAmountStr = transaction.RequestedAmount.ToString("G29", CultureInfo.InvariantCulture);
+        var networkFeeStr = transaction.NetworkFee.ToString("G29", CultureInfo.InvariantCulture);
+        var serviceFeeStr = transaction.ServiceFee.ToString("G29", CultureInfo.InvariantCulture);
         // netAmount is what the recipient receives after any service fees
         // NetworkFee is paid to the network (miners/validators), not deducted from recipient
         // When TreatAsGrossAmount=true, the Amount already has fees deducted from the requested amount
         var netAmount = transaction.Amount - transaction.ServiceFee;
-        var netAmountStr = netAmount.ToString(CultureInfo.InvariantCulture);
+        var netAmountStr = netAmount.ToString("G29", CultureInfo.InvariantCulture);
         var sourceOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.SourceAddress);
         var destinationOwnership = ResolveOwnership(addressLookup, transaction.AssetId, transaction.DestinationAddress);
-        var sourceType = sourceOwnership != null ? TransferPeerType.VAULT_ACCOUNT : TransferPeerType.ONE_TIME_ADDRESS;
+        var sourceType = transaction.IsSourceAddressUnavailable
+            ? TransferPeerType.UNKNOWN
+            : sourceOwnership != null
+                ? TransferPeerType.VAULT_ACCOUNT
+                : TransferPeerType.ONE_TIME_ADDRESS;
         var destinationType = destinationOwnership != null ? TransferPeerType.VAULT_ACCOUNT : TransferPeerType.ONE_TIME_ADDRESS;
+        var peerSubType = transaction.IsSourceAddressUnavailable ? string.Empty : "DEFAULT";
 
         return new TransactionDto
         {
@@ -282,24 +288,27 @@ public sealed class TransactionViewService : ITransactionViewService
             {
                 Type = sourceType,
                 Id = sourceOwnership?.VaultAccountId ?? string.Empty,
-                Name = sourceOwnership?.VaultAccountName ?? string.Empty,
-                SubType = "DEFAULT",
-                VirtualType = "UNKNOWN",
-                VirtualId = string.Empty,
+                Name = transaction.IsSourceAddressUnavailable
+                    ? "External"
+                    : sourceOwnership?.VaultAccountName ?? string.Empty,
+                SubType = peerSubType,
+                VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
+                VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
             },
             Destination = new TransferPeerPathResponseDto
             {
                 Type = destinationType,
                 Id = destinationOwnership?.VaultAccountId ?? string.Empty,
                 Name = destinationOwnership?.VaultAccountName ?? string.Empty,
-                SubType = "DEFAULT",
-                VirtualType = "UNKNOWN",
-                VirtualId = string.Empty,
+                SubType = peerSubType,
+                VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
+                VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
             },
-            RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
+            RequestedAmount = requestedAmountStr,
             Amount = amountStr,
             NetAmount = netAmountStr,
             AmountUSD = null,
+            Fee = transaction.Fee.ToString("G29", CultureInfo.InvariantCulture),
             ServiceFee = serviceFeeStr,
             NetworkFee = networkFeeStr,
             CreatedAt = createdAtUnix,
@@ -310,12 +319,12 @@ public sealed class TransactionViewService : ITransactionViewService
             SubStatus = transaction.SubStatus,
             DestinationAddress = transaction.DestinationAddress ?? string.Empty,
             SourceAddress = transaction.SourceAddress ?? string.Empty,
-            DestinationAddressDescription = string.Empty,
+            DestinationAddressDescription = destinationOwnership?.AddressDescription ?? string.Empty,
             DestinationTag = transaction.DestinationTag ?? string.Empty,
             SignedBy = new List<string>(),
             CreatedBy = string.Empty,
             RejectedBy = string.Empty,
-            AddressType = "PERMANENT",
+            AddressType = transaction.IsSourceAddressUnavailable ? string.Empty : "PERMANENT",
             Note = transaction.Note ?? string.Empty,
             ExchangeTxId = string.Empty,
             FeeCurrency = transaction.FeeCurrency ?? transaction.AssetId ?? string.Empty,
@@ -335,8 +344,8 @@ public sealed class TransactionViewService : ITransactionViewService
             Destinations = new List<TransactionResponseDestinationDto>(),
             BlockInfo = new BlockInfoDto
             {
-                BlockHeight = "100",
-                BlockHash = "xxxyyy",
+                BlockHeight = transaction.BlockHeight ?? "100",
+                BlockHash = transaction.BlockHash ?? "xxxyyy",
             },
             AuthorizationInfo = new AuthorizationInfoDto
             {
@@ -347,12 +356,18 @@ public sealed class TransactionViewService : ITransactionViewService
             AmountInfo = new AmountInfoDto
             {
                 Amount = amountStr,
-                RequestedAmount = transaction.RequestedAmount.ToString(CultureInfo.InvariantCulture),
+                RequestedAmount = requestedAmountStr,
                 NetAmount = netAmountStr,
                 AmountUSD = string.Empty,
             },
-            Index = null,
+            FeeInfo = new FeeInfoDto
+            {
+                NetworkFee = networkFeeStr,
+                ServiceFee = transaction.ServiceFee == 0 ? null : serviceFeeStr,
+            },
+            Index = transaction.TransactionIndex,
             BlockchainIndex = string.Empty,
+            AssetType = "BASE_ASSET",
         };
     }
 
@@ -373,6 +388,7 @@ public sealed class TransactionViewService : ITransactionViewService
             AssetId = transaction.AssetId,
             SourceType = sourceType,
             SourceAddress = transaction.SourceAddress,
+            IsSourceAddressUnavailable = transaction.IsSourceAddressUnavailable,
             SourceVaultAccountName = sourceOwnership?.VaultAccountName,
             DestinationType = destinationType,
             DestinationVaultAccountName = destinationOwnership?.VaultAccountName,
@@ -381,6 +397,9 @@ public sealed class TransactionViewService : ITransactionViewService
             DestinationTag = transaction.DestinationTag,
             State = transaction.State.ToString(),
             Hash = transaction.Hash,
+            TransactionIndex = transaction.TransactionIndex,
+            BlockHeight = transaction.BlockHeight,
+            BlockHash = transaction.BlockHash,
             Fee = transaction.Fee.ToString("F18"),
             NetworkFee = transaction.NetworkFee.ToString("F18"),
             FeeCurrency = transaction.FeeCurrency ?? transaction.AssetId,

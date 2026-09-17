@@ -14,7 +14,7 @@ switch ($Stack) {
 }
 
 if ($Action -eq "up") {
-  docker compose -f $composeFile up -d @ExtraArgs
+  docker compose -f $composeFile up @ExtraArgs
 } else {
   docker compose -f $composeFile $Action @ExtraArgs
 }

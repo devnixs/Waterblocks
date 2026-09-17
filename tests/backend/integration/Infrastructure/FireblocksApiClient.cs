@@ -214,6 +214,7 @@ public class FireblocksTransactionDto
     public string RequestedAmount { get; set; } = "0";
     public string Amount { get; set; } = "0";
     public string NetAmount { get; set; } = "0";
+    public string Fee { get; set; } = "0";
     public string ServiceFee { get; set; } = "0";
     public string NetworkFee { get; set; } = "0";
     public decimal CreatedAt { get; set; }
@@ -223,9 +224,18 @@ public class FireblocksTransactionDto
     public string SubStatus { get; set; } = string.Empty;
     public string DestinationAddress { get; set; } = string.Empty;
     public string SourceAddress { get; set; } = string.Empty;
+    public string DestinationAddressDescription { get; set; } = string.Empty;
+    public string AddressType { get; set; } = string.Empty;
     public string Note { get; set; } = string.Empty;
     public string ExternalTxId { get; set; } = string.Empty;
     public string CustomerRefId { get; set; } = string.Empty;
+    public string Operation { get; set; } = string.Empty;
+    public decimal NumOfConfirmations { get; set; }
+    public FireblocksAmountInfoDto AmountInfo { get; set; } = new();
+    public FireblocksFeeInfoDto FeeInfo { get; set; } = new();
+    public FireblocksBlockInfoDto BlockInfo { get; set; } = new();
+    public decimal? Index { get; set; }
+    public string AssetType { get; set; } = string.Empty;
 }
 
 public class FireblocksTransferPeerPathResponse
@@ -234,6 +244,25 @@ public class FireblocksTransferPeerPathResponse
     public string? Id { get; set; }
     public string? Name { get; set; }
     public string SubType { get; set; } = string.Empty;
+}
+
+public class FireblocksAmountInfoDto
+{
+    public string Amount { get; set; } = "0";
+    public string RequestedAmount { get; set; } = "0";
+    public string NetAmount { get; set; } = "0";
+}
+
+public class FireblocksFeeInfoDto
+{
+    public string NetworkFee { get; set; } = "0";
+    public string? ServiceFee { get; set; }
+}
+
+public class FireblocksBlockInfoDto
+{
+    public string? BlockHeight { get; set; }
+    public string? BlockHash { get; set; }
 }
 
 public class FireblocksPaginatedAddressesResponse

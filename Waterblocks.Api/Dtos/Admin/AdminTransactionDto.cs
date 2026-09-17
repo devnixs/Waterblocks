@@ -9,6 +9,7 @@ public class AdminTransactionDto
     public string AssetId { get; set; } = string.Empty;
     public AdminTransactionPartyType SourceType { get; set; } = AdminTransactionPartyType.EXTERNAL;
     public string? SourceAddress { get; set; }
+    public bool IsSourceAddressUnavailable { get; set; }
     public string? SourceVaultAccountName { get; set; }
     public AdminTransactionPartyType DestinationType { get; set; } = AdminTransactionPartyType.EXTERNAL;
     public string? DestinationVaultAccountName { get; set; }
@@ -17,6 +18,9 @@ public class AdminTransactionDto
     public string? DestinationTag { get; set; }
     public string State { get; set; } = "SUBMITTED";
     public string? Hash { get; set; }
+    public int? TransactionIndex { get; set; }
+    public string? BlockHeight { get; set; }
+    public string? BlockHash { get; set; }
     public string Fee { get; set; } = "0";
     public string NetworkFee { get; set; } = "0";
     public string? FeeCurrency { get; set; }
@@ -72,6 +76,15 @@ public class CreateAdminTransactionRequestDto
     public string? DestinationTag { get; set; }
     public string? InitialState { get; set; }
     public string? Hash { get; set; }
+
+    /// <summary>
+    /// Simulates the Fireblocks UNKNOWN source returned for source-less BTC exchange deposits.
+    /// </summary>
+    public bool? IsSourceAddressUnavailable { get; set; }
+
+    public int? TransactionIndex { get; set; }
+    public string? BlockHeight { get; set; }
+    public string? BlockHash { get; set; }
 
     /// <summary>
     /// Network fee amount. If not provided, calculated from FeeLevel or defaults to Medium.

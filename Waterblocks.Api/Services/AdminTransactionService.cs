@@ -238,18 +238,61 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         var sourceAddress = request.SourceAddress?.Trim();
         var destinationAddress = request.DestinationAddress?.Trim();
         var destinationTag = request.DestinationTag?.Trim();
+        var isSourceAddressUnavailable = request.IsSourceAddressUnavailable == true;
 
-        if (string.IsNullOrWhiteSpace(sourceAddress))
+        if (isSourceAddressUnavailable)
+        {
+            var nativeAsset = asset.NativeAsset ?? asset.AssetId;
+            if (asset.BlockchainType != BlockchainType.AddressBased ||
+                !string.Equals(nativeAsset, "BTC", StringComparison.OrdinalIgnoreCase))
+            {
+                return Failure<AdminTransactionDto>(
+                    "Source-less exchange deposits are supported only for BTC-family assets",
+                    "SOURCELESS_ASSET_UNSUPPORTED");
+            }
+
+            if (!string.IsNullOrWhiteSpace(sourceAddress))
+            {
+                return Failure<AdminTransactionDto>(
+                    "A source-less exchange deposit cannot include a source address",
+                    "SOURCELESS_SOURCE_ADDRESS_INVALID");
+            }
+
+            if (request.TransactionIndex is < 0)
+            {
+                return Failure<AdminTransactionDto>(
+                    "Transaction index must be zero or greater",
+                    "TRANSACTION_INDEX_INVALID");
+            }
+
+            if (request.BlockHeight?.Trim().Length > 100 || request.BlockHash?.Trim().Length > 100)
+            {
+                return Failure<AdminTransactionDto>(
+                    "Block height and block hash must not exceed 100 characters",
+                    "BLOCK_INFO_INVALID");
+            }
+
+            sourceAddress = string.Empty;
+        }
+
+        if (!isSourceAddressUnavailable && string.IsNullOrWhiteSpace(sourceAddress))
         {
             sourceAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
         }
 
         if (string.IsNullOrWhiteSpace(destinationAddress))
         {
+            if (isSourceAddressUnavailable)
+            {
+                return Failure<AdminTransactionDto>(
+                    "A source-less exchange deposit requires an existing destination vault address",
+                    "SOURCELESS_DESTINATION_REQUIRED");
+            }
+
             destinationAddress = _addressGenerator.GenerateExternalAddress(request.AssetId);
         }
 
-        if (string.IsNullOrWhiteSpace(sourceAddress))
+        if (!isSourceAddressUnavailable && string.IsNullOrWhiteSpace(sourceAddress))
         {
             return Failure<AdminTransactionDto>("Source address is required", "SOURCE_ADDRESS_REQUIRED");
         }
@@ -266,13 +309,20 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
 
         var addressLookup = await _transactionView.BuildAddressOwnershipLookupAsync(
             request.AssetId,
-            new[] { sourceAddress, destinationAddress });
+            new[] { sourceAddress ?? string.Empty, destinationAddress ?? string.Empty });
 
         var sourceOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, sourceAddress);
         var destinationOwnership = _transactionView.ResolveOwnership(addressLookup, request.AssetId, destinationAddress);
 
         var sourceInternal = sourceOwnership != null;
         var destinationInternal = destinationOwnership != null;
+
+        if (isSourceAddressUnavailable && !destinationInternal)
+        {
+            return Failure<AdminTransactionDto>(
+                "A source-less exchange deposit requires an existing destination vault address",
+                "SOURCELESS_DESTINATION_REQUIRED");
+        }
 
         if (sourceInternal)
         {
@@ -300,6 +350,10 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         if (!feeResult)
         {
             return Failure<AdminTransactionDto>(feeError!, "INVALID_NETWORK_FEE");
+        }
+        if (isSourceAddressUnavailable && request.NetworkFee == null)
+        {
+            networkFee = 0;
         }
 
         // Determine fee currency (for tokens, fee is paid in native asset)
@@ -331,10 +385,14 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             VaultAccountId = transactionVaultId!,
             WorkspaceId = workspaceId,
             AssetId = request.AssetId,
-            SourceAddress = sourceAddress,
+            SourceAddress = sourceAddress ?? string.Empty,
+            IsSourceAddressUnavailable = isSourceAddressUnavailable,
+            TransactionIndex = request.TransactionIndex,
+            BlockHeight = request.BlockHeight?.Trim(),
+            BlockHash = request.BlockHash?.Trim(),
             Amount = transferAmount,
             RequestedAmount = requestedAmount,
-            DestinationAddress = destinationAddress,
+            DestinationAddress = destinationAddress!,
             DestinationTag = destinationTag,
             Fee = networkFee,
             NetworkFee = networkFee,
@@ -359,7 +417,9 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
 
         if (derivedType == "INCOMING")
         {
-            transaction.State = completeImmediately
+            transaction.State = isSourceAddressUnavailable
+                ? TransactionState.COMPLETED
+                : completeImmediately
                 ? TransactionState.COMPLETED
                 : ResolveInitialState(request.InitialState, TransactionState.COMPLETED);
         }
@@ -376,7 +436,11 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             {
                 if (transaction.State == TransactionState.COMPLETED)
                 {
-                    transaction.Confirmations = 6;
+                    transaction.Confirmations = isSourceAddressUnavailable ? 1 : 6;
+                    if (isSourceAddressUnavailable)
+                    {
+                        transaction.SubStatus = "CONFIRMED";
+                    }
                     await _balanceService.CreditIncomingAsync(transaction);
                 }
 

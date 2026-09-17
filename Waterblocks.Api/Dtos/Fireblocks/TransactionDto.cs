@@ -16,6 +16,7 @@ public class TransactionDto
     public string? Amount { get; set; }
     public string? NetAmount { get; set; }
     public string? AmountUSD { get; set; }
+    public string? Fee { get; set; }
     public string? ServiceFee { get; set; }
     public string? NetworkFee { get; set; }
     public decimal? CreatedAt { get; set; }
@@ -48,8 +49,10 @@ public class TransactionDto
     public BlockInfoDto BlockInfo { get; set; } = new();
     public AuthorizationInfoDto AuthorizationInfo { get; set; } = new();
     public AmountInfoDto AmountInfo { get; set; } = new();
+    public FeeInfoDto FeeInfo { get; set; } = new();
     public decimal? Index { get; set; }
     public string BlockchainIndex { get; set; } = string.Empty;
+    public string AssetType { get; set; } = "BASE_ASSET";
 }
 
 /// <summary>
@@ -61,8 +64,8 @@ public class TransferPeerPathResponseDto
     public string? Id { get; set; }
     public string? Name { get; set; }
     public string SubType { get; set; } = "DEFAULT";
-    public string VirtualType { get; set; } = "UNKNOWN";
-    public string VirtualId { get; set; } = string.Empty;
+    public string? VirtualType { get; set; } = "UNKNOWN";
+    public string? VirtualId { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -74,6 +77,15 @@ public class AmountInfoDto
     public string? RequestedAmount { get; set; }
     public string? NetAmount { get; set; }
     public string? AmountUSD { get; set; }
+}
+
+/// <summary>
+/// Matches the Fireblocks feeInfo object returned on transaction reads.
+/// </summary>
+public class FeeInfoDto
+{
+    public string NetworkFee { get; set; } = "0";
+    public string? ServiceFee { get; set; }
 }
 
 /// <summary>

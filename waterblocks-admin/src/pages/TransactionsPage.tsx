@@ -45,6 +45,9 @@ export default function TransactionsPage() {
   const [destinationVaultId, setDestinationVaultId] = useState('');
   const [destinationTag, setDestinationTag] = useState('');
   const [hash, setHash] = useState('');
+  const [transactionIndex, setTransactionIndex] = useState('0');
+  const [blockHeight, setBlockHeight] = useState('');
+  const [blockHash, setBlockHash] = useState('');
   const [feeLevel, setFeeLevel] = useState<FeeLevel>('MEDIUM');
   const [treatAsGrossAmount, setTreatAsGrossAmount] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
@@ -325,6 +328,21 @@ export default function TransactionsPage() {
 
   const selectedAdminAsset = (adminAssets || []).find((asset) => asset.id === assetId);
   const isMemoBased = selectedAdminAsset?.blockchainType === 'MemoBased';
+  const selectedAsset = (assets || []).find((asset) => asset.id === assetId);
+  const isBtcFamily = (selectedAsset?.nativeAsset || selectedAsset?.id || '').toUpperCase() === 'BTC';
+
+  useEffect(() => {
+    if (sourceType === 'SOURCELESS_EXCHANGE' && !isBtcFamily) {
+      setSourceType('EXTERNAL_RANDOM');
+    }
+  }, [sourceType, isBtcFamily]);
+
+  useEffect(() => {
+    if (sourceType === 'SOURCELESS_EXCHANGE' && destinationType !== 'VAULT') {
+      setDestinationType('VAULT');
+      setDestinationAddress('');
+    }
+  }, [sourceType, destinationType]);
 
   useEffect(() => {
     if (!isMemoBased && destinationTag) {
@@ -431,6 +449,9 @@ export default function TransactionsPage() {
       if (sourceType === 'EXTERNAL_RANDOM') {
         return '';
       }
+      if (sourceType === 'SOURCELESS_EXCHANGE') {
+        return '';
+      }
       return resolveOneTimeAddress(sourceAddress);
     };
 
@@ -439,7 +460,9 @@ export default function TransactionsPage() {
       ? await resolveVaultDefault(destinationVaultId, setDestinationAddress, 'Destination')
       : resolveOneTimeAddress(destinationAddress);
 
-    if (!resolvedSourceAddress && sourceType !== 'EXTERNAL_RANDOM') {
+    if (!resolvedSourceAddress &&
+        sourceType !== 'EXTERNAL_RANDOM' &&
+        sourceType !== 'SOURCELESS_EXCHANGE') {
       showToast({ title: 'Source address is required', type: 'error' });
       return;
     }
@@ -456,6 +479,13 @@ export default function TransactionsPage() {
       destinationAddress: resolvedDestinationAddress,
       destinationTag: destinationTag.trim() || undefined,
       hash: hash.trim() || undefined,
+      isSourceAddressUnavailable: sourceType === 'SOURCELESS_EXCHANGE',
+      transactionIndex: sourceType === 'SOURCELESS_EXCHANGE'
+        ? Number.parseInt(transactionIndex || '0', 10)
+        : undefined,
+      blockHeight: sourceType === 'SOURCELESS_EXCHANGE' ? blockHeight.trim() || undefined : undefined,
+      blockHash: sourceType === 'SOURCELESS_EXCHANGE' ? blockHash.trim() || undefined : undefined,
+      networkFee: sourceType === 'SOURCELESS_EXCHANGE' ? '0' : undefined,
       feeLevel: feeLevel,
       treatAsGrossAmount: treatAsGrossAmount,
       initiatedBy: currentUserEmail || undefined,
@@ -472,6 +502,9 @@ export default function TransactionsPage() {
       setDestinationAddress('');
       setDestinationTag('');
       setHash('');
+      setTransactionIndex('0');
+      setBlockHeight('');
+      setBlockHash('');
       setFeeLevel('MEDIUM');
       setTreatAsGrossAmount(false);
       setShowCreateForm(false);
@@ -583,8 +616,12 @@ export default function TransactionsPage() {
           sourceType={sourceType}
           setSourceType={(type) => {
             setSourceType(type);
-            if (type === 'VAULT' || type === 'EXTERNAL_RANDOM') {
+            if (type === 'VAULT' || type === 'EXTERNAL_RANDOM' || type === 'SOURCELESS_EXCHANGE') {
               setSourceAddress('');
+            }
+            if (type === 'SOURCELESS_EXCHANGE') {
+              setDestinationType('VAULT');
+              setDestinationAddress('');
             }
           }}
           sourceAddress={sourceAddress}
@@ -608,6 +645,12 @@ export default function TransactionsPage() {
           setAmount={setAmount}
           hash={hash}
           setHash={setHash}
+          transactionIndex={transactionIndex}
+          setTransactionIndex={setTransactionIndex}
+          blockHeight={blockHeight}
+          setBlockHeight={setBlockHeight}
+          blockHash={blockHash}
+          setBlockHash={setBlockHash}
           feeLevel={feeLevel}
           setFeeLevel={setFeeLevel}
           treatAsGrossAmount={treatAsGrossAmount}

@@ -126,7 +126,11 @@ export function TransactionDetailPanel({
               </div>
             )}
             {!transaction.sourceAddress && transaction.sourceType === 'EXTERNAL' && (
-              <div className="text-muted text-sm mt-1">-</div>
+              <div className="text-muted text-sm mt-1">
+                {transaction.isSourceAddressUnavailable
+                  ? 'Coinbase / exchange (source address unavailable)'
+                  : '-'}
+              </div>
             )}
           </div>
 
@@ -164,6 +168,24 @@ export function TransactionDetailPanel({
             <div className="text-mono text-sm break-all text-accent cursor-pointer hover:underline">
               {transaction.hash}
             </div>
+            {transaction.transactionIndex != null && (
+              <div className="text-sm mt-3">
+                <span className="text-muted">Output index: </span>
+                <span className="text-mono">{transaction.transactionIndex}</span>
+              </div>
+            )}
+            {transaction.blockHeight && (
+              <div className="text-sm mt-1">
+                <span className="text-muted">Block height: </span>
+                <span className="text-mono">{transaction.blockHeight}</span>
+              </div>
+            )}
+            {transaction.blockHash && (
+              <div className="text-sm mt-1">
+                <span className="text-muted">Block hash: </span>
+                <span className="text-mono break-all">{transaction.blockHash}</span>
+              </div>
+            )}
           </div>
         </div>
       )}

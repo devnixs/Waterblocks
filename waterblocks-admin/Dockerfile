@@ -9,7 +9,6 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.27-alpine
-RUN apk add --no-cache gettext
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY config.js.template /usr/share/nginx/html/config.js.template
 COPY docker-entrypoint.d/ /docker-entrypoint.d/

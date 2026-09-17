@@ -268,6 +268,14 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("BlockHash")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("BlockHeight")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("Confirmations")
                         .HasColumnType("integer");
 
@@ -313,6 +321,9 @@ namespace Waterblocks.Api.Migrations
                     b.Property<bool>("IsFrozen")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSourceAddressUnavailable")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("NetworkFee")
                         .HasColumnType("decimal(36,18)");
 
@@ -350,6 +361,9 @@ namespace Waterblocks.Api.Migrations
 
                     b.Property<bool>("TreatAsGrossAmount")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("TransactionIndex")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

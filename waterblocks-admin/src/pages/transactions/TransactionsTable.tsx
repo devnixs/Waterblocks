@@ -108,7 +108,11 @@ export function TransactionsTable({
                     </span>
                   </div>
                 ) : (
-                  <span title={tx.sourceAddress}>{formatAddress(tx.sourceAddress)}</span>
+                  <span title={tx.sourceAddress}>
+                    {tx.isSourceAddressUnavailable
+                      ? 'Coinbase / exchange (no source address)'
+                      : formatAddress(tx.sourceAddress)}
+                  </span>
                 )}
               </td>
               <td className="text-mono text-sm text-muted">
