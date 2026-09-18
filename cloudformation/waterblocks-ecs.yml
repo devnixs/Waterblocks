@@ -28,8 +28,8 @@ Parameters:
     Description: Tag for the waterblocks-admin image.
   PostgresInstanceType:
     Type: String
-    Default: db.t4g.micro
-    Description: RDS PostgreSQL instance type (default to cheapest in eu-west-1).
+    Default: db.t4g.small
+    Description: RDS PostgreSQL instance type (db.t4g.small handles API connection spikes better than micro).
   PostgresUsername:
     Type: String
     Default: postgres
@@ -74,12 +74,12 @@ Parameters:
     Description: Optional Datadog API key for forwarding API logs.
   FargateCpu:
     Type: String
-    Default: "256"
-    Description: Fargate task CPU units (256 = 0.25 vCPU).
+    Default: "512"
+    Description: Fargate task CPU units (512 = 0.5 vCPU). Raised from 256 after API OOM/segfault crashes under load.
   FargateMemory:
     Type: String
-    Default: "512"
-    Description: Fargate task memory in MiB (512 = 0.5 GB).
+    Default: "1024"
+    Description: Fargate task memory in MiB (1024 = 1 GB). Raised from 512 after API OutOfMemoryException crashes under load.
   VpcCidr:
     Type: String
   PublicSubnet1Cidr:

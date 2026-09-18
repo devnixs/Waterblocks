@@ -59,8 +59,8 @@ public class HttpTrafficLoggingMiddleware
         }
 
         var originalResponseBody = context.Response.Body;
-        await using var responseBodyBuffer = new MemoryStream();
-        context.Response.Body = responseBodyBuffer;
+        await using var responseCapture = new CappedCaptureStream(originalResponseBody, MaxBodyLength);
+        context.Response.Body = responseCapture;
 
         try
         {
@@ -74,20 +74,7 @@ public class HttpTrafficLoggingMiddleware
         finally
         {
             stopwatch.Stop();
-
-            string responseBody;
-            try
-            {
-                responseBodyBuffer.Position = 0;
-                responseBody = await ReadBodyAsync(responseBodyBuffer, context.Response.ContentType);
-                responseBodyBuffer.Position = 0;
-            }
-            finally
-            {
-                context.Response.Body = originalResponseBody;
-                responseBodyBuffer.Position = 0;
-                await responseBodyBuffer.CopyToAsync(originalResponseBody);
-            }
+            context.Response.Body = originalResponseBody;
 
             LogHttpExchange(
                 context,
@@ -95,7 +82,7 @@ public class HttpTrafficLoggingMiddleware
                 requestHeaders,
                 requestBody,
                 ToLoggableHeaders(context.Response.Headers),
-                responseBody,
+                FormatCapturedBody(responseCapture, context.Response.ContentType),
                 unhandledException);
         }
     }
@@ -161,19 +148,39 @@ public class HttpTrafficLoggingMiddleware
             return "[empty]";
         }
 
+        // Read at most MaxBodyLength + 1 so large bodies are never fully buffered in memory.
+        var buffer = new char[MaxBodyLength + 1];
         using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-        var content = await reader.ReadToEndAsync();
-        if (string.IsNullOrEmpty(content))
+        var read = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
+        if (read == 0)
         {
             return "[empty]";
         }
 
-        if (content.Length <= MaxBodyLength)
+        if (read <= MaxBodyLength)
         {
-            return content;
+            return new string(buffer, 0, read);
         }
 
-        return $"{content[..MaxBodyLength]}...[truncated]";
+        return $"{new string(buffer, 0, MaxBodyLength)}...[truncated]";
+    }
+
+    private static string FormatCapturedBody(CappedCaptureStream capture, string? contentType)
+    {
+        if (!IsTextBasedContentType(contentType))
+        {
+            return $"[body omitted for content type: {contentType ?? "unknown"}]";
+        }
+
+        if (capture.CapturedLength == 0)
+        {
+            return "[empty]";
+        }
+
+        var content = Encoding.UTF8.GetString(capture.CapturedBytes, 0, capture.CapturedLength);
+        return capture.Truncated
+            ? $"{content}...[truncated]"
+            : content;
     }
 
     private static bool CanHaveBody(long? contentLength, IHeaderDictionary headers)
@@ -223,5 +230,106 @@ public class HttpTrafficLoggingMiddleware
     private static string JoinValues(StringValues values)
     {
         return string.Join(", ", values.ToArray());
+    }
+
+    /// <summary>
+    /// Pass-through response stream that keeps only the first <see cref="MaxBodyLength"/> bytes for logging.
+    /// </summary>
+    private sealed class CappedCaptureStream : Stream
+    {
+        private readonly Stream _inner;
+        private readonly byte[] _capture;
+        private readonly int _maxCaptureBytes;
+        private int _capturedLength;
+        private bool _truncated;
+
+        public CappedCaptureStream(Stream inner, int maxCaptureBytes)
+        {
+            _inner = inner;
+            _maxCaptureBytes = maxCaptureBytes;
+            _capture = new byte[maxCaptureBytes];
+        }
+
+        public byte[] CapturedBytes => _capture;
+        public int CapturedLength => _capturedLength;
+        public bool Truncated => _truncated;
+
+        public override bool CanRead => false;
+        public override bool CanSeek => false;
+        public override bool CanWrite => _inner.CanWrite;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => _inner.Flush();
+
+        public override Task FlushAsync(CancellationToken cancellationToken) =>
+            _inner.FlushAsync(cancellationToken);
+
+        public override int Read(byte[] buffer, int offset, int count) =>
+            throw new NotSupportedException();
+
+        public override long Seek(long offset, SeekOrigin origin) =>
+            throw new NotSupportedException();
+
+        public override void SetLength(long value) =>
+            throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            Capture(buffer.AsSpan(offset, count));
+            _inner.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            Capture(buffer);
+            _inner.Write(buffer);
+        }
+
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            Capture(buffer.AsSpan(offset, count));
+            await _inner.WriteAsync(buffer.AsMemory(offset, count), cancellationToken);
+        }
+
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            Capture(buffer.Span);
+            await _inner.WriteAsync(buffer, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // Do not dispose the inner response body stream; ASP.NET owns it.
+            base.Dispose(disposing);
+        }
+
+        public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        private void Capture(ReadOnlySpan<byte> buffer)
+        {
+            if (buffer.IsEmpty)
+            {
+                return;
+            }
+
+            var remaining = _maxCaptureBytes - _capturedLength;
+            if (remaining > 0)
+            {
+                var toCopy = Math.Min(remaining, buffer.Length);
+                buffer[..toCopy].CopyTo(_capture.AsSpan(_capturedLength));
+                _capturedLength += toCopy;
+                buffer = buffer[toCopy..];
+            }
+
+            if (!buffer.IsEmpty)
+            {
+                _truncated = true;
+            }
+        }
     }
 }
