@@ -5,7 +5,11 @@ namespace Waterblocks.Api.Utils;
 public static class DecimalColumnGuard
 {
     public const int NumericScale = 18;
-    public const decimal Numeric36Scale18ExclusiveUpperBound = 1_000_000_000_000_000_000m;
+
+    /// <summary>
+    /// The largest value that Npgsql can read back from a numeric(36,18) column, because it keeps all 18 decimal places.
+    /// </summary>
+    public const decimal MaxReadableValue = decimal.MaxValue / 1_000_000_000_000_000_000m;
 
     public static bool TryParsePositiveNumeric36Scale18(
         string? rawValue,
@@ -75,14 +79,19 @@ public static class DecimalColumnGuard
             return false;
         }
 
-        if (decimal.Abs(value) >= Numeric36Scale18ExclusiveUpperBound)
+        if (decimal.Abs(value) > MaxReadableValue)
         {
-            errorMessage = $"{fieldName} is too large. Maximum supported value is 999999999999999999.999999999999999999.";
+            errorMessage = TooLargeMessage(fieldName);
             return false;
         }
 
         errorMessage = null;
         return true;
+    }
+
+    public static string TooLargeMessage(string fieldName)
+    {
+        return $"{fieldName} is too large. Maximum supported value is {MaxReadableValue.ToString(CultureInfo.InvariantCulture)}.";
     }
 
     public static void EnsureNumeric36Scale18(decimal value, string fieldName)
