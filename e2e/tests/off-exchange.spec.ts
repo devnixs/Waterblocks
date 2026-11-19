@@ -191,7 +191,7 @@ test('connects an account that was created through the API', async ({ page, requ
   await expect(page.locator('tr[data-asset]')).toHaveCount(2);
   await page.getByLabel('Search assets').fill('usd');
   await expect(page.locator('tr[data-asset]')).toHaveCount(1);
-  await expect(page.locator('tr[data-asset="USDT"]')).toBeVisible();
+  await expect(page.locator('tr[data-asset="USDT_ERC20"]')).toBeVisible();
   await page.getByLabel('Search assets').fill('');
 
   await page.getByRole('button', { name: 'Connect', exact: true }).click();

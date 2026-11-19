@@ -156,7 +156,7 @@ For a connected account, one background worker sends collateral events to the si
 
 To add an exchange, for example Bybit:
 
-1. Add a class in `Waterblocks.Api/Services/ExchangeSimulators` that extends `ExchangeSimulatorClientBase` (or implements `IExchangeSimulatorClient`). Set the exchange type, the display name, the assets and the one-account rule, and write the calls of that simulator.
+1. Add a class in `Waterblocks.Api/Services/ExchangeSimulators` that extends `ExchangeSimulatorClientBase` (or implements `IExchangeSimulatorClient`). Set the exchange type, the display name, the assets and the one-account rule, and write the calls of that simulator. Map each Waterblocks asset id to the currency name of the exchange inside the client. For example, the Gate.io client maps `USDT_ERC20` to `USDT`.
 2. Register it in `Program.cs` with `builder.Services.AddExchangeSimulatorClient<TheNewClient>();`.
 3. Set `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL`.
 

@@ -25,6 +25,7 @@ status: COMPLETE
 - [X] Use generic error codes: `EXCHANGE_SIMULATOR_NOT_CONFIGURED`, `EXCHANGE_SIMULATOR_UNREACHABLE`, `SIMULATOR_ACCOUNT_NOT_FOUND` and `EXCHANGE_ACCOUNT_LIMIT_REACHED`.
 - [X] Use generic settings: `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` and `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN`.
 - [X] Add GET /admin/exchange-providers. The Admin UI reads the provider list, the exchange names, the assets and the one-account rule from it.
+- [X] Map Waterblocks asset ids to exchange currency names inside each client. The Gate.io client maps `USDT_ERC20` to `USDT`, because Waterblocks has no asset `USDT`.
 - [X] Accept the exchange type of each simulator client in POST /exchange_accounts, also when the Fireblocks list of that call does not have it (for example `DERIBIT`).
 - [X] Remove exchange names from the table headers, labels and messages of the Exchanges screens.
 - [X] Do not add a second real exchange client. Do not change the Fireblocks-compatible contract.
@@ -35,7 +36,7 @@ status: COMPLETE
 - [X] `specs/03-core-workflows.spec.md` (`EXCH-001`, `EXCH-004`, `EXCH-005`, `EXCH-012`, `EXCH-015`, `ADM-EXCH-002`, `ADM-EXCH-003`, `ADM-EXCH-006`, `ADM-EXCH-008`, `UI-EXCH-001`, `UI-EXCH-002`, `UI-EXCH-003`, `UI-EXCH-005`)
 - [X] `specs/04-data-and-persistence.spec.md` (`DATA-013`, `DATA-015`, `DATA-MIG-001`)
 - [X] `specs/05-integrations.spec.md` (`INT-004`, `INT-005`, `INT-006`, `INT-007`)
-- [X] `specs/06-testing-and-qa.spec.md` (`TEST-016`, `TEST-026`, `TEST-027`)
+- [X] `specs/06-testing-and-qa.spec.md` (`TEST-016`, `TEST-026`, `TEST-027`, `TEST-028`)
 - [X] `specs/07-deployment-and-ops.spec.md` (`OPS-012`)
 
 ## Acceptance Notes

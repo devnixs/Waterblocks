@@ -144,7 +144,7 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         connection.GetProperty("simulatorAccountId").GetString().Should().Be(SimulatorUserId.ToString());
         connection.GetProperty("maskedApiKey").GetString().Should().Be("gate****cdef");
         data.GetProperty("assets").EnumerateArray().Select(asset => asset.GetProperty("assetId").GetString())
-            .Should().Equal("BTC", "USDT");
+            .Should().Equal("BTC", "USDT_ERC20");
     }
 
     [Fact]
@@ -444,7 +444,19 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         var account = await ReadOkAsync(await Http.GetAsync($"/exchange_accounts/{accountId}"));
         account.GetProperty("success").GetBoolean().Should().BeTrue();
         account.GetProperty("assets").EnumerateArray().Select(asset => asset.GetProperty("id").GetString())
-            .Should().Equal("BTC", "USDT");
+            .Should().Equal("BTC", "USDT_ERC20");
+    }
+
+    [Fact]
+    public async Task Gate_Usdt_Balance_Shows_On_The_Waterblocks_Usdt_Asset()
+    {
+        var accountId = await CreateConnectedAccountAsync();
+        Simulator.SetBalance(SimulatorAccount, "USDT", spotAvailable: 250m, spotLocked: 50m);
+
+        var asset = await GetExchangeAssetAsync(accountId, "USDT_ERC20");
+
+        Amount(asset, "credit").Should().Be(300m);
+        (await Http.GetAsync($"/exchange_accounts/{accountId}/USDT")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

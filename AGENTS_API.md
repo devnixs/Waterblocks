@@ -84,6 +84,7 @@ Work summary (STORY-023):
 - Renamed the connection columns to `SimulatorAccountId` and `SimulatorAccountName`, and added `ExchangeType` to the mirror events. One migration, `AddOffExchangeCollateral`, replaces the two earlier migrations of this branch.
 - Renamed the error codes to `EXCHANGE_SIMULATOR_NOT_CONFIGURED`, `EXCHANGE_SIMULATOR_UNREACHABLE`, `SIMULATOR_ACCOUNT_NOT_FOUND` and `EXCHANGE_ACCOUNT_LIMIT_REACHED`, and the settings to `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` and `__ADMIN_TOKEN`.
 - Added `GET /admin/exchange-providers`.
+- `GateSimulatorClient` maps Waterblocks asset ids to Gate currencies (`BTC` to `BTC`, `USDT_ERC20` to `USDT`) in the events and the balances. Before, it sent `USDT`, which is not a Waterblocks asset id.
 - `POST /exchange_accounts` also accepts the exchange type of each simulator client, so that a new exchange outside the Fireblocks list of that call needs no second change.
 
 Files touched:

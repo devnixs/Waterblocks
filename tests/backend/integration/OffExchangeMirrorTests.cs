@@ -34,6 +34,33 @@ public class OffExchangeMirrorTests : OffExchangeTestBase
     }
 
     [Fact]
+    public async Task Usdt_Add_Reaches_The_Gate_Simulator_As_Usdt()
+    {
+        var accountId = await CreateConnectedAccountAsync();
+        var vaultId = await CreateFundedVaultAsync("USDT_ERC20", 500m);
+        var ethWallet = await Fixture.AdminClient.CreateWalletAsync(vaultId, "ETH");
+        ethWallet.IsSuccess.Should().BeTrue(ethWallet.Error?.Message);
+        var ethDeposit = await Fixture.AdminClient.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            AssetId = "ETH",
+            DestinationAddress = ethWallet.Data!.DepositAddress,
+            Amount = "1",
+        });
+        ethDeposit.IsSuccess.Should().BeTrue(ethDeposit.Error?.Message);
+
+        var response = await PostAsync("/off_exchange/add", AddBody(vaultId, accountId, "100", gross: false, assetId: "USDT_ERC20"));
+        var transactionId = (await ReadOkAsync(response)).GetProperty("id").GetString()!;
+        await CompleteAsync(transactionId);
+        await WaitForMirrorStateAsync(accountId, transactionId, "APPLIED");
+
+        var mirrored = Simulator.FindEvent(transactionId)!;
+        mirrored.AssetId.Should().Be("USDT");
+        mirrored.Amount.Should().Be(100m);
+        Simulator.GetSpotAvailable(SimulatorAccount, "USDT").Should().Be(100m);
+        Amount(await GetExchangeAssetAsync(accountId, "USDT_ERC20"), "available").Should().Be(100m);
+    }
+
+    [Fact]
     public async Task Network_Failure_Retries_Without_A_Second_Credit()
     {
         var accountId = await CreateConnectedAccountAsync();

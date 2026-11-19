@@ -19,7 +19,16 @@ public sealed class GateSimulatorClient : ExchangeSimulatorClientBase
     private const string CollateralEventsPath = "/_api/collateral/events";
     private const string EventSource = "waterblocks";
 
-    private static readonly IReadOnlyList<string> CollateralAssetIds = new[] { "BTC", "USDT" };
+    /// <summary>
+    /// The Gate currency of each Waterblocks asset that a connected account can hold.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> GateCurrencies = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["BTC"] = "BTC",
+        ["USDT_ERC20"] = "USDT",
+    };
+
+    private static readonly IReadOnlyList<string> CollateralAssetIds = new[] { "BTC", "USDT_ERC20" };
 
     public GateSimulatorClient(HttpClient httpClient, IConfiguration configuration)
         : base(httpClient, configuration)
@@ -81,13 +90,20 @@ public sealed class GateSimulatorClient : ExchangeSimulatorClientBase
             return NotConfiguredOutcome();
         }
 
+        if (!GateCurrencies.TryGetValue(mirrorEvent.AssetId, out var currency))
+        {
+            return new MirrorEventOutcome(
+                MirrorEventOutcomeKind.Refused,
+                $"Gate.io has no currency for the Waterblocks asset {mirrorEvent.AssetId}");
+        }
+
         using var request = CreateAdminRequest(HttpMethod.Post, CollateralEventsPath);
         request.Content = JsonContent.Create(new Dictionary<string, string>
         {
             ["event_id"] = mirrorEvent.Id,
             ["account"] = mirrorEvent.SimulatorAccountName,
             ["type"] = mirrorEvent.Type,
-            ["asset"] = mirrorEvent.AssetId,
+            ["asset"] = currency,
             ["amount"] = AmountText.Format(mirrorEvent.Amount),
             ["source"] = EventSource,
         });
@@ -203,14 +219,18 @@ public sealed class GateSimulatorClient : ExchangeSimulatorClientBase
             return null;
         }
 
+        // The snapshot uses Waterblocks asset ids, so that callers do not know the Gate currency names.
         var balances = new Dictionary<string, SimulatorBalance>(StringComparer.Ordinal);
         if (element.TryGetProperty("balances", out var balanceElement) && balanceElement.ValueKind == JsonValueKind.Object)
         {
-            foreach (var balance in balanceElement.EnumerateObject())
+            foreach (var (assetId, currency) in GateCurrencies)
             {
-                balances[balance.Name] = new SimulatorBalance(
-                    ReadDecimal(balance.Value, "spot_available"),
-                    ReadDecimal(balance.Value, "spot_locked"));
+                if (balanceElement.TryGetProperty(currency, out var balance))
+                {
+                    balances[assetId] = new SimulatorBalance(
+                        ReadDecimal(balance, "spot_available"),
+                        ReadDecimal(balance, "spot_locked"));
+                }
             }
         }
 

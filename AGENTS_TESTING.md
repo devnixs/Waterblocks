@@ -40,6 +40,7 @@ Files touched:
 Work summary (STORY-023):
 - Added `OffExchangeProviderTests`. It adds `FakeExchangeSimulatorClient`, an in-memory simulator client, for `BYBIT_V2` and `DERIBIT` next to the Gate.io client. The tests prove that a new exchange needs only a new client: the provider list, the exchange type check, the connection, the mirror events, the asset check, the one-account rule and the connection index work for each exchange.
 - `OffExchangeTestBase.ConfigureServices` is virtual, so that a test class can add a client.
+- Added tests for the Gate.io asset mapping: a `USDT_ERC20` add reaches the fake simulator as `USDT`, and its `USDT` balance shows on `USDT_ERC20`.
 - Updated the existing Off Exchange tests to the generic names and error codes.
 - The e2e test checks the provider list of the connect dialog against `GET /admin/exchange-providers`, and checks that the Exchanges table headers name no exchange.
 

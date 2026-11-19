@@ -54,7 +54,7 @@ public class OffExchangeProviderTests : OffExchangeTestBase
 
         var gate = providers.EnumerateArray().Single(item => item.GetProperty("exchangeType").GetString() == GateExchangeType);
         gate.GetProperty("name").GetString().Should().Be("Gate.io");
-        gate.GetProperty("assetIds").EnumerateArray().Select(item => item.GetString()).Should().Equal("BTC", "USDT");
+        gate.GetProperty("assetIds").EnumerateArray().Select(item => item.GetString()).Should().Equal("BTC", "USDT_ERC20");
         gate.GetProperty("oneAccountPerWorkspace").GetBoolean().Should().BeTrue();
         gate.GetProperty("isConfigured").GetBoolean().Should().BeTrue();
 
