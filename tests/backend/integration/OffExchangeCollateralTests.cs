@@ -359,11 +359,17 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
         var removal = await SubmitRemoveAsync(vaultId, accountId, "0.9999", gross: false);
 
         removal.GetProperty("status").GetString().Should().Be("CANCELLED");
-        await AssertRejectedRemovalAsync(removal.GetProperty("id").GetString()!);
+        var removalId = removal.GetProperty("id").GetString()!;
+        await AssertRejectedRemovalAsync(removalId);
+        (await GetTransferAsync(accountId, removalId)).GetProperty("failureReason").GetString().Should().Be(
+            "The removal needs 1 BTC from the collateral account (0.9999 BTC plus the 0.0001 BTC network fee), but only 0.9999 BTC is free.");
         var asset = await GetExchangeAssetAsync(accountId);
         Amount(asset, "total").Should().Be(0.9999m);
         Amount(asset, "lockedAmount").Should().Be(0m);
         (await GetVaultBalanceAsync(vaultId)).Should().Be(vaultBefore);
+
+        var withFeeDeducted = await SubmitRemoveAsync(vaultId, accountId, "0.9999", gross: true);
+        withFeeDeducted.GetProperty("status").GetString().Should().Be("SUBMITTED");
     }
 
     [Fact]
@@ -378,7 +384,10 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
 
         var refused = await SubmitRemoveAsync(vaultId, accountId, "0.3");
         refused.GetProperty("status").GetString().Should().Be("CANCELLED");
-        await AssertRejectedRemovalAsync(refused.GetProperty("id").GetString()!);
+        var refusedId = refused.GetProperty("id").GetString()!;
+        await AssertRejectedRemovalAsync(refusedId);
+        (await GetTransferAsync(accountId, refusedId)).GetProperty("failureReason").GetString().Should().Be(
+            "The removal needs 0.3 BTC from the collateral account, but only 0.1999 BTC is free.");
 
         var accepted = await SubmitRemoveAsync(vaultId, accountId, "0.1");
         accepted.GetProperty("status").GetString().Should().Be("SUBMITTED");

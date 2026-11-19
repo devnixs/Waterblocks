@@ -73,9 +73,13 @@ public class BalanceService : IBalanceService
     {
         if (transaction.CollateralDirection == CollateralDirection.REMOVE)
         {
-            return await _collateralLedger.TryLockRemovalAsync(transaction)
-                ? BalanceResult.Ok()
-                : BalanceResult.Fail("The amount is above the available collateral", "COLLATERAL_NOT_AVAILABLE");
+            if (await _collateralLedger.TryLockRemovalAsync(transaction))
+            {
+                return BalanceResult.Ok();
+            }
+
+            var free = await _collateralLedger.GetFreeCollateralAsync(transaction);
+            return BalanceResult.Fail(CollateralNotFreeMessage(transaction, free), "COLLATERAL_NOT_AVAILABLE");
         }
 
         // Address-based lookup - no workspace filter needed since addresses are globally unique
@@ -174,6 +178,21 @@ public class BalanceService : IBalanceService
         }
 
         return BalanceResult.Ok();
+    }
+
+    private static string CollateralNotFreeMessage(Transaction transaction, decimal free)
+    {
+        var assetId = transaction.AssetId;
+        var needed = $"{AmountText.Format(transaction.CollateralOutflow)} {assetId}";
+        var freeAmount = $"{AmountText.Format(Math.Max(free, 0m))} {assetId}";
+        if (transaction.TreatAsGrossAmount)
+        {
+            return $"The removal needs {needed} from the collateral account, but only {freeAmount} is free.";
+        }
+
+        var amount = $"{AmountText.Format(transaction.Amount)} {assetId}";
+        var fee = $"{AmountText.Format(transaction.NetworkFee)} {assetId}";
+        return $"The removal needs {needed} from the collateral account ({amount} plus the {fee} network fee), but only {freeAmount} is free.";
     }
 
     public async Task CompleteTransactionAsync(Transaction transaction)

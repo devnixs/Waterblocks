@@ -250,7 +250,11 @@ test('shows rejected removals', async ({ page, request }) => {
   await expect(page.getByText('Applied at Gate')).toBeVisible({ timeout: 15_000 });
 
   await submitTransfer(page, 'Remove collateral', '5');
-  await expect(page.getByLabel('Notifications (F8)').getByText('The exchange rejected the removal')).toBeVisible();
+  const notifications = page.getByLabel('Notifications (F8)');
+  await expect(notifications.getByText('The exchange rejected the removal')).toBeVisible();
+  await expect(notifications.getByText(
+    'The removal needs 5 BTC from the collateral account, but only 0.9999 BTC is free.',
+  )).toBeVisible();
   await expect(page.locator('.exchange-transfer').first().locator('.state-badge')).toHaveText('CANCELLED');
 
   await setGateBalance(request, gateAccount, 0.1);

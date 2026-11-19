@@ -98,7 +98,12 @@ function CollateralTransferForm({ account, target, onClose }: CollateralTransfer
       }
 
       if (response.data.state === 'CANCELLED') {
-        showToast({ title: 'The exchange rejected the removal', type: 'error', duration: 5000 });
+        showToast({
+          title: 'The exchange rejected the removal',
+          description: response.data.failureReason,
+          type: 'error',
+          duration: 8000,
+        });
       } else {
         showToast({ title: 'Collateral transfer created', type: 'success', duration: 3000 });
       }

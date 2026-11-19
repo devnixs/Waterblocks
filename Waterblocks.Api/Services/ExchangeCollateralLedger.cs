@@ -13,6 +13,7 @@ public interface IExchangeCollateralLedger
 {
     Task<ExchangeAccountAsset> EnsureAssetRowAsync(string exchangeAccountId, string assetId);
     Task<bool> TryLockRemovalAsync(Transaction transaction);
+    Task<decimal> GetFreeCollateralAsync(Transaction transaction);
     Task SettleAddAsync(Transaction transaction);
     Task SettleRemovalAsync(Transaction transaction);
     Task ReleaseRemovalAsync(Transaction transaction);
@@ -76,6 +77,13 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
         }
 
         return true;
+    }
+
+    public Task<decimal> GetFreeCollateralAsync(Transaction transaction)
+    {
+        return AssetRow(transaction)
+            .Select(asset => asset.Custody - asset.Locked - asset.ExchangeHold)
+            .SingleAsync();
     }
 
     public async Task SettleAddAsync(Transaction transaction)
