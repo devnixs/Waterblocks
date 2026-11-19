@@ -126,7 +126,7 @@ Windows PowerShell equivalents:
 - **Realtime**: UI updates via SignalR; status indicator shows connection state.
 - **Off Exchange**: exchange accounts, Add collateral and Remove collateral work through the API and the Exchanges screens.
 
-## Off Exchange and the Gate simulator
+## Off Exchange and exchange simulators
 Waterblocks serves these Fireblocks-compatible calls, without `/v1`:
 
 - `POST`, `GET /exchange_accounts`, `GET /exchange_accounts/paged`, `GET /exchange_accounts/credentials_public_key`
@@ -135,22 +135,32 @@ Waterblocks serves these Fireblocks-compatible calls, without `/v1`:
 
 `POST /exchange_accounts`, `POST /off_exchange/add` and `POST /off_exchange/remove` accept the `Idempotency-Key` header. A key has at most 40 characters. For 24 hours, a repeated key returns the first reply.
 
-Set these values to connect an account to a Gate simulator account:
+An exchange account can connect to an account in the simulator of its exchange. Each exchange that Waterblocks can connect has one simulator client. Today the only client is the Gate.io simulator (exchange type `GATEIO`). `GET /admin/exchange-providers` lists the clients, their assets and their rules. The Admin UI reads this list.
+
+Each exchange has its own settings, with the exchange type in the name:
 
 | Setting | Meaning |
 | --- | --- |
-| `GATE_SIMULATOR_BASE_URL` | Simulator origin, for example `http://host.docker.internal:8083`. An empty value turns the connection off |
-| `GATE_SIMULATOR_ADMIN_TOKEN` | Optional. Sent as `X-Admin-Token` on the simulator `/_api` calls |
+| `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` | Simulator origin, for example `EXCHANGE_SIMULATORS__GATEIO__BASE_URL=http://host.docker.internal:8083`. An empty value turns the connection off |
+| `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` | Optional. The Gate.io client sends it as `X-Admin-Token` on the simulator `/_api` calls |
 
-Open **Exchanges** in the Admin UI, select **Connect account**, and enter an API key and secret of the simulator account. Waterblocks uses the secret only for the connection check. It does not store the secret.
+Open **Exchanges** in the Admin UI, select **Connect account**, select the exchange, and enter an API key and secret of the simulator account. Waterblocks uses the secret only for the connection check. It does not store the secret.
 
-A workspace can have one Gate account. One Gate simulator account can be connected in only one workspace.
+A simulator account can be connected in only one workspace. An exchange can allow only one account in each workspace. Gate.io uses this rule.
 
-For a connected account, one background worker sends collateral events to the simulator:
+For a connected account, one background worker sends collateral events to the simulator of the account:
 
 - An add sends its net amount when the transaction reaches `COMPLETED`.
 - A removal sends the amount that leaves the collateral vault when it is created, and waits for the simulator to approve it.
 - A removal that fails after approval sends a reversal.
+
+To add an exchange, for example Bybit:
+
+1. Add a class in `Waterblocks.Api/Services/ExchangeSimulators` that extends `ExchangeSimulatorClientBase` (or implements `IExchangeSimulatorClient`). Set the exchange type, the display name, the assets and the one-account rule, and write the calls of that simulator.
+2. Register it in `Program.cs` with `builder.Services.AddExchangeSimulatorClient<TheNewClient>();`.
+3. Set `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL`.
+
+The tables, the API and the Admin UI need no change.
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
@@ -184,7 +194,7 @@ npm run dev
 ## Admin UI
 - Transactions page: create + manage transactions and state transitions
 - Vaults page: create vaults, create wallets, view balances + deposit addresses
-- Exchanges page: connect a Gate simulator account, view collateral balances, add and remove collateral
+- Exchanges page: connect an exchange simulator account, view collateral balances, add and remove collateral
 - Workspaces page: create/delete/view workspaces and API keys
 
 ---

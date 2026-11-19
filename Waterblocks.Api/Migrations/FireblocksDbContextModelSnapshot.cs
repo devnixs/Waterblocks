@@ -276,13 +276,6 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("GateSimulatorAccount")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<long?>("GateSimulatorUserId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("MainAccountId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -295,6 +288,14 @@ namespace Waterblocks.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("SimulatorAccountId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SimulatorAccountName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -314,13 +315,11 @@ namespace Waterblocks.Api.Migrations
                     b.HasIndex("CollateralAccountId")
                         .IsUnique();
 
-                    b.HasIndex(new[] { "GateSimulatorUserId" }, "IX_ExchangeAccounts_GateSimulatorUserId")
-                        .IsUnique()
-                        .HasFilter("\"GateSimulatorUserId\" IS NOT NULL");
+                    b.HasIndex("WorkspaceId");
 
-                    b.HasIndex(new[] { "WorkspaceId" }, "IX_ExchangeAccounts_WorkspaceId_Gate")
+                    b.HasIndex(new[] { "ExchangeType", "SimulatorAccountId" }, "IX_ExchangeAccounts_ExchangeType_SimulatorAccountId")
                         .IsUnique()
-                        .HasFilter("\"ExchangeType\" = 'GATEIO'");
+                        .HasFilter("\"SimulatorAccountId\" IS NOT NULL");
 
                     b.ToTable("ExchangeAccounts");
                 });
@@ -388,11 +387,16 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ExchangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("LastError")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("SimulatorAccount")
+                    b.Property<string>("SimulatorAccountName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -423,7 +427,7 @@ namespace Waterblocks.Api.Migrations
 
                     b.HasIndex("TransactionId");
 
-                    b.HasIndex("Status", "CreatedAt");
+                    b.HasIndex("Status", "ExchangeType", "CreatedAt");
 
                     b.ToTable("ExchangeMirrorEvents");
                 });

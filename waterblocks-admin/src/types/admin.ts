@@ -271,10 +271,18 @@ export type CollateralDirection = 'ADD' | 'REMOVE';
 export type ExchangeMirrorState = 'PENDING' | 'APPLIED' | 'REJECTED' | 'FAILED' | 'CANCELLED';
 
 export interface AdminExchangeConnection {
-  simulatorAccount: string;
-  simulatorUserId: number;
+  simulatorAccountId: string;
+  simulatorAccountName: string;
   maskedApiKey: string;
   connectedAt?: string;
+}
+
+export interface AdminExchangeProvider {
+  exchangeType: string;
+  name: string;
+  assetIds: string[];
+  oneAccountPerWorkspace: boolean;
+  isConfigured: boolean;
 }
 
 export interface AdminExchangeAsset {

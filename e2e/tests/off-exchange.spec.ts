@@ -86,8 +86,14 @@ async function primeAdminSession(page: Page, workspaceId: string) {
   }, workspaceId);
 }
 
+async function getProviders(request: APIRequestContext) {
+  const response = await request.get(`${apiUrl}/admin/exchange-providers`);
+  expect(response.ok()).toBeTruthy();
+  return (await response.json() as { data: Array<{ exchangeType: string; name: string }> }).data;
+}
+
 async function fillConnectForm(dialog: Locator, account: GateAccount, secret = account.secret) {
-  await dialog.getByRole('button', { name: /Gate/ }).click();
+  await dialog.getByRole('button', { name: /Gate\.io/ }).click();
   await dialog.getByLabel('Display name').fill(accountName);
   await dialog.getByLabel('API key').fill(account.key);
   await dialog.getByLabel('API secret', { exact: true }).fill(secret);
@@ -134,8 +140,12 @@ test('shows the empty state and the provider list', async ({ page, request }) =>
   await expect(page.getByRole('heading', { name: 'Connect an account' })).toBeVisible();
   await page.getByRole('button', { name: 'Connect account' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('button', { name: /Gate/ })).toContainText('Off Exchange');
-  await dialog.getByRole('button', { name: /Gate/ }).click();
+  const providers = await getProviders(request);
+  await expect(dialog.locator('.exchange-provider')).toHaveText(
+    providers.map((provider) => new RegExp(provider.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+  );
+  await expect(dialog.getByRole('button', { name: /Gate\.io/ })).toContainText('Off Exchange');
+  await dialog.getByRole('button', { name: /Gate\.io/ }).click();
   await expect(dialog.getByText('Main account')).toBeVisible();
   await expect(dialog.getByLabel('API secret', { exact: true })).toHaveAttribute('type', 'password');
   await dialog.getByRole('button', { name: 'Show' }).click();
@@ -160,7 +170,7 @@ test('shows the message of a wrong key and keeps secrets out of browser storage'
 
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('button', { name: 'Connect account' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: /Gate/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Gate\.io/ }).click();
   await expect(page.getByRole('dialog').getByLabel('API key')).toHaveValue('');
 });
 
@@ -177,7 +187,7 @@ test('connects an account that was created through the API', async ({ page, requ
 
   await page.goto(`/exchanges/${id}`);
 
-  await expect(page.getByText('This account has no Gate simulator connection.')).toBeVisible();
+  await expect(page.getByText('This account has no simulator connection.')).toBeVisible();
   await expect(page.locator('tr[data-asset]')).toHaveCount(2);
   await page.getByLabel('Search assets').fill('usd');
   await expect(page.locator('tr[data-asset]')).toHaveCount(1);
@@ -193,10 +203,10 @@ test('connects an account that was created through the API', async ({ page, requ
   await expect(dialog).toBeHidden();
   await expect(page.getByText(gateAccount.name)).toBeVisible();
   await page.getByRole('button', { name: 'Refresh' }).click();
-  await expect(page.getByText('This account has no Gate simulator connection.')).toHaveCount(0);
+  await expect(page.getByText('This account has no simulator connection.')).toHaveCount(0);
 
   await page.goto('/exchanges');
-  await expect(page.getByText('A workspace can have only one Gate account.')).toBeVisible();
+  await expect(page.getByText('A workspace can have only one Gate.io account.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect account' })).toHaveCount(0);
 });
 
@@ -217,18 +227,24 @@ test('connects an account, moves collateral and labels the transactions', async 
   await expect(page.getByText('ADD COLLATERAL', { exact: true })).toBeVisible();
   const [add] = await getTransfers(request, accountId, workspace.id);
   await completeTransaction(request, add.id, workspace.id);
-  await expect(page.getByText('Applied at Gate')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Applied at Gate.io', { exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(assetRow(page)).toContainText('0.99990000', { timeout: 15_000 });
 
   await submitTransfer(page, 'Remove collateral', '0.4');
   await expect(page.getByText('REMOVE COLLATERAL', { exact: true })).toBeVisible();
-  await expect(page.getByText('Applied at Gate')).toHaveCount(2, { timeout: 15_000 });
+  await expect(page.getByText('Applied at Gate.io', { exact: true })).toHaveCount(2, { timeout: 15_000 });
   const [removal] = await getTransfers(request, accountId, workspace.id);
   await completeTransaction(request, removal.id, workspace.id);
   await expect(assetRow(page)).toContainText('0.59990000', { timeout: 15_000 });
 
   await page.goto('/exchanges');
-  await expect(page.getByRole('row', { name: new RegExp(accountName) })).toContainText(gateAccount.name);
+  await expect(page.locator('thead th')).toHaveText([
+    'Name', 'Exchange', 'Simulator account', 'Connection', 'Collateral', 'Created',
+  ]);
+  const accountRow = page.getByRole('row', { name: new RegExp(accountName) });
+  await expect(accountRow).toContainText(gateAccount.name);
+  await expect(accountRow).toContainText('Gate.io');
+  await expect(accountRow).toContainText('0.5999 BTC');
   await page.getByRole('row', { name: new RegExp(accountName) }).click();
   await expect(page).toHaveURL(new RegExp(`/exchanges/${accountId}$`));
 
@@ -251,7 +267,7 @@ test('shows rejected removals', async ({ page, request }) => {
   await expect(page.getByText('ADD COLLATERAL', { exact: true })).toBeVisible();
   const [add] = await getTransfers(request, accountId, workspace.id);
   await completeTransaction(request, add.id, workspace.id);
-  await expect(page.getByText('Applied at Gate')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Applied at Gate.io', { exact: true })).toBeVisible({ timeout: 15_000 });
 
   await submitTransfer(page, 'Remove collateral', '5');
   const notifications = page.getByLabel('Notifications (F8)');
@@ -264,7 +280,7 @@ test('shows rejected removals', async ({ page, request }) => {
   await setGateBalance(request, gateAccount, 0.1);
   await expect(assetRow(page)).toContainText('0.10000000', { timeout: 15_000 });
   await submitTransfer(page, 'Remove collateral', '0.5');
-  await expect(page.getByText('Rejected by Gate')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Rejected by Gate.io', { exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.exchange-transfer').first().locator('.state-badge')).toHaveText('CANCELLED');
   await expect(assetRow(page).locator('td').nth(4)).toHaveText('0.00000000');
 });

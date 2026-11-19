@@ -1141,7 +1141,7 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       summary: Add an exchange account
-      description: Waterblocks allows one GATEIO account in each workspace. A second GATEIO account gets 409.
+      description: In Waterblocks, an exchange type can allow only one account in each workspace (GATEIO uses this rule). A second account of such a type gets 409.
       operationId: addExchangeAccount
       parameters:
         - $ref: '#/components/parameters/X-Idempotency-Key'

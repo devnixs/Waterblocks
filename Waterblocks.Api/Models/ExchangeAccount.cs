@@ -4,21 +4,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Waterblocks.Api.Models;
 
 /// <summary>
-/// An exchange account of one workspace, with an optional connection to a Gate simulator account.
+/// An exchange account of one workspace, with an optional connection to an account in the simulator of its exchange.
 /// </summary>
 public class ExchangeAccount
 {
     public const string ApprovedStatus = "APPROVED";
 
     /// <summary>
-    /// The unique index that allows one Gate account in each workspace.
+    /// The unique index that allows one connection for each simulator account of an exchange type, in all workspaces.
     /// </summary>
-    public const string OneGateAccountPerWorkspaceIndex = "IX_ExchangeAccounts_WorkspaceId_Gate";
-
-    /// <summary>
-    /// The unique index that allows one exchange account for each Gate simulator account, in all workspaces.
-    /// </summary>
-    public const string OneAccountPerSimulatorAccountIndex = "IX_ExchangeAccounts_GateSimulatorUserId";
+    public const string OneConnectionPerSimulatorAccountIndex = "IX_ExchangeAccounts_ExchangeType_SimulatorAccountId";
 
     [Key]
     [MaxLength(50)]
@@ -47,10 +42,17 @@ public class ExchangeAccount
     [MaxLength(255)]
     public string? MainAccountId { get; set; }
 
+    /// <summary>
+    /// The stable id of the connected account in the exchange simulator.
+    /// </summary>
     [MaxLength(100)]
-    public string? GateSimulatorAccount { get; set; }
+    public string? SimulatorAccountId { get; set; }
 
-    public long? GateSimulatorUserId { get; set; }
+    /// <summary>
+    /// The name of the connected account in the exchange simulator.
+    /// </summary>
+    [MaxLength(100)]
+    public string? SimulatorAccountName { get; set; }
 
     [MaxLength(20)]
     public string? MaskedApiKey { get; set; }
@@ -62,7 +64,7 @@ public class ExchangeAccount
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     [NotMapped]
-    public bool IsConnected => GateSimulatorAccount != null;
+    public bool IsConnected => SimulatorAccountName != null;
 
     public Workspace Workspace { get; set; } = null!;
 

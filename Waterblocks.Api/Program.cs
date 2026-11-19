@@ -1,6 +1,7 @@
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Services.ExchangeSimulators;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -38,8 +39,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService>();
 builder.Services.AddHostedService<Waterblocks.Api.Services.ExchangeMirrorWorker>();
-builder.Services.AddHttpClient<Waterblocks.Api.Services.IGateSimulatorClient, Waterblocks.Api.Services.GateSimulatorClient>(
-    client => client.Timeout = TimeSpan.FromSeconds(5));
+
+// Each exchange that Waterblocks can connect has one simulator client. Add a new exchange here.
+builder.Services.AddExchangeSimulatorClient<GateSimulatorClient>();
+builder.Services.AddScoped<IExchangeSimulatorRegistry, ExchangeSimulatorRegistry>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionFactory, Waterblocks.Api.Services.TransactionFactory>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionStateService, Waterblocks.Api.Services.TransactionStateService>();

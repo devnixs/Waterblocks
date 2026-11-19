@@ -16,14 +16,14 @@ status: COMPLETE
 ## Goal
 
 - [X] Let testers and the LL engine use Fireblocks-compatible exchange accounts, Add collateral and Remove collateral on Waterblocks.
-- [X] Let testers connect a Gate simulator account in the admin UI, and run Add collateral and Remove collateral from there.
+- [X] Let testers connect an exchange simulator account (Gate.io first) in the admin UI, and run Add collateral and Remove collateral from there.
 
 ## Scope
 
 - [X] Add the Fireblocks-compatible `/exchange_accounts` and `/off_exchange` endpoints that the specs list.
 - [X] Add the `/admin/exchange-accounts` endpoints.
 - [X] Store exchange accounts, collateral balances, mirror events and idempotency records in PostgreSQL.
-- [X] Mirror collateral changes to a connected Gate simulator account with one background worker.
+- [X] Mirror collateral changes to the simulator account of a connected exchange account with one background worker.
 - [X] Release funds on every final state other than `COMPLETED`, `POST /transactions/{txId}/cancel` included.
 - [X] Add the Exchanges page, the connect dialog, the CVA screen, the collateral transfer dialog and the transfers list.
 - [X] Do not add settlement, deposit to exchange, withdraw from exchange, sub account screens, other exchange providers in the UI, USD values, new transaction states, webhooks or JWT signature checks.

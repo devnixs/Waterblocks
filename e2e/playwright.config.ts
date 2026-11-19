@@ -49,7 +49,7 @@ export default defineConfig({
           process.env.ARCHIVE_ALL_WORKSPACES_ENABLED ?? 'true',
         ConnectionStrings__DefaultConnection:
           process.env.ConnectionStrings__DefaultConnection ?? defaultConnectionString,
-        GATE_SIMULATOR_BASE_URL: process.env.GATE_SIMULATOR_BASE_URL ?? fakeGateUrl,
+        EXCHANGE_SIMULATORS__GATEIO__BASE_URL: process.env.EXCHANGE_SIMULATORS__GATEIO__BASE_URL ?? fakeGateUrl,
       },
     },
     {

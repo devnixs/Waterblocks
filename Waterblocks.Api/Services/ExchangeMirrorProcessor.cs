@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Services.ExchangeSimulators;
 
 namespace Waterblocks.Api.Services;
 
 /// <summary>
-/// Sends pending mirror events to the Gate simulator and applies its replies.
+/// Sends pending mirror events to the simulator of their exchange type and applies the replies.
 /// </summary>
 public interface IExchangeMirrorProcessor
 {
@@ -20,7 +21,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
     private const string FailedAtExchange = "3RD_PARTY_FAILED";
 
     private readonly FireblocksDbContext _context;
-    private readonly IGateSimulatorClient _gateSimulator;
+    private readonly IExchangeSimulatorRegistry _simulators;
     private readonly ICollateralTransactionRunner _runner;
     private readonly ITransactionStateService _transactionState;
     private readonly IAdminTransactionNotifier _notifier;
@@ -28,14 +29,14 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
     public ExchangeMirrorProcessor(
         FireblocksDbContext context,
-        IGateSimulatorClient gateSimulator,
+        IExchangeSimulatorRegistry simulators,
         ICollateralTransactionRunner runner,
         ITransactionStateService transactionState,
         IAdminTransactionNotifier notifier,
         ILogger<ExchangeMirrorProcessor> logger)
     {
         _context = context;
-        _gateSimulator = gateSimulator;
+        _simulators = simulators;
         _runner = runner;
         _transactionState = transactionState;
         _notifier = notifier;
@@ -44,33 +45,39 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
     public async Task ProcessPendingAsync(CancellationToken cancellationToken = default)
     {
-        if (!_gateSimulator.IsConfigured)
+        // Events of an exchange type with no configured simulator stay pending until the simulator is configured.
+        var simulators = _simulators.All
+            .Where(simulator => simulator.IsConfigured)
+            .ToDictionary(simulator => simulator.ExchangeType, StringComparer.Ordinal);
+        if (simulators.Count == 0)
         {
             return;
         }
 
+        var exchangeTypes = simulators.Keys.ToList();
         var pendingEvents = await _context.ExchangeMirrorEvents
             .AsNoTracking()
-            .Where(item => item.Status == ExchangeMirrorEventStatus.PENDING)
+            .Where(item => item.Status == ExchangeMirrorEventStatus.PENDING && exchangeTypes.Contains(item.ExchangeType))
             .OrderBy(item => item.CreatedAt)
             .ThenBy(item => item.Id)
             .Take(BatchSize)
             .ToListAsync(cancellationToken);
 
         // An account keeps its order, so its later events wait when an earlier event must be sent again.
-        var waitingAccounts = new HashSet<string>(StringComparer.Ordinal);
+        var waitingAccounts = new HashSet<(string ExchangeType, string AccountName)>();
         foreach (var pendingEvent in pendingEvents)
         {
-            if (waitingAccounts.Contains(pendingEvent.SimulatorAccount) ||
+            var account = (pendingEvent.ExchangeType, pendingEvent.SimulatorAccountName);
+            if (waitingAccounts.Contains(account) ||
                 !await IsStillPendingAsync(pendingEvent.Id, cancellationToken))
             {
                 continue;
             }
 
-            var outcome = await _gateSimulator.SendEventAsync(pendingEvent, cancellationToken);
-            if (outcome.Kind == GateEventOutcomeKind.Retry)
+            var outcome = await simulators[pendingEvent.ExchangeType].SendEventAsync(pendingEvent, cancellationToken);
+            if (outcome.Kind == MirrorEventOutcomeKind.Retry)
             {
-                waitingAccounts.Add(pendingEvent.SimulatorAccount);
+                waitingAccounts.Add(account);
                 await RecordRetryAsync(pendingEvent, outcome, cancellationToken);
                 continue;
             }
@@ -88,7 +95,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
     private async Task RecordRetryAsync(
         ExchangeMirrorEvent pendingEvent,
-        GateEventOutcome outcome,
+        MirrorEventOutcome outcome,
         CancellationToken cancellationToken)
     {
         var error = Truncate(outcome.Message);
@@ -105,14 +112,14 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
         if (pendingEvent.Attempts == 0)
         {
             _logger.LogWarning(
-                "Gate simulator did not take mirror event {EventId}. It stays pending: {Error}",
-                pendingEvent.Id, error);
+                "The {ExchangeType} simulator did not take mirror event {EventId}. It stays pending: {Error}",
+                pendingEvent.ExchangeType, pendingEvent.Id, error);
         }
     }
 
     private async Task ApplyOutcomeAsync(
         ExchangeMirrorEvent pendingEvent,
-        GateEventOutcome outcome,
+        MirrorEventOutcome outcome,
         CancellationToken cancellationToken)
     {
         var transaction = await _runner.RunAsync(
@@ -147,7 +154,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
         CollateralUnitOfWork unitOfWork,
         Transaction transaction,
         ExchangeMirrorEvent mirrorEvent,
-        GateEventOutcome outcome)
+        MirrorEventOutcome outcome)
     {
         var now = DateTimeOffset.UtcNow;
         var isRemoval = mirrorEvent.Type == ExchangeMirrorEventType.Remove;
@@ -157,7 +164,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
         switch (outcome.Kind)
         {
-            case GateEventOutcomeKind.Applied:
+            case MirrorEventOutcomeKind.Applied:
                 mirrorEvent.Status = ExchangeMirrorEventStatus.APPLIED;
                 if (isRemoval)
                 {
@@ -166,7 +173,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
                 break;
 
-            case GateEventOutcomeKind.Rejected:
+            case MirrorEventOutcomeKind.Rejected:
                 mirrorEvent.Status = ExchangeMirrorEventStatus.REJECTED;
                 if (isRemoval)
                 {
@@ -178,7 +185,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
                 break;
 
-            case GateEventOutcomeKind.Refused:
+            case MirrorEventOutcomeKind.Refused:
                 mirrorEvent.Status = ExchangeMirrorEventStatus.FAILED;
                 if (isRemoval)
                 {

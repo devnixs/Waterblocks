@@ -140,8 +140,8 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         var data = (await ReadOkAsync(response)).GetProperty("data");
         data.GetProperty("name").GetString().Should().Be("Gate main");
         var connection = data.GetProperty("connection");
-        connection.GetProperty("simulatorAccount").GetString().Should().Be(SimulatorAccount);
-        connection.GetProperty("simulatorUserId").GetInt64().Should().Be(SimulatorUserId);
+        connection.GetProperty("simulatorAccountName").GetString().Should().Be(SimulatorAccount);
+        connection.GetProperty("simulatorAccountId").GetString().Should().Be(SimulatorUserId.ToString());
         connection.GetProperty("maskedApiKey").GetString().Should().Be("gate****cdef");
         data.GetProperty("assets").EnumerateArray().Select(asset => asset.GetProperty("assetId").GetString())
             .Should().Equal("BTC", "USDT");
@@ -159,7 +159,7 @@ public class OffExchangeAccountTests : OffExchangeTestBase
             new { apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
 
         var data = (await ReadOkAsync(response)).GetProperty("data");
-        data.GetProperty("connection").GetProperty("simulatorAccount").GetString().Should().Be(SimulatorAccount);
+        data.GetProperty("connection").GetProperty("simulatorAccountName").GetString().Should().Be(SimulatorAccount);
     }
 
     [Fact]
@@ -173,11 +173,11 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     public async Task Unreachable_Simulator_Gives_Unreachable_Code()
     {
         Simulator.IsOffline = true;
-        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "GATE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
+        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "EXCHANGE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
 
         Simulator.IsOffline = false;
         Simulator.ForcedStatus = HttpStatusCode.ServiceUnavailable;
-        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "GATE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
+        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "EXCHANGE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
     }
 
     [Fact]
@@ -193,19 +193,21 @@ public class OffExchangeAccountTests : OffExchangeTestBase
             new { exchangeType = "GATEIO", name = "Gate", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await ReadJsonAsync(response)).GetProperty("error").GetProperty("code").GetString()
-            .Should().Be("GATE_SIMULATOR_NOT_CONFIGURED");
+        var error = (await ReadJsonAsync(response)).GetProperty("error");
+        error.GetProperty("code").GetString().Should().Be("EXCHANGE_SIMULATOR_NOT_CONFIGURED");
+        error.GetProperty("message").GetString().Should().Be("The Gate.io simulator URL is not configured");
     }
 
     [Fact]
     public async Task Admin_Token_Is_Sent_On_Simulator_Admin_Calls()
     {
         Simulator.RequiredAdminToken = "simulator-admin-token";
-        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "GATE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
+        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "EXCHANGE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
 
         var settings = new Dictionary<string, string?>(SimulatorSettings())
         {
-            [Waterblocks.Api.Services.GateSimulatorClient.AdminTokenSetting] = "simulator-admin-token",
+            [Waterblocks.Api.Services.ExchangeSimulators.ExchangeSimulatorSettings.AdminTokenKey(GateExchangeType)] =
+                "simulator-admin-token",
         };
         await using var factory = Fixture.CreateFactory(settings, ConfigureServices);
         var client = factory.CreateClient();
@@ -220,15 +222,15 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task A_Workspace_Has_Only_One_Gate_Account()
+    public async Task An_Exchange_With_The_One_Account_Rule_Has_One_Account_In_A_Workspace()
     {
         await CreateExchangeAccountAsync();
 
         var secondGate = await PostAsync("/exchange_accounts", new { exchangeType = "GATEIO", name = "Second Gate" });
         secondGate.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadJsonAsync(secondGate)).GetProperty("message").GetString()
-            .Should().Be("This workspace already has a Gate account. A workspace can have only one Gate account");
-        await AssertConnectFailsAsync(HttpStatusCode.Conflict, "GATE_ACCOUNT_ALREADY_EXISTS", SimulatorApiKey, SimulatorApiSecret);
+            .Should().Be("This workspace already has a Gate.io account. A workspace can have only one Gate.io account");
+        await AssertConnectFailsAsync(HttpStatusCode.Conflict, "EXCHANGE_ACCOUNT_LIMIT_REACHED", SimulatorApiKey, SimulatorApiSecret);
 
         var otherExchange = await PostAsync("/exchange_accounts", new { exchangeType = "BITGET", name = "Other exchange" });
         otherExchange.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -237,7 +239,7 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task Parallel_Gate_Accounts_In_One_Workspace_Create_One_Account()
+    public async Task Parallel_Creates_Of_A_One_Account_Exchange_Create_One_Account()
     {
         var calls = Enumerable.Range(0, 5).Select(index => PostAsync(
             "/exchange_accounts",

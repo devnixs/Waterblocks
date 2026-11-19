@@ -69,11 +69,11 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             return false;
         }
 
-        var simulatorAccount = await FindSimulatorAccountAsync(transaction);
-        if (simulatorAccount != null)
+        var connection = await FindConnectionAsync(transaction);
+        if (connection != null)
         {
             transaction.RequiresExchangeApproval = true;
-            AddEvent(transaction, EventId(transaction), simulatorAccount, ExchangeMirrorEventType.Remove, outflow);
+            AddEvent(transaction, EventId(transaction), connection, ExchangeMirrorEventType.Remove, outflow);
         }
 
         return true;
@@ -106,10 +106,10 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             throw new UnsafeNumericValueException(DecimalColumnGuard.TooLargeMessage(CollateralTotalName(transaction.AssetId)));
         }
 
-        var simulatorAccount = await FindSimulatorAccountAsync(transaction);
-        if (simulatorAccount != null)
+        var connection = await FindConnectionAsync(transaction);
+        if (connection != null)
         {
-            AddEvent(transaction, EventId(transaction), simulatorAccount, ExchangeMirrorEventType.Add, amount);
+            AddEvent(transaction, EventId(transaction), connection, ExchangeMirrorEventType.Add, amount);
         }
     }
 
@@ -163,13 +163,18 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             AddEvent(
                 transaction,
                 reversalId,
-                removalEvent.SimulatorAccount,
+                new SimulatorConnection(removalEvent.ExchangeType, removalEvent.SimulatorAccountName),
                 ExchangeMirrorEventType.Add,
                 removalEvent.Amount);
         }
     }
 
-    private void AddEvent(Transaction transaction, string eventId, string simulatorAccount, string type, decimal amount)
+    private void AddEvent(
+        Transaction transaction,
+        string eventId,
+        SimulatorConnection connection,
+        string type,
+        decimal amount)
     {
         var now = DateTimeOffset.UtcNow;
         _context.ExchangeMirrorEvents.Add(new ExchangeMirrorEvent
@@ -178,7 +183,8 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             TransactionId = transaction.Id,
             WorkspaceId = transaction.WorkspaceId,
             ExchangeAccountId = transaction.ExchangeAccountId!,
-            SimulatorAccount = simulatorAccount,
+            ExchangeType = connection.ExchangeType,
+            SimulatorAccountName = connection.AccountName,
             Type = type,
             AssetId = transaction.AssetId,
             Amount = amount,
@@ -213,11 +219,14 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             .FirstOrDefaultAsync(asset => asset.ExchangeAccountId == exchangeAccountId && asset.AssetId == assetId);
     }
 
-    private Task<string?> FindSimulatorAccountAsync(Transaction transaction)
+    /// <summary>
+    /// Returns the simulator account of a connected exchange account, or null when the account has no connection.
+    /// </summary>
+    private Task<SimulatorConnection?> FindConnectionAsync(Transaction transaction)
     {
         return _context.ExchangeAccounts
-            .Where(account => account.Id == transaction.ExchangeAccountId)
-            .Select(account => account.GateSimulatorAccount)
+            .Where(account => account.Id == transaction.ExchangeAccountId && account.SimulatorAccountName != null)
+            .Select(account => new SimulatorConnection(account.ExchangeType, account.SimulatorAccountName!))
             .FirstOrDefaultAsync();
     }
 
@@ -236,4 +245,6 @@ public sealed class ExchangeCollateralLedger : IExchangeCollateralLedger
             throw new InvalidOperationException("The collateral balance row does not exist");
         }
     }
+
+    private sealed record SimulatorConnection(string ExchangeType, string AccountName);
 }

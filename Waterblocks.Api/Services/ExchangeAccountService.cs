@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Waterblocks.Api.Dtos.Admin;
@@ -6,6 +5,7 @@ using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Services.ExchangeSimulators;
 using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
@@ -20,6 +20,7 @@ public interface IExchangeAccountService
     Task<ExchangeAccountDto> GetCollateralAccountAsync(string mainExchangeAccountId);
     ExchangeCredentialsPublicKeyDto GetCredentialsPublicKey();
 
+    List<AdminExchangeProviderDto> ListProviders();
     Task<List<AdminExchangeAccountDto>> ListForAdminAsync();
     Task<AdminExchangeAccountDto> GetForAdminAsync(string exchangeAccountId);
     Task<AdminExchangeAccountDto> CreateConnectedAsync(CreateAdminExchangeAccountRequestDto request);
@@ -50,7 +51,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     private readonly FireblocksDbContext _context;
     private readonly WorkspaceContext _workspace;
-    private readonly IGateSimulatorClient _gateSimulator;
+    private readonly IExchangeSimulatorRegistry _simulators;
     private readonly IExchangeCollateralLedger _collateralLedger;
     private readonly IRealtimeNotifier _realtimeNotifier;
     private readonly IdempotencyContext _idempotency;
@@ -58,14 +59,14 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     public ExchangeAccountService(
         FireblocksDbContext context,
         WorkspaceContext workspace,
-        IGateSimulatorClient gateSimulator,
+        IExchangeSimulatorRegistry simulators,
         IExchangeCollateralLedger collateralLedger,
         IRealtimeNotifier realtimeNotifier,
         IdempotencyContext idempotency)
     {
         _context = context;
         _workspace = workspace;
-        _gateSimulator = gateSimulator;
+        _simulators = simulators;
         _collateralLedger = collateralLedger;
         _realtimeNotifier = realtimeNotifier;
         _idempotency = idempotency;
@@ -83,11 +84,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     public async Task<AddExchangeAccountResponseDto> CreateAsync(AddExchangeAccountRequestDto request)
     {
         var exchangeType = RequireExchangeType(request.ExchangeType);
-        if (exchangeType == ExchangeTypes.Gate)
-        {
-            await RequireNoGateAccountAsync();
-        }
-
+        var simulator = _simulators.Find(exchangeType);
         var mainAccountId = string.IsNullOrWhiteSpace(request.MainAccountId) ? null : request.MainAccountId.Trim();
         if (mainAccountId?.Length > MaxNameLength)
         {
@@ -110,9 +107,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             ExchangeType = account.ExchangeType,
         };
 
-        _context.ExchangeAccounts.Add(account);
-        _idempotency.StageReply(_context, StatusCodes.Status201Created, response);
-        await SaveAccountAsync();
+        await AddAccountAsync(account, simulator, response);
         _idempotency.MarkReplyStored();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
@@ -188,6 +183,20 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         };
     }
 
+    public List<AdminExchangeProviderDto> ListProviders()
+    {
+        return _simulators.All
+            .Select(simulator => new AdminExchangeProviderDto
+            {
+                ExchangeType = simulator.ExchangeType,
+                Name = simulator.DisplayName,
+                AssetIds = simulator.AssetIds.ToList(),
+                OneAccountPerWorkspace = simulator.OneAccountPerWorkspace,
+                IsConfigured = simulator.IsConfigured,
+            })
+            .ToList();
+    }
+
     public async Task<List<AdminExchangeAccountDto>> ListForAdminAsync()
     {
         var views = await BuildViewsAsync(await LoadWorkspaceAccountsAsync());
@@ -202,10 +211,10 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     public async Task<AdminExchangeAccountDto> CreateConnectedAsync(CreateAdminExchangeAccountRequestDto request)
     {
         var exchangeType = RequireExchangeType(request.ExchangeType);
-        RequireGateAccountType(exchangeType);
+        var simulator = _simulators.Require(exchangeType);
         var name = RequireName(request.Name);
-        await RequireNoGateAccountAsync();
-        var connection = await VerifyConnectionAsync(request.ApiKey, request.ApiSecret);
+        await RequireFreeAccountSlotAsync(simulator, WorkspaceId);
+        var connection = await VerifyConnectionAsync(simulator, request.ApiKey, request.ApiSecret);
 
         var account = new ExchangeAccount
         {
@@ -214,8 +223,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             ExchangeType = exchangeType,
         };
         ApplyConnection(account, connection);
-        _context.ExchangeAccounts.Add(account);
-        await SaveAccountAsync();
+        await AddAccountAsync(account, simulator, idempotentReply: null);
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
         return await GetForAdminAsync(account.Id);
@@ -229,15 +237,15 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             .FirstOrDefaultAsync(item => item.Id == exchangeAccountId && item.WorkspaceId == WorkspaceId)
             ?? throw AccountNotFound(exchangeAccountId);
 
-        RequireGateAccountType(account.ExchangeType);
+        var simulator = _simulators.Require(account.ExchangeType);
         if (account.IsConnected)
         {
             throw AlreadyConnected("This exchange account already has a connection");
         }
 
-        var connection = await VerifyConnectionAsync(request.ApiKey, request.ApiSecret);
+        var connection = await VerifyConnectionAsync(simulator, request.ApiKey, request.ApiSecret);
         ApplyConnection(account, connection);
-        await SaveAccountAsync();
+        await SaveConnectionAsync();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
         return await GetForAdminAsync(account.Id);
@@ -262,7 +270,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         {
             throw ExchangeOperationException.BadRequest(
                 "CREDIT_READ_ONLY",
-                "The credit of a connected account comes from the Gate simulator");
+                "The credit of a connected account comes from the exchange simulator");
         }
 
         await _collateralLedger.EnsureAssetRowAsync(account.Id, assetId);
@@ -423,19 +431,21 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         return accounts.Select((account, index) => BuildView(account, snapshots[index])).ToList();
     }
 
-    private Task<GateSimulatorAccountInfo?> ReadSimulatorAsync(ExchangeAccount account)
+    private Task<SimulatorAccountSnapshot?> ReadSimulatorAsync(ExchangeAccount account)
     {
-        return account.IsConnected
-            ? _gateSimulator.TryGetAccountAsync(account.GateSimulatorAccount!)
-            : Task.FromResult<GateSimulatorAccountInfo?>(null);
+        var simulator = _simulators.Find(account.ExchangeType);
+        return account.IsConnected && simulator != null
+            ? simulator.TryReadAccountAsync(account.SimulatorAccountName!)
+            : Task.FromResult<SimulatorAccountSnapshot?>(null);
     }
 
-    private static AccountView BuildView(ExchangeAccount account, GateSimulatorAccountInfo? snapshot)
+    private AccountView BuildView(ExchangeAccount account, SimulatorAccountSnapshot? snapshot)
     {
+        var simulator = _simulators.Find(account.ExchangeType);
         var assetIds = account.Assets.Select(asset => asset.AssetId).ToHashSet(StringComparer.Ordinal);
-        if (account.IsConnected)
+        if (account.IsConnected && simulator != null)
         {
-            assetIds.UnionWith(ExchangeTypes.GateSimulatorAssets);
+            assetIds.UnionWith(simulator.AssetIds);
         }
 
         var assets = assetIds
@@ -452,7 +462,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     private static AssetView BuildAssetView(
         ExchangeAccount account,
-        GateSimulatorAccountInfo? snapshot,
+        SimulatorAccountSnapshot? snapshot,
         ExchangeAccountAsset? row,
         string assetId)
     {
@@ -470,9 +480,9 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         }
         else if (account.IsConnected)
         {
-            var balance = snapshot!.Balances.GetValueOrDefault(assetId) ?? new GateSimulatorBalance(0m, 0m);
-            available = Math.Max(Math.Min(free, balance.SpotAvailable), 0m);
-            credit = balance.SpotAvailable + balance.SpotLocked;
+            var balance = snapshot!.Balances.GetValueOrDefault(assetId) ?? new SimulatorBalance(0m, 0m);
+            available = Math.Max(Math.Min(free, balance.Available), 0m);
+            credit = balance.Available + balance.Locked;
         }
 
         return new AssetView(assetId, custody, locked, exchangeHold, available, credit, row?.CollateralAddress);
@@ -526,9 +536,9 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             Connection = account.IsConnected
                 ? new AdminExchangeConnectionDto
                 {
-                    SimulatorAccount = account.GateSimulatorAccount!,
-                    SimulatorUserId = account.GateSimulatorUserId ?? 0,
-                    MaskedApiKey = account.MaskedApiKey ?? string.Empty,
+                    SimulatorAccountId = account.SimulatorAccountId!,
+                    SimulatorAccountName = account.SimulatorAccountName!,
+                    MaskedApiKey = account.MaskedApiKey!,
                     ConnectedAt = account.ConnectedAt,
                 }
                 : null,
@@ -553,7 +563,10 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         };
     }
 
-    private async Task<GateConnection> VerifyConnectionAsync(string? apiKey, string? apiSecret)
+    private async Task<SimulatorConnection> VerifyConnectionAsync(
+        IExchangeSimulatorClient simulator,
+        string? apiKey,
+        string? apiSecret)
     {
         var key = apiKey?.Trim();
         var secret = apiSecret?.Trim();
@@ -562,53 +575,101 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             throw ExchangeOperationException.BadRequest("API_CREDENTIALS_REQUIRED", "API key and API secret are required");
         }
 
-        var userId = await _gateSimulator.VerifyCredentialsAsync(key, secret);
-        var simulatorAccount = await _gateSimulator.FindAccountByUserIdAsync(userId)
-            ?? throw ExchangeOperationException.BadRequest(
-                "GATE_SIMULATOR_ACCOUNT_NOT_FOUND",
-                "The Gate simulator has no account for this API key");
-
-        var alreadyConnected = await _context.ExchangeAccounts
-            .AnyAsync(account => account.GateSimulatorUserId == userId);
+        var identity = await simulator.IdentifyAccountAsync(key, secret);
+        var alreadyConnected = await _context.ExchangeAccounts.AnyAsync(account =>
+            account.ExchangeType == simulator.ExchangeType && account.SimulatorAccountId == identity.AccountId);
         if (alreadyConnected)
         {
             throw SimulatorAccountInUse();
         }
 
-        return new GateConnection(simulatorAccount.Name, userId, MaskApiKey(key));
+        return new SimulatorConnection(identity, MaskApiKey(key));
     }
 
-    private static void ApplyConnection(ExchangeAccount account, GateConnection connection)
+    private static void ApplyConnection(ExchangeAccount account, SimulatorConnection connection)
     {
         var now = DateTimeOffset.UtcNow;
-        account.GateSimulatorAccount = connection.SimulatorAccount;
-        account.GateSimulatorUserId = connection.SimulatorUserId;
+        account.SimulatorAccountId = connection.Identity.AccountId;
+        account.SimulatorAccountName = connection.Identity.AccountName;
         account.MaskedApiKey = connection.MaskedApiKey;
         account.ConnectedAt = now;
         account.UpdatedAt = now;
     }
 
-    private async Task RequireNoGateAccountAsync()
+    /// <summary>
+    /// Adds an account in one database transaction. When the exchange allows one account in each workspace,
+    /// a lock on the workspace and exchange type makes parallel calls add one account only.
+    /// </summary>
+    private async Task AddAccountAsync(
+        ExchangeAccount account,
+        IExchangeSimulatorClient? simulator,
+        AddExchangeAccountResponseDto? idempotentReply)
     {
-        var hasGateAccount = await _context.ExchangeAccounts
-            .AnyAsync(account => account.WorkspaceId == WorkspaceId && account.ExchangeType == ExchangeTypes.Gate);
-        if (hasGateAccount)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        try
         {
-            throw GateAccountExists();
+            await strategy.ExecuteAsync(async () =>
+            {
+                _context.ChangeTracker.Clear();
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                // A retry after a lost commit must not add the account again.
+                if (await _context.ExchangeAccounts.AnyAsync(item => item.Id == account.Id))
+                {
+                    return;
+                }
+
+                if (simulator?.OneAccountPerWorkspace == true)
+                {
+                    await LockAccountSlotAsync(account.WorkspaceId, simulator.ExchangeType);
+                    await RequireFreeAccountSlotAsync(simulator, account.WorkspaceId);
+                }
+
+                _context.ExchangeAccounts.Add(account);
+                if (idempotentReply != null)
+                {
+                    _idempotency.StageReply(_context, StatusCodes.Status201Created, idempotentReply);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            });
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneConnectionPerSimulatorAccountIndex))
+        {
+            throw SimulatorAccountInUse();
         }
     }
 
-    private async Task SaveAccountAsync()
+    private Task LockAccountSlotAsync(string workspaceId, string exchangeType)
+    {
+        var lockName = $"exchange-account-slot|{workspaceId}|{exchangeType}";
+        return _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({lockName}, 0))");
+    }
+
+    private async Task RequireFreeAccountSlotAsync(IExchangeSimulatorClient simulator, string workspaceId)
+    {
+        if (!simulator.OneAccountPerWorkspace)
+        {
+            return;
+        }
+
+        var hasAccount = await _context.ExchangeAccounts
+            .AnyAsync(account => account.WorkspaceId == workspaceId && account.ExchangeType == simulator.ExchangeType);
+        if (hasAccount)
+        {
+            throw AccountLimitReached(simulator);
+        }
+    }
+
+    private async Task SaveConnectionAsync()
     {
         try
         {
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneGateAccountPerWorkspaceIndex))
-        {
-            throw GateAccountExists();
-        }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneAccountPerSimulatorAccountIndex))
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneConnectionPerSimulatorAccountIndex))
         {
             throw SimulatorAccountInUse();
         }
@@ -627,9 +688,13 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             : $"{apiKey[..MaskedKeyEdgeLength]}****{apiKey[^MaskedKeyEdgeLength..]}";
     }
 
-    private static string RequireExchangeType(string? exchangeType)
+    /// <summary>
+    /// Accepts the exchange types of the Fireblocks "Add an exchange account" call and the type of each simulator client.
+    /// </summary>
+    private string RequireExchangeType(string? exchangeType)
     {
-        if (string.IsNullOrWhiteSpace(exchangeType) || !ExchangeTypes.Supported.Contains(exchangeType))
+        if (string.IsNullOrWhiteSpace(exchangeType) ||
+            (!ExchangeTypes.Supported.Contains(exchangeType) && _simulators.Find(exchangeType) == null))
         {
             throw ExchangeOperationException.BadRequest(
                 "EXCHANGE_TYPE_NOT_SUPPORTED",
@@ -637,16 +702,6 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         }
 
         return exchangeType;
-    }
-
-    private static void RequireGateAccountType(string exchangeType)
-    {
-        if (exchangeType != ExchangeTypes.Gate)
-        {
-            throw ExchangeOperationException.BadRequest(
-                "EXCHANGE_TYPE_NOT_SUPPORTED",
-                "Only GATEIO accounts can connect to the Gate simulator");
-        }
     }
 
     private static string RequireName(string? name)
@@ -691,23 +746,22 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     private static ExchangeOperationException SimulatorAccountInUse()
     {
-        return AlreadyConnected("This Gate simulator account is already connected. It can be connected in only one workspace");
+        return AlreadyConnected("This simulator account is already connected. It can be connected in only one workspace");
     }
 
-    private static ExchangeOperationException GateAccountExists()
+    private static ExchangeOperationException AccountLimitReached(IExchangeSimulatorClient simulator)
     {
-        return new ExchangeOperationException(
-            HttpStatusCode.Conflict,
-            "GATE_ACCOUNT_ALREADY_EXISTS",
-            "This workspace already has a Gate account. A workspace can have only one Gate account");
+        return ExchangeOperationException.Conflict(
+            "EXCHANGE_ACCOUNT_LIMIT_REACHED",
+            $"This workspace already has a {simulator.DisplayName} account. A workspace can have only one {simulator.DisplayName} account");
     }
 
     private static ExchangeOperationException AlreadyConnected(string message)
     {
-        return new ExchangeOperationException(HttpStatusCode.Conflict, "EXCHANGE_ACCOUNT_ALREADY_CONNECTED", message);
+        return ExchangeOperationException.Conflict("EXCHANGE_ACCOUNT_ALREADY_CONNECTED", message);
     }
 
-    private sealed record GateConnection(string SimulatorAccount, long SimulatorUserId, string MaskedApiKey);
+    private sealed record SimulatorConnection(SimulatorAccountIdentity Identity, string MaskedApiKey);
 
     private sealed record AssetView(
         string AssetId,

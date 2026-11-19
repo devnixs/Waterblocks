@@ -19,7 +19,7 @@ public static class ExchangeMirrorEventType
 }
 
 /// <summary>
-/// One collateral change that Waterblocks must send to the Gate simulator.
+/// One collateral change that Waterblocks must send to the simulator of the exchange account.
 /// </summary>
 public class ExchangeMirrorEvent
 {
@@ -40,9 +40,16 @@ public class ExchangeMirrorEvent
     [MaxLength(50)]
     public string ExchangeAccountId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The exchange type that selects the simulator client for this event.
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string ExchangeType { get; set; } = string.Empty;
+
     [Required]
     [MaxLength(100)]
-    public string SimulatorAccount { get; set; } = string.Empty;
+    public string SimulatorAccountName { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(10)]

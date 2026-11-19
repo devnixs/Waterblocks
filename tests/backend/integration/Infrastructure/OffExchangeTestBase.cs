@@ -5,16 +5,17 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Core;
-using Waterblocks.Api.Services;
+using Waterblocks.Api.Services.ExchangeSimulators;
 using Xunit;
 
 namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// Shared setup and calls for the Off Exchange integration tests.
+/// Shared setup and calls for the Off Exchange integration tests. The Gate simulator client uses a test double.
 /// </summary>
 public abstract class OffExchangeTestBase : IAsyncLifetime
 {
+    protected const string GateExchangeType = "GATEIO";
     protected const string SimulatorAccount = "lombard";
     protected const string SimulatorApiKey = "gate-key-0123456789abcdef";
     protected const string SimulatorApiSecret = "gate-secret-fedcba9876543210";
@@ -39,12 +40,15 @@ public abstract class OffExchangeTestBase : IAsyncLifetime
 
     protected static IReadOnlyDictionary<string, string?> SimulatorSettings(string? baseUrl = FakeGateSimulator.BaseUrl)
     {
-        return new Dictionary<string, string?> { [GateSimulatorClient.BaseUrlSetting] = baseUrl };
+        return new Dictionary<string, string?> { [ExchangeSimulatorSettings.BaseUrlKey(GateExchangeType)] = baseUrl };
     }
 
-    protected void ConfigureServices(IServiceCollection services)
+    /// <summary>
+    /// Installs the test doubles. A test class can override it to add the client of another exchange.
+    /// </summary>
+    protected virtual void ConfigureServices(IServiceCollection services)
     {
-        services.AddHttpClient<IGateSimulatorClient, GateSimulatorClient>()
+        services.AddHttpClient<GateSimulatorClient>()
             .ConfigurePrimaryHttpMessageHandler(() => Simulator);
         services.AddSingleton<ILogEventSink>(Logs);
     }
@@ -89,18 +93,20 @@ public abstract class OffExchangeTestBase : IAsyncLifetime
         return decimal.Parse(element.GetProperty(propertyName).GetString()!, NumberStyles.Float, CultureInfo.InvariantCulture);
     }
 
-    protected async Task<string> CreateExchangeAccountAsync(string name = "Gate main", string exchangeType = "GATEIO")
+    protected async Task<string> CreateExchangeAccountAsync(string name = "Gate main", string exchangeType = GateExchangeType)
     {
         var response = await PostAsync("/exchange_accounts", new { exchangeType, name });
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         return (await ReadJsonAsync(response)).GetProperty("id").GetString()!;
     }
 
-    protected async Task<string> CreateConnectedAccountAsync(string name = "Gate connected")
+    protected async Task<string> CreateConnectedAccountAsync(
+        string name = "Gate connected",
+        string exchangeType = GateExchangeType,
+        string apiKey = SimulatorApiKey,
+        string apiSecret = SimulatorApiSecret)
     {
-        var response = await PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name, apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var response = await PostAsync("/admin/exchange-accounts", new { exchangeType, name, apiKey, apiSecret });
         var body = await ReadOkAsync(response);
         return body.GetProperty("data").GetProperty("id").GetString()!;
     }

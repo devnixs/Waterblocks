@@ -22,6 +22,7 @@ import type {
   AdminGeneratedAddress,
   EstimateFeeResponse,
   AdminExchangeAccount,
+  AdminExchangeProvider,
   AdminCollateralTransfer,
   CollateralTransferRequest,
   ConnectExchangeAccountRequest,
@@ -273,6 +274,10 @@ export const adminApi = {
   },
 
   // Exchange accounts
+  async getExchangeProviders(): Promise<AdminResponse<AdminExchangeProvider[]>> {
+    return fetchApi('/admin/exchange-providers');
+  },
+
   async getExchangeAccounts(): Promise<AdminResponse<AdminExchangeAccount[]>> {
     return fetchApi('/admin/exchange-accounts');
   },

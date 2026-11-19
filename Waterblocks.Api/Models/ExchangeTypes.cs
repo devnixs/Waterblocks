@@ -2,8 +2,6 @@ namespace Waterblocks.Api.Models;
 
 public static class ExchangeTypes
 {
-    public const string Gate = "GATEIO";
-
     /// <summary>
     /// The exchange types that the Fireblocks "Add an exchange account" call accepts.
     /// </summary>
@@ -19,15 +17,10 @@ public static class ExchangeTypes
         "HITBTC",
         "GEMINI",
         "HUOBI",
-        Gate,
+        "GATEIO",
         "COINHAKO",
         "BULLISH",
         "BITGET",
         "LUNO",
     };
-
-    /// <summary>
-    /// The assets that a connected Gate simulator account can hold.
-    /// </summary>
-    public static readonly IReadOnlyList<string> GateSimulatorAssets = new[] { "BTC", "USDT" };
 }

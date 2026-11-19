@@ -64,8 +64,8 @@ namespace Waterblocks.Api.Migrations
                     ExchangeType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     MainAccountId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    GateSimulatorAccount = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    GateSimulatorUserId = table.Column<long>(type: "bigint", nullable: true),
+                    SimulatorAccountId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    SimulatorAccountName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     MaskedApiKey = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     ConnectedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -90,7 +90,8 @@ namespace Waterblocks.Api.Migrations
                     TransactionId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     WorkspaceId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ExchangeAccountId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    SimulatorAccount = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ExchangeType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SimulatorAccountName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Type = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     AssetId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(36,18)", nullable: false),
@@ -162,16 +163,21 @@ namespace Waterblocks.Api.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExchangeAccounts_WorkspaceId_GateSimulatorUserId",
+                name: "IX_ExchangeAccounts_ExchangeType_SimulatorAccountId",
                 table: "ExchangeAccounts",
-                columns: new[] { "WorkspaceId", "GateSimulatorUserId" },
+                columns: new[] { "ExchangeType", "SimulatorAccountId" },
                 unique: true,
-                filter: "\"GateSimulatorUserId\" IS NOT NULL");
+                filter: "\"SimulatorAccountId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExchangeMirrorEvents_Status_CreatedAt",
+                name: "IX_ExchangeAccounts_WorkspaceId",
+                table: "ExchangeAccounts",
+                column: "WorkspaceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExchangeMirrorEvents_Status_ExchangeType_CreatedAt",
                 table: "ExchangeMirrorEvents",
-                columns: new[] { "Status", "CreatedAt" });
+                columns: new[] { "Status", "ExchangeType", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExchangeMirrorEvents_TransactionId",

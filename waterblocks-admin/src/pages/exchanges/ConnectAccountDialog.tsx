@@ -3,47 +3,57 @@ import type { FormEvent } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/adminClient';
-import type { AdminExchangeAccount } from '../../types/admin';
+import { useExchangeProviders } from '../../api/queries';
+import type { AdminExchangeAccount, AdminExchangeProvider } from '../../types/admin';
+import { findFullProviders, findProvider } from './exchangeFormat';
 
-type ExchangeProvider = {
-  exchangeType: string;
-  name: string;
-  label: string;
-};
-
-const EXCHANGE_PROVIDERS: ExchangeProvider[] = [
-  { exchangeType: 'GATEIO', name: 'Gate', label: 'Off Exchange' },
-];
+const PROVIDER_LABEL = 'Off Exchange';
 
 type ConnectAccountDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConnected: (account: AdminExchangeAccount) => void;
   account?: AdminExchangeAccount;
+  accounts?: AdminExchangeAccount[];
 };
 
 type ConnectAccountFormProps = Omit<ConnectAccountDialogProps, 'open'>;
 
 type ProviderStepProps = {
-  onSelect: (provider: ExchangeProvider) => void;
+  providers: AdminExchangeProvider[];
+  fullProviders: AdminExchangeProvider[];
+  onSelect: (provider: AdminExchangeProvider) => void;
   onCancel: () => void;
 };
 
-function ProviderStep({ onSelect, onCancel }: ProviderStepProps) {
+function providerNote(provider: AdminExchangeProvider, isFull: boolean): string {
+  if (isFull) return 'This workspace already has an account';
+  if (!provider.isConfigured) return 'The simulator URL is not configured';
+  return PROVIDER_LABEL;
+}
+
+function ProviderStep({ providers, fullProviders, onSelect, onCancel }: ProviderStepProps) {
   return (
     <div className="grid gap-4">
       <div className="grid gap-2">
-        {EXCHANGE_PROVIDERS.map((provider) => (
-          <button
-            key={provider.exchangeType}
-            type="button"
-            className="exchange-provider"
-            onClick={() => onSelect(provider)}
-          >
-            <span className="font-medium">{provider.name}</span>
-            <span className="text-sm text-muted">{provider.label}</span>
-          </button>
-        ))}
+        {providers.length === 0 && (
+          <div className="text-sm text-muted">No exchange simulator is available.</div>
+        )}
+        {providers.map((provider) => {
+          const isFull = fullProviders.includes(provider);
+          return (
+            <button
+              key={provider.exchangeType}
+              type="button"
+              className="exchange-provider"
+              onClick={() => onSelect(provider)}
+              disabled={isFull || !provider.isConfigured}
+            >
+              <span className="font-medium">{provider.name}</span>
+              <span className="text-sm text-muted">{providerNote(provider, isFull)}</span>
+            </button>
+          );
+        })}
       </div>
       <div className="flex justify-end">
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
@@ -52,12 +62,10 @@ function ProviderStep({ onSelect, onCancel }: ProviderStepProps) {
   );
 }
 
-function ConnectAccountForm({ onOpenChange, onConnected, account }: ConnectAccountFormProps) {
+function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] }: ConnectAccountFormProps) {
   const queryClient = useQueryClient();
-  const initialProvider = account
-    ? EXCHANGE_PROVIDERS.find((provider) => provider.exchangeType === account.exchangeType) ?? null
-    : null;
-  const [provider, setProvider] = useState<ExchangeProvider | null>(initialProvider);
+  const providersQuery = useExchangeProviders();
+  const [selectedProvider, setSelectedProvider] = useState<AdminExchangeProvider | null>(null);
   const [displayName, setDisplayName] = useState(account?.name ?? '');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
@@ -65,8 +73,29 @@ function ConnectAccountForm({ onOpenChange, onConnected, account }: ConnectAccou
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  if (providersQuery.isLoading) {
+    return <div className="text-sm text-muted">Loading exchanges...</div>;
+  }
+
+  if (providersQuery.error) {
+    return <div className="form-error" role="alert">Error: {providersQuery.error.message}</div>;
+  }
+
+  const providers = providersQuery.data ?? [];
+  const provider = account ? findProvider(providers, account.exchangeType) : selectedProvider;
+  if (account && !provider) {
+    return <div className="form-error" role="alert">Waterblocks has no simulator for {account.exchangeType}.</div>;
+  }
+
   if (!provider) {
-    return <ProviderStep onSelect={setProvider} onCancel={() => onOpenChange(false)} />;
+    return (
+      <ProviderStep
+        providers={providers}
+        fullProviders={findFullProviders(providers, accounts)}
+        onSelect={setSelectedProvider}
+        onCancel={() => onOpenChange(false)}
+      />
+    );
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -160,7 +189,7 @@ function ConnectAccountForm({ onOpenChange, onConnected, account }: ConnectAccou
   );
 }
 
-export function ConnectAccountDialog({ open, onOpenChange, onConnected, account }: ConnectAccountDialogProps) {
+export function ConnectAccountDialog({ open, onOpenChange, onConnected, account, accounts }: ConnectAccountDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -168,9 +197,14 @@ export function ConnectAccountDialog({ open, onOpenChange, onConnected, account 
         <Dialog.Content className="dialog-content">
           <Dialog.Title className="text-xl font-semibold mb-2">Connect account</Dialog.Title>
           <Dialog.Description className="text-sm text-muted mb-4">
-            Connect a Gate simulator account with its API key and secret.
+            Connect an exchange simulator account with its API key and secret.
           </Dialog.Description>
-          <ConnectAccountForm onOpenChange={onOpenChange} onConnected={onConnected} account={account} />
+          <ConnectAccountForm
+            onOpenChange={onOpenChange}
+            onConnected={onConnected}
+            account={account}
+            accounts={accounts}
+          />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

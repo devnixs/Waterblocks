@@ -18,10 +18,22 @@ public class AdminExchangeAccountDto
 
 public class AdminExchangeConnectionDto
 {
-    public string SimulatorAccount { get; set; } = string.Empty;
-    public long SimulatorUserId { get; set; }
+    public string SimulatorAccountId { get; set; } = string.Empty;
+    public string SimulatorAccountName { get; set; } = string.Empty;
     public string MaskedApiKey { get; set; } = string.Empty;
     public DateTimeOffset? ConnectedAt { get; set; }
+}
+
+/// <summary>
+/// One exchange that Waterblocks can connect to its simulator.
+/// </summary>
+public class AdminExchangeProviderDto
+{
+    public string ExchangeType { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public List<string> AssetIds { get; set; } = new();
+    public bool OneAccountPerWorkspace { get; set; }
+    public bool IsConfigured { get; set; }
 }
 
 public class AdminExchangeAssetDto

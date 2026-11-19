@@ -139,7 +139,7 @@ public class Transaction
     public CollateralDirection? CollateralDirection { get; set; }
 
     /// <summary>
-    /// True when the Gate simulator must approve this removal before it can move forward.
+    /// True when the exchange simulator must approve this removal before it can move forward.
     /// </summary>
     public bool RequiresExchangeApproval { get; set; }
 

@@ -307,7 +307,7 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task Connected_Account_Accepts_Only_Btc_And_Usdt()
+    public async Task Connected_Account_Accepts_Only_The_Assets_Of_Its_Exchange()
     {
         var accountId = await CreateConnectedAccountAsync();
         var vaultId = await CreateFundedVaultAsync("ETH", 1m);
@@ -315,6 +315,8 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
         var response = await PostAsync("/off_exchange/add", AddBody(vaultId, accountId, "0.1", assetId: "ETH"));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadJsonAsync(response)).GetProperty("message").GetString()
+            .Should().Be("A connected Gate.io account does not accept ETH");
     }
 
     [Fact]

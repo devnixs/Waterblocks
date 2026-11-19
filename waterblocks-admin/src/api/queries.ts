@@ -325,6 +325,18 @@ export function useDeleteAdminAsset() {
 }
 
 // Exchange accounts
+export function useExchangeProviders() {
+  return useQuery({
+    queryKey: ['exchangeProviders'],
+    queryFn: async () => {
+      const response = await adminApi.getExchangeProviders();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+    staleTime: 60000,
+  });
+}
+
 export function useExchangeAccounts() {
   const workspaceId = getWorkspaceId();
   return useQuery({

@@ -1,7 +1,7 @@
 namespace Waterblocks.Api.Services;
 
 /// <summary>
-/// Sends pending mirror events to the Gate simulator about once each second.
+/// Sends pending mirror events to the exchange simulators about once each second.
 /// </summary>
 public sealed class ExchangeMirrorWorker : BackgroundService
 {

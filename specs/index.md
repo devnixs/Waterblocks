@@ -54,7 +54,7 @@ This index lists every spec file in this repository. Each entry shows its area, 
 - Area: `integrations`
 - Owners: `backend`
 - ID prefix: `INT` (with `INT-WS` for SignalR realtime)
-- Blurb: The Fireblocks OpenAPI contract that the `/v1/*` surface mirrors, the Gate simulator connection and collateral mirror, plus the SignalR `/hubs/admin` realtime channel — workspace-group join/leave, `transactionUpserted`/`transactionsUpdated`/`vaultUpserted`/`vaultsUpdated` events, and the client-side `useRealtimeUpdates` reconnect/cache-invalidation hook.
+- Blurb: The Fireblocks OpenAPI contract that the `/v1/*` surface mirrors, the exchange simulator clients (one for each exchange, Gate.io today) and the collateral mirror, plus the SignalR `/hubs/admin` realtime channel — workspace-group join/leave, `transactionUpserted`/`transactionsUpdated`/`vaultUpserted`/`vaultsUpdated` events, and the client-side `useRealtimeUpdates` reconnect/cache-invalidation hook.
 
 ## Testing & QA
 

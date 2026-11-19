@@ -112,12 +112,11 @@ public class FireblocksDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CollateralAccountId).IsUnique();
-            entity.HasIndex(e => e.WorkspaceId, ExchangeAccount.OneGateAccountPerWorkspaceIndex)
+            entity.HasIndex(
+                    e => new { e.ExchangeType, e.SimulatorAccountId },
+                    ExchangeAccount.OneConnectionPerSimulatorAccountIndex)
                 .IsUnique()
-                .HasFilter($"\"ExchangeType\" = '{ExchangeTypes.Gate}'");
-            entity.HasIndex(e => e.GateSimulatorUserId, ExchangeAccount.OneAccountPerSimulatorAccountIndex)
-                .IsUnique()
-                .HasFilter("\"GateSimulatorUserId\" IS NOT NULL");
+                .HasFilter("\"SimulatorAccountId\" IS NOT NULL");
             entity.HasOne(e => e.Workspace)
                 .WithMany()
                 .HasForeignKey(e => e.WorkspaceId)
@@ -136,7 +135,7 @@ public class FireblocksDbContext : DbContext
         modelBuilder.Entity<ExchangeMirrorEvent>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.Status, e.ExchangeType, e.CreatedAt });
             entity.HasIndex(e => e.TransactionId);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
         });

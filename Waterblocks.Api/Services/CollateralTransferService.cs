@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Models;
+using Waterblocks.Api.Services.ExchangeSimulators;
 using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
@@ -35,6 +36,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
 
     private readonly WorkspaceContext _workspace;
     private readonly ICollateralTransactionRunner _runner;
+    private readonly IExchangeSimulatorRegistry _simulators;
     private readonly IRealtimeNotifier _realtimeNotifier;
     private readonly IdempotencyContext _idempotency;
     private readonly ILogger<CollateralTransferService> _logger;
@@ -42,12 +44,14 @@ public sealed class CollateralTransferService : ICollateralTransferService
     public CollateralTransferService(
         WorkspaceContext workspace,
         ICollateralTransactionRunner runner,
+        IExchangeSimulatorRegistry simulators,
         IRealtimeNotifier realtimeNotifier,
         IdempotencyContext idempotency,
         ILogger<CollateralTransferService> logger)
     {
         _workspace = workspace;
         _runner = runner;
+        _simulators = simulators;
         _realtimeNotifier = realtimeNotifier;
         _idempotency = idempotency;
         _logger = logger;
@@ -212,13 +216,17 @@ public sealed class CollateralTransferService : ICollateralTransferService
         }
     }
 
-    private static void RequireSupportedAsset(ExchangeAccount account, Asset asset, CollateralDirection direction)
+    private void RequireSupportedAsset(ExchangeAccount account, Asset asset, CollateralDirection direction)
     {
-        if (account.IsConnected && !ExchangeTypes.GateSimulatorAssets.Contains(asset.AssetId))
+        if (account.IsConnected)
         {
-            throw ExchangeOperationException.BadRequest(
-                "ASSET_NOT_SUPPORTED",
-                $"A connected Gate simulator account does not accept {asset.AssetId}");
+            var simulator = _simulators.Require(account.ExchangeType);
+            if (!simulator.AssetIds.Contains(asset.AssetId))
+            {
+                throw ExchangeOperationException.BadRequest(
+                    "ASSET_NOT_SUPPORTED",
+                    $"A connected {simulator.DisplayName} account does not accept {asset.AssetId}");
+            }
         }
 
         if (direction == CollateralDirection.REMOVE && asset.HasSeparateFeeAsset())

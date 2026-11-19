@@ -1238,8 +1238,13 @@ tr:hover td {
   transition: all var(--transition-fast);
 }
 
-.exchange-provider:hover {
+.exchange-provider:hover:not(:disabled) {
   background: var(--bg-tertiary);
+}
+
+.exchange-provider:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .form-error {

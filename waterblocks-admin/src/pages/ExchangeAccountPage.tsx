@@ -1,39 +1,37 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useExchangeAccount, useExchangeTransfers } from '../api/queries';
-import type { AdminExchangeAccount, AdminExchangeAsset } from '../types/admin';
+import { useAssets, useExchangeAccount, useExchangeProviders, useExchangeTransfers } from '../api/queries';
 import { CollateralTransferDialog } from './exchanges/CollateralTransferDialog';
 import type { CollateralTransferTarget } from './exchanges/CollateralTransferDialog';
 import { CollateralTransfersList } from './exchanges/CollateralTransfersList';
 import { ConnectAccountDialog } from './exchanges/ConnectAccountDialog';
 import { ExchangeAssetsTable } from './exchanges/ExchangeAssetsTable';
 import { ExchangeConnectionCard } from './exchanges/ExchangeConnectionCard';
-import { createEmptyExchangeAsset, findExchangeAsset } from './exchanges/exchangeFormat';
+import { exchangeName, findProvider, listAccountAssets } from './exchanges/exchangeFormat';
 
 const REFRESH_INTERVAL_MS = 3000;
-const DEFAULT_ASSET_IDS = ['BTC', 'USDT'];
-
-function listAccountAssets(account: AdminExchangeAccount): AdminExchangeAsset[] {
-  const missingAssets = DEFAULT_ASSET_IDS
-    .filter((assetId) => !findExchangeAsset(account, assetId))
-    .map(createEmptyExchangeAsset);
-  return [...account.assets, ...missingAssets].sort((left, right) => left.assetId.localeCompare(right.assetId));
-}
 
 export default function ExchangeAccountPage() {
   const { exchangeAccountId = '' } = useParams();
   const accountQuery = useExchangeAccount(exchangeAccountId, REFRESH_INTERVAL_MS);
   const transfersQuery = useExchangeTransfers(exchangeAccountId, REFRESH_INTERVAL_MS);
+  const { data: providers } = useExchangeProviders();
+  const { data: knownAssets } = useAssets();
   const [assetSearch, setAssetSearch] = useState('');
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [transferTarget, setTransferTarget] = useState<CollateralTransferTarget | null>(null);
   const account = accountQuery.data;
+  const exchangeProviders = useMemo(() => providers ?? [], [providers]);
+  const provider = account ? findProvider(exchangeProviders, account.exchangeType) : undefined;
 
   const assets = useMemo(() => {
     if (!account) return [];
+    // A transfer accepts the assets of the exchange simulator, or any known asset when the exchange has no simulator.
+    const transferAssetIds = provider ? provider.assetIds : (knownAssets ?? []).map((asset) => asset.id);
     const search = assetSearch.trim().toLowerCase();
-    return listAccountAssets(account).filter((asset) => asset.assetId.toLowerCase().includes(search));
-  }, [account, assetSearch]);
+    return listAccountAssets(account, transferAssetIds)
+      .filter((asset) => asset.assetId.toLowerCase().includes(search));
+  }, [account, provider, knownAssets, assetSearch]);
 
   if (accountQuery.isLoading) return <div className="p-6 text-center text-muted">Loading exchange account...</div>;
   if (accountQuery.error || !account) {
@@ -44,6 +42,7 @@ export default function ExchangeAccountPage() {
     );
   }
 
+  const exchange = exchangeName(exchangeProviders, account.exchangeType);
   const refresh = () => {
     accountQuery.refetch();
     transfersQuery.refetch();
@@ -59,13 +58,17 @@ export default function ExchangeAccountPage() {
 
       {!account.success && (
         <div className="exchange-warning" role="alert">
-          The Gate simulator cannot be read. Available amounts show 0 until it answers.
+          The {exchange} simulator cannot be read. Available amounts show 0 until it answers.
         </div>
       )}
 
       <div className="exchange-layout">
         <div>
-          <ExchangeConnectionCard account={account} onConnect={() => setShowConnectDialog(true)} />
+          <ExchangeConnectionCard
+            account={account}
+            provider={provider}
+            onConnect={() => setShowConnectDialog(true)}
+          />
           <div className="exchange-toolbar">
             <input
               type="text"
@@ -81,7 +84,7 @@ export default function ExchangeAccountPage() {
             onTransfer={(asset, direction) => setTransferTarget({ asset, direction })}
           />
         </div>
-        <CollateralTransfersList transfers={transfersQuery.data ?? []} />
+        <CollateralTransfersList transfers={transfersQuery.data ?? []} exchange={exchange} />
       </div>
 
       <ConnectAccountDialog

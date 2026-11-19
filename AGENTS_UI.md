@@ -48,7 +48,18 @@ Files touched:
 - `waterblocks-admin/src/pages/transactions/` (form, table, detail panel, amount summary)
 
 Work summary (STORY-022):
-- The Exchanges page shows `A workspace can have only one Gate account.` in place of `Connect account` when the workspace has a Gate account.
+- The Exchanges page shows `A workspace can have only one Gate.io account.` in place of `Connect account` when the workspace has its Gate.io account.
 
 Files touched:
 - `waterblocks-admin/src/pages/ExchangesPage.tsx`
+
+Work summary (STORY-023):
+- Added `useExchangeProviders`, which reads `GET /admin/exchange-providers`. The connect dialog, the exchange names, the one-account text and the asset rows of the CVA screen come from it. No screen names an exchange in its code.
+- The connect dialog disables a provider that already has its one account in the workspace, or that has no simulator URL, and shows the reason.
+- The Exchanges table has the columns Name, Exchange, Simulator account, Connection, Collateral and Created. `Collateral` lists the total of each asset.
+- The connection card, the warning and the mirror labels use the exchange name from the API, for example `Applied at Gate.io`.
+
+Files touched:
+- `waterblocks-admin/src/api/adminClient.ts`, `waterblocks-admin/src/api/queries.ts`, `waterblocks-admin/src/types/admin.ts`, `waterblocks-admin/src/App.css`
+- `waterblocks-admin/src/pages/ExchangesPage.tsx`, `waterblocks-admin/src/pages/ExchangeAccountPage.tsx`
+- `waterblocks-admin/src/pages/exchanges/` (connect dialog, connection card, table, transfers list, format helpers)
