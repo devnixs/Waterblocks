@@ -66,3 +66,15 @@ Files touched:
 - `Waterblocks.Api/Models/`, `Waterblocks.Api/Dtos/`, `Waterblocks.Api/Infrastructure/`
 - `Waterblocks.Api/Migrations/20261118234357_AddOffExchangeCollateral.cs`
 - `Fireblocks.swagger.yml`, `.env.example`, `docker-compose.yml`, `docker-compose.frontend.yml`, `docker-compose.full.yml`
+
+Work summary (STORY-022):
+- A workspace can have one `GATEIO` exchange account. A second one gets 409 with `GATE_ACCOUNT_ALREADY_EXISTS`.
+- One Gate simulator account can be connected in only one workspace. A second connection gets 409 with `EXCHANGE_ACCOUNT_ALREADY_CONNECTED`.
+- Two filtered unique indexes enforce the rules for parallel calls. `ExchangeAccountService` maps their violations to the same 409 replies.
+
+Files touched:
+- `Waterblocks.Api/Services/ExchangeAccountService.cs`
+- `Waterblocks.Api/Models/ExchangeAccount.cs`
+- `Waterblocks.Api/Infrastructure/Db/FireblocksDbContext.cs`
+- `Waterblocks.Api/Migrations/20261119070824_OneGateAccountPerWorkspace.cs`
+- `Fireblocks.swagger.yml`

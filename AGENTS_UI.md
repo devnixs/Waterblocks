@@ -46,3 +46,9 @@ Files touched:
 - `waterblocks-admin/src/pages/ExchangesPage.tsx`, `waterblocks-admin/src/pages/ExchangeAccountPage.tsx`
 - `waterblocks-admin/src/pages/exchanges/`
 - `waterblocks-admin/src/pages/transactions/` (form, table, detail panel, amount summary)
+
+Work summary (STORY-022):
+- The Exchanges page shows `A workspace can have only one Gate account.` in place of `Connect account` when the workspace has a Gate account.
+
+Files touched:
+- `waterblocks-admin/src/pages/ExchangesPage.tsx`

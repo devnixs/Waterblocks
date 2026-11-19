@@ -9,6 +9,8 @@ namespace Waterblocks.IntegrationTests;
 
 public class OffExchangeAccountTests : OffExchangeTestBase
 {
+    private static readonly string[] OtherExchangeTypes = { "BITGET", "BYBIT_V2", "GEMINI" };
+
     [Fact]
     public async Task Exchange_Accounts_Can_Be_Created_Listed_Paged_And_Read()
     {
@@ -21,9 +23,9 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         body.GetProperty("exchangeType").GetString().Should().Be("GATEIO");
 
         var ids = new List<string> { firstId };
-        for (var index = 0; index < 3; index++)
+        foreach (var exchangeType in OtherExchangeTypes)
         {
-            ids.Add(await CreateExchangeAccountAsync($"Gate {index}"));
+            ids.Add(await CreateExchangeAccountAsync($"Account {exchangeType}", exchangeType));
         }
 
         var list = await ReadOkAsync(await Http.GetAsync("/exchange_accounts"));
@@ -218,17 +220,62 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task One_Simulator_Account_Connects_Only_Once_In_A_Workspace()
+    public async Task A_Workspace_Has_Only_One_Gate_Account()
+    {
+        await CreateExchangeAccountAsync();
+
+        var secondGate = await PostAsync("/exchange_accounts", new { exchangeType = "GATEIO", name = "Second Gate" });
+        secondGate.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadJsonAsync(secondGate)).GetProperty("message").GetString()
+            .Should().Be("This workspace already has a Gate account. A workspace can have only one Gate account");
+        await AssertConnectFailsAsync(HttpStatusCode.Conflict, "GATE_ACCOUNT_ALREADY_EXISTS", SimulatorApiKey, SimulatorApiSecret);
+
+        var otherExchange = await PostAsync("/exchange_accounts", new { exchangeType = "BITGET", name = "Other exchange" });
+        otherExchange.StatusCode.Should().Be(HttpStatusCode.Created);
+        var accounts = await ReadOkAsync(await Http.GetAsync("/exchange_accounts"));
+        accounts.EnumerateArray().Count(account => account.GetProperty("type").GetString() == "GATEIO").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Parallel_Gate_Accounts_In_One_Workspace_Create_One_Account()
+    {
+        var calls = Enumerable.Range(0, 5).Select(index => PostAsync(
+            "/exchange_accounts",
+            new { exchangeType = "GATEIO", name = $"Gate {index}" }));
+
+        var responses = await Task.WhenAll(calls);
+
+        responses.Count(response => response.StatusCode == HttpStatusCode.Created).Should().Be(1);
+        responses.Count(response => response.StatusCode == HttpStatusCode.Conflict).Should().Be(4);
+    }
+
+    [Fact]
+    public async Task A_Simulator_Account_Connects_In_Only_One_Workspace()
     {
         await CreateConnectedAccountAsync();
+        var (otherWorkspaceId, otherApiKey) = await Fixture.CreateWorkspaceAsync("Other workspace");
+        var other = Fixture.CreateAnonymousHttpClient();
+        other.DefaultRequestHeaders.Add("X-API-Key", otherApiKey);
+        other.DefaultRequestHeaders.Add("X-Workspace-Id", otherWorkspaceId);
 
-        await AssertConnectFailsAsync(HttpStatusCode.Conflict, "EXCHANGE_ACCOUNT_ALREADY_CONNECTED", SimulatorApiKey, SimulatorApiSecret);
+        var createConnected = await PostAsync(
+            other,
+            "/admin/exchange-accounts",
+            new { exchangeType = "GATEIO", name = "Gate", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        createConnected.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadJsonAsync(createConnected)).GetProperty("error").GetProperty("code").GetString()
+            .Should().Be("EXCHANGE_ACCOUNT_ALREADY_CONNECTED");
 
-        var accountId = await CreateExchangeAccountAsync("No connection");
-        var response = await PostAsync(
+        var created = await PostAsync(other, "/exchange_accounts", new { exchangeType = "GATEIO", name = "No connection" });
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var accountId = (await ReadJsonAsync(created)).GetProperty("id").GetString();
+        var connect = await PostAsync(
+            other,
             $"/admin/exchange-accounts/{accountId}/connect",
             new { apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        connect.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadJsonAsync(connect)).GetProperty("error").GetProperty("code").GetString()
+            .Should().Be("EXCHANGE_ACCOUNT_ALREADY_CONNECTED");
     }
 
     [Fact]
@@ -249,6 +296,13 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     {
         const string fireblocksCreds = "encrypted-creds-value-5f1c";
         const string fireblocksKey = "exchange-key-value-81ac";
+        var wrongSecret = await PostAsync(
+            "/admin/exchange-accounts",
+            new { exchangeType = "GATEIO", name = "Wrong", apiKey = SimulatorApiKey, apiSecret = "wrong-secret-value-77" });
+        var wrongSecretText = await wrongSecret.Content.ReadAsStringAsync();
+        (await ReadJsonAsync(wrongSecret)).GetProperty("error").GetProperty("code").GetString()
+            .Should().Be("INVALID_EXCHANGE_CREDENTIALS");
+
         var created = await PostAsync(
             "/exchange_accounts",
             new { exchangeType = "GATEIO", name = "With creds", creds = fireblocksCreds, key = fireblocksKey },
@@ -262,10 +316,6 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         var connectedText = await connected.Content.ReadAsStringAsync();
         connected.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var wrongSecret = await PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Wrong", apiKey = SimulatorApiKey, apiSecret = "wrong-secret-value-77" });
-        var wrongSecretText = await wrongSecret.Content.ReadAsStringAsync();
         var readText = await (await Http.GetAsync($"/admin/exchange-accounts/{accountId}")).Content.ReadAsStringAsync();
 
         var secrets = new[] { SimulatorApiSecret, SimulatorApiKey, fireblocksCreds, fireblocksKey, "wrong-secret-value-77" };

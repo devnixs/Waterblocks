@@ -194,6 +194,10 @@ test('connects an account that was created through the API', async ({ page, requ
   await expect(page.getByText(gateAccount.name)).toBeVisible();
   await page.getByRole('button', { name: 'Refresh' }).click();
   await expect(page.getByText('This account has no Gate simulator connection.')).toHaveCount(0);
+
+  await page.goto('/exchanges');
+  await expect(page.getByText('A workspace can have only one Gate account.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect account' })).toHaveCount(0);
 });
 
 test('connects an account, moves collateral and labels the transactions', async ({ page, request }) => {

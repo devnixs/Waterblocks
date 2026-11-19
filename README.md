@@ -144,6 +144,8 @@ Set these values to connect an account to a Gate simulator account:
 
 Open **Exchanges** in the Admin UI, select **Connect account**, and enter an API key and secret of the simulator account. Waterblocks uses the secret only for the connection check. It does not store the secret.
 
+A workspace can have one Gate account. One Gate simulator account can be connected in only one workspace.
+
 For a connected account, one background worker sends collateral events to the simulator:
 
 - An add sends its net amount when the transaction reaches `COMPLETED`.

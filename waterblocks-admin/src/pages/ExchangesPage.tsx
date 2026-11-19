@@ -15,6 +15,7 @@ export default function ExchangesPage() {
 
   const openAccount = (account: AdminExchangeAccount) => navigate(`/exchanges/${account.id}`);
   const exchangeAccounts = accounts ?? [];
+  const hasGateAccount = exchangeAccounts.some((account) => account.exchangeType === 'GATEIO');
 
   return (
     <div>
@@ -30,9 +31,13 @@ export default function ExchangesPage() {
         <>
           <div className="flex-between mb-4">
             <h2>Exchanges <span className="text-muted text-sm">({exchangeAccounts.length})</span></h2>
-            <button className="btn btn-primary" onClick={() => setShowConnectDialog(true)}>
-              Connect account
-            </button>
+            {hasGateAccount ? (
+              <span className="text-muted text-sm">A workspace can have only one Gate account.</span>
+            ) : (
+              <button className="btn btn-primary" onClick={() => setShowConnectDialog(true)}>
+                Connect account
+              </button>
+            )}
           </div>
           <ExchangesTable accounts={exchangeAccounts} onSelect={openAccount} />
         </>

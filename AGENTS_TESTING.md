@@ -27,3 +27,12 @@ Files touched:
 - `tests/backend/integration/OffExchangeIdempotencyTests.cs`
 - `tests/backend/integration/Infrastructure/`
 - `e2e/fake-gate-simulator.mjs`, `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`
+
+Work summary (STORY-022):
+- Added integration tests for one Gate account in each workspace, one connection for each simulator account in all workspaces, and parallel creates in one workspace.
+- The paging test now uses other exchange types for its extra accounts.
+- The e2e connect test checks the one Gate account text on the Exchanges page.
+
+Files touched:
+- `tests/backend/integration/OffExchangeAccountTests.cs`
+- `e2e/tests/off-exchange.spec.ts`

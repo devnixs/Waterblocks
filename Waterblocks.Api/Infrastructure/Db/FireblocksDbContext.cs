@@ -112,7 +112,10 @@ public class FireblocksDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CollateralAccountId).IsUnique();
-            entity.HasIndex(e => new { e.WorkspaceId, e.GateSimulatorUserId })
+            entity.HasIndex(e => e.WorkspaceId, ExchangeAccount.OneGateAccountPerWorkspaceIndex)
+                .IsUnique()
+                .HasFilter($"\"ExchangeType\" = '{ExchangeTypes.Gate}'");
+            entity.HasIndex(e => e.GateSimulatorUserId, ExchangeAccount.OneAccountPerSimulatorAccountIndex)
                 .IsUnique()
                 .HasFilter("\"GateSimulatorUserId\" IS NOT NULL");
             entity.HasOne(e => e.Workspace)

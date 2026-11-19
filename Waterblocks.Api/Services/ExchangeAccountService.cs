@@ -36,7 +36,6 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     private const int MaxNameLength = 255;
     private const int MaxTransfers = 200;
     private const int MaskedKeyEdgeLength = 4;
-    private const string ConnectionIndexName = "IX_ExchangeAccounts_WorkspaceId_GateSimulatorUserId";
 
     private const string TestCredentialsPublicKey =
         "-----BEGIN PUBLIC KEY-----\n" +
@@ -84,6 +83,11 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     public async Task<AddExchangeAccountResponseDto> CreateAsync(AddExchangeAccountRequestDto request)
     {
         var exchangeType = RequireExchangeType(request.ExchangeType);
+        if (exchangeType == ExchangeTypes.Gate)
+        {
+            await RequireNoGateAccountAsync();
+        }
+
         var mainAccountId = string.IsNullOrWhiteSpace(request.MainAccountId) ? null : request.MainAccountId.Trim();
         if (mainAccountId?.Length > MaxNameLength)
         {
@@ -108,7 +112,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
         _context.ExchangeAccounts.Add(account);
         _idempotency.StageReply(_context, StatusCodes.Status201Created, response);
-        await _context.SaveChangesAsync();
+        await SaveAccountAsync();
         _idempotency.MarkReplyStored();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
@@ -200,6 +204,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         var exchangeType = RequireExchangeType(request.ExchangeType);
         RequireGateAccountType(exchangeType);
         var name = RequireName(request.Name);
+        await RequireNoGateAccountAsync();
         var connection = await VerifyConnectionAsync(request.ApiKey, request.ApiSecret);
 
         var account = new ExchangeAccount
@@ -210,7 +215,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         };
         ApplyConnection(account, connection);
         _context.ExchangeAccounts.Add(account);
-        await SaveConnectionAsync();
+        await SaveAccountAsync();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
         return await GetForAdminAsync(account.Id);
@@ -232,7 +237,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
         var connection = await VerifyConnectionAsync(request.ApiKey, request.ApiSecret);
         ApplyConnection(account, connection);
-        await SaveConnectionAsync();
+        await SaveAccountAsync();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
         return await GetForAdminAsync(account.Id);
@@ -564,7 +569,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
                 "The Gate simulator has no account for this API key");
 
         var alreadyConnected = await _context.ExchangeAccounts
-            .AnyAsync(account => account.WorkspaceId == WorkspaceId && account.GateSimulatorUserId == userId);
+            .AnyAsync(account => account.GateSimulatorUserId == userId);
         if (alreadyConnected)
         {
             throw SimulatorAccountInUse();
@@ -583,21 +588,36 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         account.UpdatedAt = now;
     }
 
-    private async Task SaveConnectionAsync()
+    private async Task RequireNoGateAccountAsync()
+    {
+        var hasGateAccount = await _context.ExchangeAccounts
+            .AnyAsync(account => account.WorkspaceId == WorkspaceId && account.ExchangeType == ExchangeTypes.Gate);
+        if (hasGateAccount)
+        {
+            throw GateAccountExists();
+        }
+    }
+
+    private async Task SaveAccountAsync()
     {
         try
         {
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException exception) when (
-            exception.InnerException is PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation,
-                ConstraintName: ConnectionIndexName,
-            })
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneGateAccountPerWorkspaceIndex))
+        {
+            throw GateAccountExists();
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, ExchangeAccount.OneAccountPerSimulatorAccountIndex))
         {
             throw SimulatorAccountInUse();
         }
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException exception, string indexName)
+    {
+        return exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres
+            && postgres.ConstraintName == indexName;
     }
 
     private static string MaskApiKey(string apiKey)
@@ -671,7 +691,15 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     private static ExchangeOperationException SimulatorAccountInUse()
     {
-        return AlreadyConnected("This Gate simulator account is already connected in this workspace");
+        return AlreadyConnected("This Gate simulator account is already connected. It can be connected in only one workspace");
+    }
+
+    private static ExchangeOperationException GateAccountExists()
+    {
+        return new ExchangeOperationException(
+            HttpStatusCode.Conflict,
+            "GATE_ACCOUNT_ALREADY_EXISTS",
+            "This workspace already has a Gate account. A workspace can have only one Gate account");
     }
 
     private static ExchangeOperationException AlreadyConnected(string message)

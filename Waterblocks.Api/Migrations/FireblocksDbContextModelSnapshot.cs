@@ -314,9 +314,13 @@ namespace Waterblocks.Api.Migrations
                     b.HasIndex("CollateralAccountId")
                         .IsUnique();
 
-                    b.HasIndex("WorkspaceId", "GateSimulatorUserId")
+                    b.HasIndex(new[] { "GateSimulatorUserId" }, "IX_ExchangeAccounts_GateSimulatorUserId")
                         .IsUnique()
                         .HasFilter("\"GateSimulatorUserId\" IS NOT NULL");
+
+                    b.HasIndex(new[] { "WorkspaceId" }, "IX_ExchangeAccounts_WorkspaceId_Gate")
+                        .IsUnique()
+                        .HasFilter("\"ExchangeType\" = 'GATEIO'");
 
                     b.ToTable("ExchangeAccounts");
                 });

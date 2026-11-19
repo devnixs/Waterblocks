@@ -10,6 +10,16 @@ public class ExchangeAccount
 {
     public const string ApprovedStatus = "APPROVED";
 
+    /// <summary>
+    /// The unique index that allows one Gate account in each workspace.
+    /// </summary>
+    public const string OneGateAccountPerWorkspaceIndex = "IX_ExchangeAccounts_WorkspaceId_Gate";
+
+    /// <summary>
+    /// The unique index that allows one exchange account for each Gate simulator account, in all workspaces.
+    /// </summary>
+    public const string OneAccountPerSimulatorAccountIndex = "IX_ExchangeAccounts_GateSimulatorUserId";
+
     [Key]
     [MaxLength(50)]
     public string Id { get; set; } = Guid.NewGuid().ToString();
