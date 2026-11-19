@@ -124,6 +124,31 @@ Windows PowerShell equivalents:
 - **Idempotency**: `ExternalTxId` is unique (idempotency key). Duplicates return error code `1438`.
 - **Assets**: seeds from `all_assets.json` at startup.
 - **Realtime**: UI updates via SignalR; status indicator shows connection state.
+- **Off Exchange**: exchange accounts, Add collateral and Remove collateral work through the API and the Exchanges screens.
+
+## Off Exchange and the Gate simulator
+Waterblocks serves these Fireblocks-compatible calls, without `/v1`:
+
+- `POST`, `GET /exchange_accounts`, `GET /exchange_accounts/paged`, `GET /exchange_accounts/credentials_public_key`
+- `GET /exchange_accounts/{exchangeAccountId}`, `GET /exchange_accounts/{exchangeAccountId}/{assetId}`
+- `POST /off_exchange/add`, `POST /off_exchange/remove`, `GET /off_exchange/collateral_accounts/{mainExchangeAccountId}`
+
+`POST /exchange_accounts`, `POST /off_exchange/add` and `POST /off_exchange/remove` accept the `Idempotency-Key` header. A key has at most 40 characters. For 24 hours, a repeated key returns the first reply.
+
+Set these values to connect an account to a Gate simulator account:
+
+| Setting | Meaning |
+| --- | --- |
+| `GATE_SIMULATOR_BASE_URL` | Simulator origin, for example `http://host.docker.internal:8083`. An empty value turns the connection off |
+| `GATE_SIMULATOR_ADMIN_TOKEN` | Optional. Sent as `X-Admin-Token` on the simulator `/_api` calls |
+
+Open **Exchanges** in the Admin UI, select **Connect account**, and enter an API key and secret of the simulator account. Waterblocks uses the secret only for the connection check. It does not store the secret.
+
+For a connected account, one background worker sends collateral events to the simulator:
+
+- An add sends its net amount when the transaction reaches `COMPLETED`.
+- A removal sends the amount that leaves the collateral vault when it is created, and waits for the simulator to approve it.
+- A removal that fails after approval sends a reversal.
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
@@ -157,6 +182,7 @@ npm run dev
 ## Admin UI
 - Transactions page: create + manage transactions and state transitions
 - Vaults page: create vaults, create wallets, view balances + deposit addresses
+- Exchanges page: connect a Gate simulator account, view collateral balances, add and remove collateral
 - Workspaces page: create/delete/view workspaces and API keys
 
 ---

@@ -9,6 +9,8 @@ import type {
   UpdateVaultRequest,
   CreateAdminAssetRequest,
   UpdateAdminAssetRequest,
+  CollateralDirection,
+  CollateralTransferRequest,
 } from '../types/admin';
 
 function getWorkspaceId() {
@@ -318,6 +320,66 @@ export function useDeleteAdminAsset() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminAssets'] });
       queryClient.invalidateQueries({ queryKey: ['assets'] });
+    },
+  });
+}
+
+// Exchange accounts
+export function useExchangeAccounts() {
+  const workspaceId = getWorkspaceId();
+  return useQuery({
+    queryKey: ['exchangeAccounts', workspaceId],
+    queryFn: async () => {
+      const response = await adminApi.getExchangeAccounts();
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+    enabled: !!workspaceId,
+  });
+}
+
+export function useExchangeAccount(id: string, refetchInterval?: number) {
+  const workspaceId = getWorkspaceId();
+  return useQuery({
+    queryKey: ['exchangeAccount', workspaceId, id],
+    queryFn: async () => {
+      const response = await adminApi.getExchangeAccount(id);
+      if (response.error) throw new Error(response.error.message);
+      return response.data;
+    },
+    enabled: !!id && !!workspaceId,
+    refetchInterval,
+  });
+}
+
+export function useExchangeTransfers(id: string, refetchInterval?: number) {
+  const workspaceId = getWorkspaceId();
+  return useQuery({
+    queryKey: ['exchangeTransfers', workspaceId, id],
+    queryFn: async () => {
+      const response = await adminApi.getExchangeTransfers(id);
+      if (response.error) throw new Error(response.error.message);
+      return response.data || [];
+    },
+    enabled: !!id && !!workspaceId,
+    refetchInterval,
+  });
+}
+
+export function useCollateralTransfer(exchangeAccountId: string, direction: CollateralDirection) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CollateralTransferRequest) => (
+      direction === 'ADD'
+        ? adminApi.addCollateral(exchangeAccountId, request)
+        : adminApi.removeCollateral(exchangeAccountId, request)
+    ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exchangeAccounts'] });
+      queryClient.invalidateQueries({ queryKey: ['exchangeAccount'] });
+      queryClient.invalidateQueries({ queryKey: ['exchangeTransfers'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionsPaged'] });
+      queryClient.invalidateQueries({ queryKey: ['vaults'] });
     },
   });
 }

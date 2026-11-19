@@ -18,7 +18,7 @@ This index lists every spec file in this repository. Each entry shows its area, 
 - Area: `routing`
 - Owners: `frontend`
 - ID prefix: `RTE` (with `UI-TXN`, `UI-VAULT`, `UI-WS`, `UI-ASSET`, `UI-SHELL`)
-- Blurb: SPA route map (`/`, `/transactions`, `/vaults`, `/workspaces`, `/assets`), App shell behaviors (header, workspace selector, auto-transition toggle, realtime status, login gating, keyboard shortcuts), and the `SearchableVaultSelect` component.
+- Blurb: SPA route map (`/`, `/transactions`, `/vaults`, `/exchanges`, `/workspaces`, `/assets`), App shell behaviors (header, workspace selector, auto-transition toggle, realtime status, login gating, keyboard shortcuts), and the `SearchableVaultSelect` component.
 
 ## Auth & Identity
 
@@ -35,8 +35,8 @@ This index lists every spec file in this repository. Each entry shows its area, 
 
 - Area: `core-workflows`
 - Owners: `backend`
-- ID prefix: `TXN`, `VAULT`, `ASSET`, `ADM-ADDR`, `ADM-ASSET`, `ADM-SET`, `ADM-TXN`, `ADM-VAULT`, `ADM-WS` (server side); `UI-TXN`, `UI-VAULT`, `UI-ASSET` (client side)
-- Blurb: All Fireblocks-compatible endpoints (assets, network fees, transactions, vault accounts/wallets/addresses, unspent inputs); the Admin API surface (assets, settings, transactions including explicit state-transition endpoints, vaults, workspaces); the transaction state machine and auto-transition background job; transaction/vault/asset UI forms, tables, headers, pagers, detail panels, and dialogs.
+- ID prefix: `TXN`, `VAULT`, `ASSET`, `EXCH`, `ADM-ADDR`, `ADM-ASSET`, `ADM-EXCH`, `ADM-SET`, `ADM-TXN`, `ADM-VAULT`, `ADM-WS` (server side); `UI-TXN`, `UI-VAULT`, `UI-ASSET`, `UI-EXCH` (client side)
+- Blurb: All Fireblocks-compatible endpoints (assets, network fees, transactions, vault accounts/wallets/addresses, unspent inputs, exchange accounts, Off Exchange collateral); the Admin API surface (assets, settings, transactions including explicit state-transition endpoints, vaults, workspaces, exchange accounts); the transaction state machine and auto-transition background job; transaction/vault/asset/exchange UI forms, tables, headers, pagers, detail panels, and dialogs.
 
 ## Data & Persistence
 
@@ -45,7 +45,7 @@ This index lists every spec file in this repository. Each entry shows its area, 
 - Area: `data`
 - Owners: `backend`
 - ID prefix: `DATA` (with `DATA-MIG` for migrations)
-- Blurb: EF Core entities (Workspace, ApiKey, VaultAccount, Wallet, Address, Asset, Transaction, TransactionState, AdminSetting), seed data behavior, and the chronological migration history that establishes multi-tenancy, soft-delete/archive, fee config, blockchain types, identity attribution, and case sensitivity.
+- Blurb: EF Core entities (Workspace, ApiKey, VaultAccount, Wallet, Address, Asset, Transaction, TransactionState, AdminSetting, ExchangeAccount, ExchangeAccountAsset, ExchangeMirrorEvent, IdempotencyRecord), seed data behavior, and the chronological migration history that establishes multi-tenancy, soft-delete/archive, fee config, blockchain types, identity attribution, and case sensitivity.
 
 ## Integrations
 
@@ -54,7 +54,7 @@ This index lists every spec file in this repository. Each entry shows its area, 
 - Area: `integrations`
 - Owners: `backend`
 - ID prefix: `INT` (with `INT-WS` for SignalR realtime)
-- Blurb: The Fireblocks OpenAPI contract that the `/v1/*` surface mirrors, plus the SignalR `/hubs/admin` realtime channel — workspace-group join/leave, `transactionUpserted`/`transactionsUpdated`/`vaultUpserted`/`vaultsUpdated` events, and the client-side `useRealtimeUpdates` reconnect/cache-invalidation hook.
+- Blurb: The Fireblocks OpenAPI contract that the `/v1/*` surface mirrors, the Gate simulator connection and collateral mirror, plus the SignalR `/hubs/admin` realtime channel — workspace-group join/leave, `transactionUpserted`/`transactionsUpdated`/`vaultUpserted`/`vaultsUpdated` events, and the client-side `useRealtimeUpdates` reconnect/cache-invalidation hook.
 
 ## Testing & QA
 

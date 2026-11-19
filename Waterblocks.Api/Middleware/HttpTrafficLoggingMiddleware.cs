@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Primitives;
 
 namespace Waterblocks.Api.Middleware;
@@ -14,6 +16,18 @@ public class HttpTrafficLoggingMiddleware
         "Set-Cookie",
         "X-API-Key",
     };
+    private static readonly HashSet<string> RedactedBodyFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "apiKey",
+        "apiSecret",
+        "creds",
+        "key",
+    };
+    private static readonly string[] CredentialRoutePrefixes =
+    {
+        "/exchange_accounts",
+        "/admin/exchange-accounts",
+    };
 
     private readonly RequestDelegate _next;
     private readonly ILogger<HttpTrafficLoggingMiddleware> _logger;
@@ -27,7 +41,7 @@ public class HttpTrafficLoggingMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var requestHeaders = ToLoggableHeaders(context.Request.Headers);
-        var requestBody = await ReadRequestBodyAsync(context.Request);
+        var requestBody = RedactCredentials(context.Request, await ReadRequestBodyAsync(context.Request));
         var stopwatch = Stopwatch.StartNew();
         Exception? unhandledException = null;
 
@@ -136,16 +150,66 @@ public class HttpTrafficLoggingMiddleware
         }
     }
 
+    private static string RedactCredentials(HttpRequest request, string body)
+    {
+        var path = request.Path.Value ?? string.Empty;
+        var isCredentialRoute = CredentialRoutePrefixes
+            .Any(prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        if (!isCredentialRoute || body == "[empty]")
+        {
+            return body;
+        }
+
+        try
+        {
+            var document = JsonNode.Parse(body);
+            if (document == null)
+            {
+                return "[body redacted]";
+            }
+
+            RedactNode(document);
+            return document.ToJsonString();
+        }
+        catch (JsonException)
+        {
+            return "[body redacted]";
+        }
+    }
+
+    private static void RedactNode(JsonNode node)
+    {
+        if (node is JsonArray array)
+        {
+            foreach (var item in array.Where(item => item != null))
+            {
+                RedactNode(item!);
+            }
+        }
+
+        if (node is not JsonObject jsonObject)
+        {
+            return;
+        }
+
+        foreach (var (name, value) in jsonObject.ToList())
+        {
+            if (RedactedBodyFields.Contains(name))
+            {
+                jsonObject[name] = "[redacted]";
+            }
+            else if (value != null)
+            {
+                RedactNode(value);
+            }
+        }
+    }
+
     private static async Task<string> ReadBodyAsync(Stream stream, string? contentType)
     {
         if (!IsTextBasedContentType(contentType))
         {
             return $"[body omitted for content type: {contentType ?? "unknown"}]";
-        }
-
-        if (stream.CanSeek && stream.Length == 0)
-        {
-            return "[empty]";
         }
 
         // Read at most MaxBodyLength + 1 so large bodies are never fully buffered in memory.

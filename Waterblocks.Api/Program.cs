@@ -37,7 +37,18 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService>();
+builder.Services.AddHostedService<Waterblocks.Api.Services.ExchangeMirrorWorker>();
+builder.Services.AddHttpClient<Waterblocks.Api.Services.IGateSimulatorClient, Waterblocks.Api.Services.GateSimulatorClient>(
+    client => client.Timeout = TimeSpan.FromSeconds(5));
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionFactory, Waterblocks.Api.Services.TransactionFactory>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionStateService, Waterblocks.Api.Services.TransactionStateService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ICollateralTransactionRunner, Waterblocks.Api.Services.CollateralTransactionRunner>();
+builder.Services.AddScoped<Waterblocks.Api.Services.ICollateralTransferService, Waterblocks.Api.Services.CollateralTransferService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IExchangeCollateralLedger, Waterblocks.Api.Services.ExchangeCollateralLedger>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IExchangeAccountService, Waterblocks.Api.Services.ExchangeAccountService>();
+builder.Services.AddScoped<Waterblocks.Api.Services.IExchangeMirrorProcessor, Waterblocks.Api.Services.ExchangeMirrorProcessor>();
+builder.Services.AddScoped<Waterblocks.Api.Infrastructure.IdempotencyContext>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IRealtimeNotifier, Waterblocks.Api.Services.RealtimeNotifier>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionService, Waterblocks.Api.Services.AdminTransactionService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IAdminTransactionMapper, Waterblocks.Api.Services.AdminTransactionMapper>();
@@ -86,6 +97,15 @@ app.UseMiddleware<Waterblocks.Api.Middleware.FireblocksErrorMapperMiddleware>();
 
 // Add Fireblocks authentication middleware
 app.UseMiddleware<Waterblocks.Api.Middleware.FireblocksAuthenticationMiddleware>();
+
+// The inner error mapper turns exceptions into replies, so that the first reply can be stored.
+app.UseWhen(
+    Waterblocks.Api.Middleware.IdempotencyMiddleware.AppliesTo,
+    branch =>
+    {
+        branch.UseMiddleware<Waterblocks.Api.Middleware.IdempotencyMiddleware>();
+        branch.UseMiddleware<Waterblocks.Api.Middleware.FireblocksErrorMapperMiddleware>();
+    });
 
 app.UseRouting();
 

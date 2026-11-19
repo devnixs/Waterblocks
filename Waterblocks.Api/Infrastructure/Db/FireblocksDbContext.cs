@@ -18,6 +18,10 @@ public class FireblocksDbContext : DbContext
     public DbSet<Workspace> Workspaces { get; set; }
     public DbSet<ApiKey> ApiKeys { get; set; }
     public DbSet<AdminSetting> AdminSettings { get; set; }
+    public DbSet<ExchangeAccount> ExchangeAccounts { get; set; }
+    public DbSet<ExchangeAccountAsset> ExchangeAccountAssets { get; set; }
+    public DbSet<ExchangeMirrorEvent> ExchangeMirrorEvents { get; set; }
+    public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,12 +98,50 @@ public class FireblocksDbContext : DbContext
             // Keep index on WorkspaceId for backwards compatibility, but no FK constraint
             // Transactions are cross-workspace and determined by address ownership
             entity.HasIndex(e => e.WorkspaceId);
+            entity.HasIndex(e => e.ExchangeAccountId);
             entity.Property(e => e.State).HasConversion<string>();
+            entity.Property(e => e.CollateralDirection).HasConversion<string>().HasMaxLength(10);
         });
 
         modelBuilder.Entity<AdminSetting>(entity =>
         {
             entity.HasKey(e => e.Key);
+        });
+
+        modelBuilder.Entity<ExchangeAccount>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.CollateralAccountId).IsUnique();
+            entity.HasIndex(e => new { e.WorkspaceId, e.GateSimulatorUserId })
+                .IsUnique()
+                .HasFilter("\"GateSimulatorUserId\" IS NOT NULL");
+            entity.HasOne(e => e.Workspace)
+                .WithMany()
+                .HasForeignKey(e => e.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(e => e.Assets)
+                .WithOne(a => a.ExchangeAccount)
+                .HasForeignKey(a => a.ExchangeAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExchangeAccountAsset>(entity =>
+        {
+            entity.HasKey(e => new { e.ExchangeAccountId, e.AssetId });
+        });
+
+        modelBuilder.Entity<ExchangeMirrorEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => e.TransactionId);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<IdempotencyRecord>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.WorkspaceId, e.Route, e.Key }).IsUnique();
         });
 
         // Seed some common assets

@@ -21,6 +21,11 @@ import type {
   CreateWorkspaceRequest,
   AdminGeneratedAddress,
   EstimateFeeResponse,
+  AdminExchangeAccount,
+  AdminCollateralTransfer,
+  CollateralTransferRequest,
+  ConnectExchangeAccountRequest,
+  CreateExchangeAccountRequest,
 } from '../types/admin';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -265,6 +270,56 @@ export const adminApi = {
 
   async archiveAllWorkspaces(): Promise<AdminResponse<boolean>> {
     return fetchApi('/admin/workspaces/archive-all', { method: 'POST' });
+  },
+
+  // Exchange accounts
+  async getExchangeAccounts(): Promise<AdminResponse<AdminExchangeAccount[]>> {
+    return fetchApi('/admin/exchange-accounts');
+  },
+
+  async getExchangeAccount(id: string): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi(`/admin/exchange-accounts/${id}`);
+  },
+
+  async createExchangeAccount(request: CreateExchangeAccountRequest): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi('/admin/exchange-accounts', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async connectExchangeAccount(
+    id: string,
+    request: ConnectExchangeAccountRequest,
+  ): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/connect`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async addCollateral(
+    id: string,
+    request: CollateralTransferRequest,
+  ): Promise<AdminResponse<AdminCollateralTransfer>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/add-collateral`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async removeCollateral(
+    id: string,
+    request: CollateralTransferRequest,
+  ): Promise<AdminResponse<AdminCollateralTransfer>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/remove-collateral`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async getExchangeTransfers(id: string): Promise<AdminResponse<AdminCollateralTransfer[]>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/transfers`);
   },
 
   // Fee estimation (uses Fireblocks-compatible endpoint)

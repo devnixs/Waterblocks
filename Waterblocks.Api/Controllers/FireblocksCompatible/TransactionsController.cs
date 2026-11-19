@@ -21,6 +21,7 @@ public class TransactionsController : ControllerBase
     private readonly ITransactionViewService _transactionView;
     private readonly IRealtimeNotifier _realtimeNotifier;
     private readonly ITransactionIdResolver _transactionIdResolver;
+    private readonly ITransactionStateService _transactionState;
 
     public TransactionsController(
         FireblocksDbContext context,
@@ -29,7 +30,8 @@ public class TransactionsController : ControllerBase
         ITransactionService transactionService,
         ITransactionViewService transactionView,
         IRealtimeNotifier realtimeNotifier,
-        ITransactionIdResolver transactionIdResolver)
+        ITransactionIdResolver transactionIdResolver,
+        ITransactionStateService transactionState)
     {
         _context = context;
         _logger = logger;
@@ -38,6 +40,7 @@ public class TransactionsController : ControllerBase
         _transactionView = transactionView;
         _realtimeNotifier = realtimeNotifier;
         _transactionIdResolver = transactionIdResolver;
+        _transactionState = transactionState;
     }
 
     [HttpPost]
@@ -144,11 +147,16 @@ public class TransactionsController : ControllerBase
             throw FireblocksApiException.BadRequest($"Cannot cancel transaction in {transaction.State} state");
         }
 
-        transaction.TransitionTo(TransactionState.CANCELLED);
-        transaction.SubStatus = "CANCELLED_BY_USER";
-        await _context.SaveChangesAsync();
+        var change = await _transactionState.ChangeAsync(
+            transaction,
+            new TransactionStateRequest(TransactionState.CANCELLED, "CANCELLED_BY_USER"));
+        if (!change.Success)
+        {
+            throw FireblocksApiException.BadRequest(change.ErrorMessage!);
+        }
 
-        await NotifyTransactionsUpdatedAsync(transaction);
+        await NotifyTransactionsUpdatedAsync(change.Transaction!);
+        await _realtimeNotifier.NotifyVaultsUpdatedAsync(_workspace.WorkspaceId);
 
         _logger.LogInformation("Cancelled transaction {TransactionId}", txId);
 
@@ -189,6 +197,11 @@ public class TransactionsController : ControllerBase
     public async Task<ActionResult<DropTransactionResponseDto>> DropTransaction(string txId, [FromBody] CreateTransactionRequestDto? replacementRequest = null)
     {
         var transaction = await FindTransactionByIdOrExternalIdAsync(txId);
+
+        if (transaction.IsCollateralTransfer)
+        {
+            throw FireblocksApiException.BadRequest("Drop operation is not supported for collateral transfers");
+        }
 
         // Only ETH transactions can be dropped
         if (transaction.AssetId != "ETH")

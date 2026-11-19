@@ -114,7 +114,9 @@ export function TransactionDetailPanel({
         <div className="grid gap-4">
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
             <div className="text-xs text-muted uppercase mb-1">Source</div>
-            <div className="font-medium">{transaction.sourceType}</div>
+            <div className="font-medium">
+              {transaction.collateralDirection === 'REMOVE' ? transaction.exchangeAccountName : transaction.sourceType}
+            </div>
             {transaction.sourceType === 'INTERNAL' && (
               <div className="text-sm mt-1">
                 Vault: {transaction.sourceVaultAccountName || transaction.vaultAccountId}
@@ -138,7 +140,9 @@ export function TransactionDetailPanel({
 
           <div className="p-4 bg-tertiary/20 rounded-lg border border-tertiary">
             <div className="text-xs text-muted uppercase mb-1">Destination</div>
-            <div className="font-medium">{transaction.destinationType}</div>
+            <div className="font-medium">
+              {transaction.collateralDirection === 'ADD' ? transaction.exchangeAccountName : transaction.destinationType}
+            </div>
             {transaction.destinationType === 'INTERNAL' && (
               <div className="text-sm mt-1">
                 Vault: {transaction.destinationVaultAccountName || transaction.vaultAccountId}

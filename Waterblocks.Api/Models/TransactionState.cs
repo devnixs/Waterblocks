@@ -22,6 +22,14 @@ public static class TransactionStateExtensions
         return TransactionStateMachine.Instance.IsTerminal(state);
     }
 
+    /// <summary>
+    /// True for every final state other than COMPLETED.
+    /// </summary>
+    public static bool IsFailure(this TransactionState state)
+    {
+        return state.IsTerminal() && state != TransactionState.COMPLETED;
+    }
+
     public static bool CanTransitionTo(this TransactionState currentState, TransactionState newState)
     {
         return TransactionStateMachine.Instance.CanTransition(currentState, newState);

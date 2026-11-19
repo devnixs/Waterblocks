@@ -42,3 +42,27 @@ Files touched:
 - `Waterblocks.Api/Services/AutoTransitionService.cs`
 - `Waterblocks.Api/Migrations/20260111110500_AddAdminSettings.cs`
 - `Waterblocks.Api/Migrations/20260111110500_AddAdminSettings.Designer.cs`
+
+Date: 2026-11-19
+
+Work summary (STORY-021):
+- Added Fireblocks-compatible `/exchange_accounts` and `/off_exchange` endpoints, and admin `/admin/exchange-accounts` endpoints.
+- Added exchange accounts, collateral balance rows, Gate mirror events and idempotency records.
+- `TransactionFactory` now holds the rules that `POST /transactions` and the collateral calls share.
+- `TransactionStateService` is the shared path for a state change and its balance effects. A collateral transfer changes state in one database transaction that locks the transaction row.
+- `ExchangeCollateralLedger` holds the exchange side of `ReserveFundsAsync`, `CompleteTransactionAsync` and `RollbackTransactionAsync`.
+- `ExchangeMirrorWorker` sends pending events to the Gate simulator, oldest first, about once each second.
+- `IdempotencyMiddleware` keeps the first reply of the three supported routes for 24 hours.
+- `POST /transactions/{txId}/cancel` now releases reserved funds.
+- `HttpTrafficLoggingMiddleware` now logs request bodies as `FND-005` says, and removes credentials on the exchange account routes.
+
+Files touched:
+- `Waterblocks.Api/Controllers/FireblocksCompatible/ExchangeAccountsController.cs`
+- `Waterblocks.Api/Controllers/FireblocksCompatible/OffExchangeController.cs`
+- `Waterblocks.Api/Controllers/FireblocksCompatible/TransactionsController.cs`
+- `Waterblocks.Api/Controllers/Admin/AdminExchangeAccountsController.cs`
+- `Waterblocks.Api/Services/` (exchange, collateral, mirror, state and transaction factory services)
+- `Waterblocks.Api/Middleware/` (authentication, error mapper, idempotency, traffic logging)
+- `Waterblocks.Api/Models/`, `Waterblocks.Api/Dtos/`, `Waterblocks.Api/Infrastructure/`
+- `Waterblocks.Api/Migrations/20261118234357_AddOffExchangeCollateral.cs`
+- `Fireblocks.swagger.yml`, `.env.example`, `docker-compose.yml`, `docker-compose.frontend.yml`, `docker-compose.full.yml`

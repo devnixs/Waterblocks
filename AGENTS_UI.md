@@ -28,3 +28,21 @@ Files touched:
 - `waterblocks-admin/src/App.tsx`
 - `waterblocks-admin/package.json`
 - `waterblocks-admin/package-lock.json`
+
+Date: 2026-11-19
+
+Work summary (STORY-021):
+- Added the Exchanges page, the connect dialog, the collateral vault account screen, the collateral transfer dialog and the transfers list.
+- Added the `Exchanges` nav link and keyboard shortcut `5`.
+- The connect dialog calls `adminApi` directly, so that credentials stay out of React Query. Its state ends when the dialog closes.
+- The Transactions table and detail panel show the exchange account name on the exchange side of a collateral transfer.
+- Moved the amount summary of the transaction form to `TransactionAmountSummary`, so that the transfer dialog uses the same summary.
+
+Files touched:
+- `waterblocks-admin/src/App.tsx`, `waterblocks-admin/src/App.css`
+- `waterblocks-admin/src/api/adminClient.ts`, `waterblocks-admin/src/api/queries.ts`
+- `waterblocks-admin/src/hooks/useRealtimeUpdates.ts`, `waterblocks-admin/src/types/admin.ts`
+- `waterblocks-admin/src/components/KeyboardShortcutsDialog.tsx`
+- `waterblocks-admin/src/pages/ExchangesPage.tsx`, `waterblocks-admin/src/pages/ExchangeAccountPage.tsx`
+- `waterblocks-admin/src/pages/exchanges/`
+- `waterblocks-admin/src/pages/transactions/` (form, table, detail panel, amount summary)

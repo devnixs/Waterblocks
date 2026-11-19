@@ -1139,6 +1139,72 @@ paths:
                   $ref: '#/components/schemas/ExchangeAccount'
         default:
           $ref: '#/components/responses/Error'
+    post:
+      summary: Add an exchange account
+      operationId: addExchangeAccount
+      parameters:
+        - $ref: '#/components/parameters/X-Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddExchangeAccountRequest'
+      responses:
+        '201':
+          description: An Exchange Account identifier object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddExchangeAccountResponse'
+        default:
+          $ref: '#/components/responses/Error'
+  /exchange_accounts/credentials_public_key:
+    get:
+      summary: Get public key to encrypt exchange credentials
+      operationId: getExchangeAccountsCredentialsPublicKey
+      responses:
+        '200':
+          description: public key as string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExchangeAccountsCredentialsPublicKeyResponse'
+        default:
+          $ref: '#/components/responses/Error'
+  /exchange_accounts/paged:
+    get:
+      summary: List connected exchange accounts
+      operationId: getPagedExchangeAccounts
+      parameters:
+        - in: query
+          name: before
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: after
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: number of exchanges per page
+          required: false
+          schema:
+            type: number
+            minimum: 1
+            maximum: 5
+            default: 3
+      responses:
+        '200':
+          description: An ExchangeAccount object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPagedExchangeAccountsResponse'
+        default:
+          $ref: '#/components/responses/Error'
   '/exchange_accounts/{exchangeAccountId}':
     get:
       summary: Returns an exchange account by ID
@@ -1934,6 +2000,66 @@ paths:
         default:
           $ref: '#/components/responses/Error'
   # OFF EXCHANGE
+  /off_exchange/add:
+    post:
+      summary: Add Collateral
+      operationId: addOffExchange
+      parameters:
+        - $ref: '#/components/parameters/X-Idempotency-Key'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCollateralRequestBody'
+      responses:
+        '200':
+          description: A transaction object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTransactionResponse'
+        default:
+          $ref: '#/components/responses/Error'
+  /off_exchange/remove:
+    post:
+      summary: Remove Collateral
+      operationId: removeOffExchange
+      parameters:
+        - $ref: '#/components/parameters/X-Idempotency-Key'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveCollateralRequestBody'
+      responses:
+        '200':
+          description: A transaction object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTransactionResponse'
+        default:
+          $ref: '#/components/responses/Error'
+  '/off_exchange/collateral_accounts/{mainExchangeAccountId}':
+    get:
+      summary: Find a specific collateral exchange account
+      operationId: getOffExchangeCollateralAccounts
+      parameters:
+        - in: path
+          name: mainExchangeAccountId
+          required: true
+          description: The id of the main exchange account for which the requested collateral account is associated with
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An ExchangeAccount object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeAccount'
+        default:
+          $ref: '#/components/responses/Error'
   '/off_exchange_accounts':
     get:
       summary: Get off exchanges
@@ -1995,6 +2121,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+  parameters:
+    X-Idempotency-Key:
+      name: Idempotency-Key
+      in: header
+      description: A unique identifier for the request. If the request is sent multiple times with the same idempotency key, the server will return the same response as the first request. The idempotency key is valid for 24 hours.
+      required: false
+      schema:
+        type: string
+        maxLength: 40
   requestBodies:
     NewWallet:
       content:
@@ -2065,6 +2200,144 @@ components:
           type: string
         available:
           type: string
+        credit:
+          type: string
+        providerSymbol:
+          type: string
+          description: The symbol used by the exchange provider to identify the asset.
+        assetSymbol:
+          type: string
+          description: The Fireblocks asset symbol.
+        assetLegacyId:
+          type: string
+          description: The Fireblocks legacy asset id.
+    AddExchangeAccountType:
+      description: Exchange account's type, from the ExchangeType schema of Fireblocks OpenAPI 1.6.2
+      type: string
+      enum:
+        - INDEPENDENT_RESERVE
+        - ENCLAVE_MARKETS
+        - BIT
+        - COINFLEX
+        - KUCOIN
+        - PXS
+        - LIQUID
+        - BITHUMB
+        - BITFINEX
+        - BITSO
+        - BITSTAMP
+        - KRAKEN
+        - KRAKENINTL
+        - BINANCE
+        - BINANCEUS
+        - CRYPTOCOM
+        - BYBIT_V2
+        - COINBASEPRO
+        - COINBASEPRIME
+        - COINBASEINTERNATIONAL
+        - WHITEBIT
+        - COINBASEEXCHANGE
+        - KORBIT
+        - HITBTC
+        - GEMINI
+        - CIRCLE
+        - BITMEX
+        - HUOBI
+        - DERIBIT
+        - OKCOIN_V5
+        - OKEX
+        - COINMETRO
+        - GATEIO
+        - SCRYPT
+        - COINHAKO
+        - LIGHTBIT
+        - BULLISH
+        - CANVAS_CONNECT
+        - BITGET
+        - LUNO
+        - BIT_GENERA
+        - TRANSFERO
+    AddExchangeAccountRequest:
+      type: object
+      properties:
+        exchangeType:
+          $ref: '#/components/schemas/AddExchangeAccountType'
+        name:
+          description: Display name of the exchange account
+          type: string
+        creds:
+          description: Encrypted credentials
+          type: string
+        key:
+          description: Api key of the exchange
+          type: string
+        mainAccountId:
+          description: Optional - main account id of the exchange
+          type: string
+      required:
+        - exchangeType
+        - name
+    AddExchangeAccountResponse:
+      type: object
+      properties:
+        id:
+          description: Exchange account's identifier
+          type: string
+        name:
+          description: Display name of the exchange account
+          type: string
+        exchangeType:
+          $ref: '#/components/schemas/AddExchangeAccountType'
+    GetPagedExchangeAccountsResponse:
+      type: object
+      properties:
+        exchanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeAccount'
+        paging:
+          type: object
+          properties:
+            after:
+              type: string
+              description: Query value to the after page
+            before:
+              type: string
+              description: Query value to the before page
+        prevUrl:
+          type: string
+        nextUrl:
+          type: string
+      required:
+        - exchanges
+    GetExchangeAccountsCredentialsPublicKeyResponse:
+      type: object
+      properties:
+        publicKey:
+          type: string
+          description: Public key string
+        tenantId:
+          type: string
+          description: Tenant identifier
+      required:
+        - publicKey
+        - tenantId
+    AddCollateralRequestBody:
+      type: object
+      properties:
+        transactionRequest:
+          $ref: '#/components/schemas/TransactionRequest'
+        isSrcCollateral:
+          type: boolean
+          description: optional
+    RemoveCollateralRequestBody:
+      type: object
+      properties:
+        transactionRequest:
+          $ref: '#/components/schemas/TransactionRequest'
+        isDstCollateral:
+          type: boolean
+          description: optional
     ExchangeTradingAccount:
       type: object
       properties:
@@ -2299,6 +2572,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExchangeAsset'
+        success:
+          type: boolean
+          description: Did succeed in retrieve balance data
         tradingAccounts:
           type: array
           items:

@@ -44,6 +44,23 @@ export function TransactionsTable({
     );
   };
 
+  const buildExchangeEndpoint = (tx: AdminTransaction, address?: string) => (
+    <div className="flex flex-col gap-1">
+      <span>
+        <Link
+          to={`/exchanges/${encodeURIComponent(tx.exchangeAccountId ?? '')}`}
+          onClick={(event) => event.stopPropagation()}
+          className="text-primary hover:underline"
+        >
+          {tx.exchangeAccountName}
+        </Link>
+      </span>
+      <span className="text-xs text-muted" title={address}>
+        {formatAddress(address)}
+      </span>
+    </div>
+  );
+
   return (
     <div className="overflow-x-auto rounded-lg border border-tertiary">
       <table className="w-full">
@@ -94,7 +111,7 @@ export function TransactionsTable({
               <td className="font-medium">{tx.assetId}</td>
               <td className="text-mono">{parseFloat(tx.amount).toFixed(4)}</td>
               <td className="text-mono text-sm text-muted">
-                {tx.sourceType === 'INTERNAL' ? (
+                {tx.collateralDirection === 'REMOVE' ? buildExchangeEndpoint(tx, tx.sourceAddress) : tx.sourceType === 'INTERNAL' ? (
                   <div className="flex flex-col gap-1">
                     <span>
                       {buildVaultLink(
@@ -116,7 +133,7 @@ export function TransactionsTable({
                 )}
               </td>
               <td className="text-mono text-sm text-muted">
-                {tx.destinationType === 'INTERNAL' ? (
+                {tx.collateralDirection === 'ADD' ? buildExchangeEndpoint(tx, tx.destinationAddress) : tx.destinationType === 'INTERNAL' ? (
                   <div className="flex flex-col gap-1">
                     <span>
                       {buildVaultLink(

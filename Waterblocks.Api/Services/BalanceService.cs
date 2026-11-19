@@ -55,19 +55,29 @@ public class BalanceService : IBalanceService
     private readonly FireblocksDbContext _context;
     private readonly ILogger<BalanceService> _logger;
     private readonly IWalletAddressService _walletAddressService;
+    private readonly IExchangeCollateralLedger _collateralLedger;
 
     public BalanceService(
         FireblocksDbContext context,
         ILogger<BalanceService> logger,
-        IWalletAddressService walletAddressService)
+        IWalletAddressService walletAddressService,
+        IExchangeCollateralLedger collateralLedger)
     {
         _context = context;
         _logger = logger;
         _walletAddressService = walletAddressService;
+        _collateralLedger = collateralLedger;
     }
 
     public async Task<BalanceResult> ReserveFundsAsync(Transaction transaction)
     {
+        if (transaction.CollateralDirection == CollateralDirection.REMOVE)
+        {
+            return await _collateralLedger.TryLockRemovalAsync(transaction)
+                ? BalanceResult.Ok()
+                : BalanceResult.Fail("The amount is above the available collateral", "COLLATERAL_NOT_AVAILABLE");
+        }
+
         // Address-based lookup - no workspace filter needed since addresses are globally unique
         var sourceWallet = await GetWalletByAddressAsync(
             transaction.SourceAddress,
@@ -168,6 +178,27 @@ public class BalanceService : IBalanceService
 
     public async Task CompleteTransactionAsync(Transaction transaction)
     {
+        if (transaction.CollateralDirection == CollateralDirection.REMOVE)
+        {
+            await _collateralLedger.SettleRemovalAsync(transaction);
+        }
+        else
+        {
+            await DebitSourceWalletAsync(transaction);
+        }
+
+        if (transaction.CollateralDirection == CollateralDirection.ADD)
+        {
+            await _collateralLedger.SettleAddAsync(transaction);
+        }
+        else
+        {
+            await CreditDestinationWalletAsync(transaction);
+        }
+    }
+
+    private async Task DebitSourceWalletAsync(Transaction transaction)
+    {
         var feeCurrency = transaction.FeeCurrency ?? transaction.AssetId;
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
@@ -229,7 +260,10 @@ public class BalanceService : IBalanceService
                 }
             }
         }
+    }
 
+    private async Task CreditDestinationWalletAsync(Transaction transaction)
+    {
         // Credit destination wallet (may be in different workspace for cross-workspace transactions)
         var destinationWallet = await GetOrCreateWalletByDestinationAddressAsync(
             transaction.DestinationAddress,
@@ -250,6 +284,12 @@ public class BalanceService : IBalanceService
 
     public async Task RollbackTransactionAsync(Transaction transaction)
     {
+        if (transaction.CollateralDirection == CollateralDirection.REMOVE)
+        {
+            await _collateralLedger.ReleaseRemovalAsync(transaction);
+            return;
+        }
+
         var feeCurrency = transaction.FeeCurrency ?? transaction.AssetId;
         var feeAmount = transaction.NetworkFee;
         var hasSeparateFeeWallet = feeCurrency != transaction.AssetId;
