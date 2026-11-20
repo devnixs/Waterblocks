@@ -38,3 +38,4 @@ Thumbs.db
 _bmad-output
 Waterblocks.Api/artifacts/
 tests/backend/integration/artifacts/
+tests/backend/integration/TestResults/

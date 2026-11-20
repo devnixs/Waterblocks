@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Admin;
@@ -74,10 +75,10 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                     Id = existingWallet.Id,
                     AssetId = existingWallet.AssetId,
                     Type = existingWallet.Type,
-                    Balance = existingWallet.Balance.ToString("F18"),
-                    LockedAmount = existingWallet.LockedAmount.ToString("F18"),
-                    Pending = existingWallet.Pending.ToString("F18"),
-                    Available = (existingWallet.Balance - existingWallet.Pending).ToString("F18"),
+                    Balance = existingWallet.Balance.ToString("F18", CultureInfo.InvariantCulture),
+                    LockedAmount = existingWallet.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
+                    Pending = existingWallet.Pending.ToString("F18", CultureInfo.InvariantCulture),
+                    Available = (existingWallet.Balance - existingWallet.Pending).ToString("F18", CultureInfo.InvariantCulture),
                     AddressCount = existingWallet.Addresses.Count,
                     DepositAddress = existingWallet.Addresses.FirstOrDefault()?.AddressValue,
                     Addresses = existingWallet.Addresses.Select(a => new WalletAddressDto
@@ -121,10 +122,10 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
             Id = wallet.Id,
             AssetId = wallet.AssetId,
             Type = wallet.Type,
-            Balance = wallet.Balance.ToString("F18"),
-            LockedAmount = wallet.LockedAmount.ToString("F18"),
-            Pending = wallet.Pending.ToString("F18"),
-            Available = (wallet.Balance - wallet.Pending).ToString("F18"),
+            Balance = wallet.Balance.ToString("F18", CultureInfo.InvariantCulture),
+            LockedAmount = wallet.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
+            Pending = wallet.Pending.ToString("F18", CultureInfo.InvariantCulture),
+            Available = (wallet.Balance - wallet.Pending).ToString("F18", CultureInfo.InvariantCulture),
             AddressCount = wallet.Addresses.Count,
             DepositAddress = wallet.Addresses.FirstOrDefault()?.AddressValue,
             Addresses = wallet.Addresses.Select(a => new WalletAddressDto
@@ -170,10 +171,10 @@ public sealed class AdminVaultService : AdminServiceBase, IAdminVaultService
                 Id = w.Id,
                 AssetId = w.AssetId,
                 Type = w.Type,
-                Balance = w.Balance.ToString("F18"),
-                LockedAmount = w.LockedAmount.ToString("F18"),
-                Pending = w.Pending.ToString("F18"),
-                Available = (w.Balance - w.Pending).ToString("F18"),
+                Balance = w.Balance.ToString("F18", CultureInfo.InvariantCulture),
+                LockedAmount = w.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
+                Pending = w.Pending.ToString("F18", CultureInfo.InvariantCulture),
+                Available = (w.Balance - w.Pending).ToString("F18", CultureInfo.InvariantCulture),
                 AddressCount = w.Addresses.Count,
                 DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue,
                 Addresses = w.Addresses.Select(a => new WalletAddressDto

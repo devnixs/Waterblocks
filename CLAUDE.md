@@ -14,9 +14,9 @@ The system provides:
 ## Architecture
 
 ### Stack
-- **Backend**: ASP.NET Core Web API (.NET 8 LTS) with controllers
+- **Backend**: ASP.NET Core Web API (.NET 10) with controllers
 - **Frontend**: React + TypeScript (Vite)
-- **Database**: PostgreSQL with EF Core 10.0.1 (code-first migrations)
+- **Database**: PostgreSQL with EF Core 10.0.4 (code-first migrations)
 - **Deployment**: Docker Compose with per-test database isolation
 
 ### Project Structure (Planned)
@@ -153,9 +153,9 @@ Admin API provides explicit state transition endpoints for deterministic testing
 ## Key Dependencies
 
 ### Backend
-- Microsoft.EntityFrameworkCore 10.0.1
-- Npgsql.EntityFrameworkCore.PostgreSQL 10.0.0
-- Swashbuckle.AspNetCore 10.1.0
+- Microsoft.EntityFrameworkCore 10.0.4
+- Npgsql.EntityFrameworkCore.PostgreSQL 10.0.3
+- Swashbuckle.AspNetCore 10.3.1
 - Serilog.AspNetCore 10.0.0
 - dotenv.net 4.0.0
 
