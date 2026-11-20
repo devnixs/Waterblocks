@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Waterblocks.Api.Models;
 using Waterblocks.Api.Utils;
 using Waterblocks.IntegrationTests.Infrastructure;
 using Xunit;
@@ -124,6 +125,23 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
         transaction.GetProperty("destination").GetProperty("type").GetString().Should().Be("VAULT_ACCOUNT");
         transaction.GetProperty("destination").GetProperty("id").GetString().Should().Be(vaultId);
         AssertAmounts(transaction, vaultRise, requestedAmount: 0.4m);
+    }
+
+    [Fact]
+    public async Task Remove_Pays_The_First_Address_Of_The_Vault_Address_List()
+    {
+        var accountId = await CreateExchangeAccountAsync();
+        var vaultId = await CreateFundedVaultAsync();
+        await AddDepositAddressesAsync(vaultId, ("bc1qremovetarget0002", 2), ("bc1qremovetarget0001", 1));
+        await AddAndCompleteAsync(vaultId, accountId, "1");
+
+        var removal = await SubmitRemoveAsync(vaultId, accountId, "0.4");
+
+        var addresses = await ReadOkAsync(await Http.GetAsync($"/vault/accounts/{vaultId}/BTC/addresses_paginated?count=50"));
+        var firstListed = addresses.GetProperty("addresses")[0].GetProperty("address").GetString();
+        firstListed.Should().Be("bc1qremovetarget0001");
+        var transaction = await GetTransactionAsync(removal.GetProperty("id").GetString()!);
+        transaction.GetProperty("destinationAddress").GetString().Should().Be(firstListed);
     }
 
     [Fact]
@@ -652,5 +670,27 @@ public class OffExchangeCollateralTests : OffExchangeTestBase
         Amount(transaction.GetProperty("feeInfo"), "networkFee").Should().Be(BtcFee);
         transaction.GetProperty("operation").GetString().Should().Be("TRANSFER");
         transaction.GetProperty("createdAt").ValueKind.Should().Be(JsonValueKind.Number);
+    }
+
+    /// <summary>
+    /// Adds deposit addresses to the BTC wallet of the vault, one save each, so that the ids follow the call order.
+    /// </summary>
+    private async Task AddDepositAddressesAsync(string vaultId, params (string Value, int Index)[] addresses)
+    {
+        using var db = Fixture.GetDbContext();
+        var wallet = await db.Wallets.SingleAsync(item => item.VaultAccountId == vaultId && item.AssetId == "BTC");
+        foreach (var (value, index) in addresses)
+        {
+            db.Addresses.Add(new Address
+            {
+                AddressValue = value,
+                Type = "DEPOSIT",
+                AddressFormat = "SEGWIT",
+                Bip44AddressIndex = index,
+                WalletId = wallet.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
     }
 }

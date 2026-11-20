@@ -166,6 +166,8 @@ Waterblocks decrypts `creds`, checks that `tenantId` is the workspace, and prove
 | `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` | Optional. Fills an empty simulator URL of that exchange at startup, for example `EXCHANGE_SIMULATORS__GATEIO__BASE_URL=http://host.docker.internal:8083`. The Supported exchanges page changes it after that |
 | `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` | Optional. Sent as `X-Admin-Token` on the calls to that simulator. It stays out of the database |
 
+The Docker Compose files set these settings for Gate.io. The Helm chart sets them from the `api.exchangeSimulators` values (see `helm/waterblocks/README.md`).
+
 ### Rules and mirror
 
 A simulator account can be connected in only one workspace. An exchange can allow only one account in each workspace. Gate.io uses this rule. A connected account accepts only the currencies of its exchange.

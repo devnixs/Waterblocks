@@ -24,7 +24,7 @@ status: COMPLETE
 - [X] Use one generic `ExchangeSimulatorClient` for the simulator admin API of every exchange: `POST /_api/keys/verify`, `GET /_api/accounts/{name}` and `POST /_api/collateral/events`.
 - [X] Check an API key with an HMAC-SHA256 key proof, so that the secret never reaches the simulator.
 - [X] Encrypt credentials as Fireblocks does: `creds` is the RSA-OAEP SHA-256 encryption of `{"apiKey","secret","tenantId"}` with a real credentials public key. `POST /exchange_accounts` with `key` and `creds` connects the account. The admin calls accept only `creds`, and the Admin UI encrypts in the browser.
-- [X] Rename the connection columns to `SimulatorAccountId` and `SimulatorAccountName`, add `ExchangeType` to the mirror events, and use generic index names and error codes. One migration, `AddOffExchangeCollateral`, replaces the two earlier migrations of this branch, and `AddExchangeCatalog` adds the catalog.
+- [X] Rename the connection columns to `SimulatorAccountId` and `SimulatorAccountName`, add `ExchangeType` to the mirror events, and use generic index names and error codes. The catalog tables are in the one migration of this branch, `AddOffExchangeCollateral` (STORY-024 merged the migrations).
 - [X] Add the Supported exchanges page, and remove exchange names from the table headers, labels and messages of the Exchanges screens.
 - [X] Do not change the Fireblocks-compatible replies of the other calls.
 
@@ -32,7 +32,7 @@ status: COMPLETE
 
 - [X] `specs/00-foundations.spec.md` (`FND-006`)
 - [X] `specs/03-core-workflows.spec.md` (`EXCH-001`, `EXCH-003`, `EXCH-004`, `EXCH-005`, `EXCH-012`, `EXCH-015`, `EXCH-016`, `ADM-EXCH-002`, `ADM-EXCH-003`, `ADM-EXCH-004`, `ADM-EXCH-006`, `ADM-EXCH-008`, `ADM-EXCH-009`, `UI-EXCH-001`, `UI-EXCH-002`, `UI-EXCH-003`, `UI-EXCH-005`, `UI-EXCH-008`)
-- [X] `specs/04-data-and-persistence.spec.md` (`DATA-013`, `DATA-015`, `DATA-018`, `DATA-019`, `DATA-020`, `DATA-MIG-001`, `DATA-MIG-002`)
+- [X] `specs/04-data-and-persistence.spec.md` (`DATA-013`, `DATA-015`, `DATA-018`, `DATA-019`, `DATA-020`, `DATA-MIG-001`)
 - [X] `specs/05-integrations.spec.md` (`INT-004`, `INT-005`, `INT-006`, `INT-007`, `INT-008`)
 - [X] `specs/06-testing-and-qa.spec.md` (`TEST-016`, `TEST-017`, `TEST-025`, `TEST-026`, `TEST-027`, `TEST-028`, `TEST-029`)
 - [X] `specs/07-deployment-and-ops.spec.md` (`OPS-012`)
@@ -40,7 +40,7 @@ status: COMPLETE
 ## Acceptance Notes
 
 - [X] No table, column, index, code file or class name contains an exchange name. Exchange names exist only as catalog data and in the seed file.
-- [X] A database that applied the two earlier migrations of this branch must be recreated. No shared database applied them.
+- [X] A database that applied an earlier migration of this branch must be recreated. No shared database applied them.
 - [X] An exchange simulator must serve `POST /_api/keys/verify`. The Gate simulator gets this call in its own repository.
 
 ## Playwright Test

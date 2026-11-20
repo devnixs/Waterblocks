@@ -131,7 +131,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
         else
         {
             var wallet = await unitOfWork.Transactions.GetOrCreateDestinationWalletAsync(vault.Id, asset, workspaceId);
-            var vaultAddress = wallet.Addresses.First();
+            var vaultAddress = FirstListedAddress(wallet);
             sourceAddress = collateralRow.CollateralAddress;
             destinationAddress = vaultAddress.AddressValue;
             destinationTag = asset.BlockchainType == BlockchainType.MemoBased ? vaultAddress.Tag : null;
@@ -182,6 +182,18 @@ public sealed class CollateralTransferService : ICollateralTransferService
             });
 
         return transaction;
+    }
+
+    /// <summary>
+    /// Returns the first address of the wallet in the order of the Fireblocks address list: the BIP44 index first, with
+    /// addresses that have no index last, then the id.
+    /// </summary>
+    private static Address FirstListedAddress(Wallet wallet)
+    {
+        return wallet.Addresses
+            .OrderBy(address => address.Bip44AddressIndex ?? int.MaxValue)
+            .ThenBy(address => address.Id)
+            .First();
     }
 
     private static void ValidateCommand(CollateralTransferCommand command)
@@ -243,7 +255,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
     {
         return await unitOfWork.Database.ExchangeAccounts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(account => account.Id == exchangeAccountId && account.WorkspaceId == workspaceId)
+                .SingleOrDefaultAsync(account => account.Id == exchangeAccountId && account.WorkspaceId == workspaceId)
             ?? throw ExchangeOperationException.NotFound(
                 "EXCHANGE_ACCOUNT_NOT_FOUND",
                 $"Exchange account {exchangeAccountId} not found");
@@ -256,7 +268,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
     {
         return await unitOfWork.Database.VaultAccounts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(vault => vault.Id == vaultAccountId && vault.WorkspaceId == workspaceId)
+                .SingleOrDefaultAsync(vault => vault.Id == vaultAccountId && vault.WorkspaceId == workspaceId)
             ?? throw ExchangeOperationException.NotFound(
                 "VAULT_NOT_FOUND",
                 $"Vault account {vaultAccountId} not found");

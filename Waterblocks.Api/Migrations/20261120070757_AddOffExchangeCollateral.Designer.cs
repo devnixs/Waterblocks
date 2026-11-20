@@ -12,8 +12,8 @@ using Waterblocks.Api.Infrastructure.Db;
 namespace Waterblocks.Api.Migrations
 {
     [DbContext(typeof(FireblocksDbContext))]
-    [Migration("20261119222149_AddExchangeCatalog")]
-    partial class AddExchangeCatalog
+    [Migration("20261120070757_AddOffExchangeCollateral")]
+    partial class AddOffExchangeCollateral
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

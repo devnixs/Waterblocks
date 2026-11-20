@@ -49,3 +49,9 @@ Files touched:
 - `tests/backend/integration/Infrastructure/FakeExchangeSimulator.cs`, `OffExchangeTestBase.cs`
 - `tests/backend/integration/OffExchangeAccountTests.cs`, `OffExchangeCollateralTests.cs`, `OffExchangeMirrorTests.cs`
 - `e2e/fake-exchange-simulator.mjs`, `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`
+
+Work summary (STORY-024):
+- Added `Remove_Pays_The_First_Address_Of_The_Vault_Address_List`. The vault wallet has a permanent address with no index and two deposit addresses that are saved out of index order. The removal must pay the first address of `addresses_paginated`.
+
+Files touched:
+- `tests/backend/integration/OffExchangeCollateralTests.cs`

@@ -27,8 +27,7 @@ depends_on:
 - [X] DATA-017: A transaction can store its exchange peer: `ExchangeAccountId`, `ExchangeAccountName`, `ExchangeType`, `CollateralDirection` (`ADD` or `REMOVE`), `RequiresExchangeApproval` and `ExchangeApprovedAt`. `VaultAccountId` is the source vault of an add and the destination vault of a removal.
 - [X] DATA-018: The `Exchange` entity is one row of the exchange catalog: `ExchangeType` (key), `Name`, optional `SimulatorBaseUrl`, `OneAccountPerWorkspace`, `CreatedAt` and `UpdatedAt`. An exchange with a simulator URL is connectable. The code names no exchange.
 - [X] DATA-019: The `ExchangeCurrency` entity stores the currency name of one Waterblocks asset at one exchange: `ExchangeType`, `AssetId` (together the key) and `Currency`. Deleting an exchange deletes its currencies.
-- [X] DATA-MIG-001: Migration `AddOffExchangeCollateral` creates the four Off Exchange tables, their indexes and the transaction columns. It does not change existing rows.
-- [X] DATA-MIG-002: Migration `AddExchangeCatalog` creates `Exchanges` and `ExchangeCurrencies`. It does not change existing rows.
+- [X] DATA-MIG-001: The one migration of the Off Exchange work, `AddOffExchangeCollateral`, creates the four Off Exchange tables, the `Exchanges` and `ExchangeCurrencies` catalog tables, their indexes and the transaction columns, with one `Up` and one `Down`. It does not change existing rows.
 
 ## Seed Data
 
