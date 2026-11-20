@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
@@ -46,9 +47,9 @@ public class AssetsController : ControllerBase
             .Select(g => new VaultAssetDto
             {
                 Id = g.Key,
-                Balance = g.Sum(w => w.Balance).ToString("F18"),
-                LockedAmount = g.Sum(w => w.LockedAmount).ToString("F18"),
-                Available = g.Sum(w => w.Balance - w.LockedAmount).ToString("F18"),
+                Balance = g.Sum(w => w.Balance).ToString("F18", CultureInfo.InvariantCulture),
+                LockedAmount = g.Sum(w => w.LockedAmount).ToString("F18", CultureInfo.InvariantCulture),
+                Available = g.Sum(w => w.Balance - w.LockedAmount).ToString("F18", CultureInfo.InvariantCulture),
             })
             .ToListAsync();
 

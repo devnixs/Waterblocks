@@ -10,7 +10,7 @@
 
 ## Prerequisites
 
-- .NET 9 SDK
+- .NET 10 SDK
 - Node.js 20+ for CI compatibility; the Admin UI currently declares Node `25.6.0`
 - Docker and Docker Compose
 - PostgreSQL 16, usually through Docker Compose

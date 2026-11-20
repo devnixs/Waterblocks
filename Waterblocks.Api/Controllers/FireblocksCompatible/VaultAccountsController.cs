@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure;
@@ -258,9 +259,9 @@ public class VaultAccountsController : ControllerBase
             Assets = vaultAccount.Wallets.Select(w => new VaultAssetDto
             {
                 Id = w.AssetId,
-                Balance = w.Balance.ToString("F18"),
-                LockedAmount = w.LockedAmount.ToString("F18"),
-                Available = (w.Balance - w.LockedAmount).ToString("F18"),
+                Balance = w.Balance.ToString("F18", CultureInfo.InvariantCulture),
+                LockedAmount = w.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
+                Available = (w.Balance - w.LockedAmount).ToString("F18", CultureInfo.InvariantCulture),
             }).ToList(),
         };
     }

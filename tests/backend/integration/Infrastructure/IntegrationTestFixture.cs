@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Waterblocks.Api.Infrastructure.Db;
 using Xunit;
@@ -10,6 +11,13 @@ namespace Waterblocks.IntegrationTests.Infrastructure;
 /// </summary>
 public class IntegrationTestFixture : IAsyncLifetime
 {
+    static IntegrationTestFixture()
+    {
+        // Match Fireblocks amount formatting ('.' decimal separator) regardless of host locale.
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+    }
+
     private TestDatabase? _database;
     private TestWebApplicationFactory? _factory;
 

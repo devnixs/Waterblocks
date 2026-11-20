@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure;
@@ -199,13 +200,13 @@ public class VaultWalletsController : ControllerBase
         return new VaultAssetDto
         {
             Id = wallet.AssetId,
-            Total = total.ToString("G29"),
-            Balance = total.ToString("G29"), // Deprecated field, same as total
-            Available = available.ToString("G29"),
-            Pending = wallet.Pending.ToString("G29"),
-            Frozen = wallet.Frozen.ToString("G29"),
-            LockedAmount = wallet.LockedAmount.ToString("G29"),
-            Staked = wallet.Staked.ToString("G29"),
+            Total = total.ToString("G29", CultureInfo.InvariantCulture),
+            Balance = total.ToString("G29", CultureInfo.InvariantCulture), // Deprecated field, same as total
+            Available = available.ToString("G29", CultureInfo.InvariantCulture),
+            Pending = wallet.Pending.ToString("G29", CultureInfo.InvariantCulture),
+            Frozen = wallet.Frozen.ToString("G29", CultureInfo.InvariantCulture),
+            LockedAmount = wallet.LockedAmount.ToString("G29", CultureInfo.InvariantCulture),
+            Staked = wallet.Staked.ToString("G29", CultureInfo.InvariantCulture),
             TotalStakedCPU = string.Empty,
             TotalStakedNetwork = string.Empty,
             SelfStakedCPU = string.Empty,

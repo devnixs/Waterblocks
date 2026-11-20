@@ -1,3 +1,4 @@
+using System.Globalization;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
@@ -6,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Sinks.Datadog.Logs;
 using Serilog.Sinks.SystemConsole.Themes;
+
+// Fireblocks-compatible amounts always use '.' as the decimal separator.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
 const string DefaultDatadogUrl = "https://http-intake.logs.datadoghq.com";
 const string DefaultDatadogService = "waterblocks-api";
