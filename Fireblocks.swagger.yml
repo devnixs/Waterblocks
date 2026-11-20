@@ -1141,7 +1141,7 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       summary: Add an exchange account
-      description: In Waterblocks, an exchange type can allow only one account in each workspace (GATEIO uses this rule). A second account of such a type gets 409.
+      description: In Waterblocks, the exchange type must be in the exchange catalog. With key and creds, Waterblocks decrypts creds and connects the account to the simulator of the exchange, when the exchange has one. An exchange can allow only one account in each workspace (GATEIO uses this rule). A second account of such an exchange gets 409.
       operationId: addExchangeAccount
       parameters:
         - $ref: '#/components/parameters/X-Idempotency-Key'
@@ -1163,6 +1163,7 @@ paths:
   /exchange_accounts/credentials_public_key:
     get:
       summary: Get public key to encrypt exchange credentials
+      description: In Waterblocks, a real RSA key that is new at each start. Encrypt {"apiKey","secret","tenantId"} with RSA-OAEP SHA-256 and send the Base64 result as creds.
       operationId: getExchangeAccountsCredentialsPublicKey
       responses:
         '200':

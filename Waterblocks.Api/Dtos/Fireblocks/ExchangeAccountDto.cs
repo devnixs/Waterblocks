@@ -1,12 +1,15 @@
 namespace Waterblocks.Api.Dtos.Fireblocks;
 
 /// <summary>
-/// Matches Fireblocks AddExchangeAccountRequest. The fields creds and key are read by no code, so they are not stored.
+/// Matches Fireblocks AddExchangeAccountRequest. creds is the encrypted credentials blob and key is the exchange API key.
+/// Waterblocks decrypts creds only to connect the account, and stores neither creds nor the secret.
 /// </summary>
 public class AddExchangeAccountRequestDto
 {
     public string? ExchangeType { get; set; }
     public string? Name { get; set; }
+    public string? Creds { get; set; }
+    public string? Key { get; set; }
     public string? MainAccountId { get; set; }
 }
 

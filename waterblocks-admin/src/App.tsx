@@ -7,6 +7,7 @@ import TransactionsPage from './pages/TransactionsPage';
 import VaultsPage from './pages/VaultsPage';
 import ExchangesPage from './pages/ExchangesPage';
 import ExchangeAccountPage from './pages/ExchangeAccountPage';
+import SupportedExchangesPage from './pages/SupportedExchangesPage';
 import WorkspacesPage from './pages/WorkspacesPage';
 import AssetsPage from './pages/AssetsPage';
 import { ToastProvider } from './components/ToastProvider';
@@ -289,6 +290,7 @@ function AppContent() {
           <Route path="/transactions/:transactionId" element={<TransactionsPage />} />
           <Route path="/vaults" element={<VaultsPage />} />
           <Route path="/exchanges" element={<ExchangesPage />} />
+          <Route path="/exchanges/supported" element={<SupportedExchangesPage />} />
           <Route path="/exchanges/:exchangeAccountId" element={<ExchangeAccountPage />} />
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/assets" element={<AssetsPage />} />

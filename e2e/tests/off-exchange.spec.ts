@@ -1,12 +1,15 @@
 import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 const apiUrl = process.env.E2E_API_URL ?? 'http://127.0.0.1:5671';
-const fakeGateUrl = `http://127.0.0.1:${process.env.E2E_FAKE_GATE_PORT ?? '18084'}`;
+const fakeSimulatorUrl = `http://127.0.0.1:${process.env.E2E_FAKE_SIMULATOR_PORT ?? '18084'}`;
+// The address of the fake simulator as the API sees it. It differs when the API runs in a container.
+const simulatorUrlForApi = process.env.E2E_SIMULATOR_URL_FOR_API ?? fakeSimulatorUrl;
 const vaultName = 'Loan vault';
 const accountName = 'Gate main';
 
-type GateAccount = { name: string; key: string; secret: string };
+type SimulatorAccount = { name: string; key: string; secret: string };
 type Transfer = { id: string; state: string };
+type Exchange = { exchangeType: string; name: string; isConnectable: boolean };
 
 function uniqueName(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
@@ -41,17 +44,23 @@ async function completeTransaction(request: APIRequestContext, transactionId: st
   }
 }
 
-async function createGateAccount(request: APIRequestContext) {
-  const response = await request.post(`${fakeGateUrl}/_test/accounts`, { data: { name: uniqueName('e2e') } });
+async function createSimulatorAccount(request: APIRequestContext) {
+  const response = await request.post(`${fakeSimulatorUrl}/_test/accounts`, { data: { name: uniqueName('e2e') } });
   expect(response.ok()).toBeTruthy();
-  return await response.json() as GateAccount;
+  return await response.json() as SimulatorAccount;
 }
 
-async function setGateBalance(request: APIRequestContext, account: GateAccount, amount: number) {
-  const response = await request.put(`${fakeGateUrl}/_test/accounts/${account.name}/balances/BTC`, {
+async function setSimulatorBalance(request: APIRequestContext, account: SimulatorAccount, amount: number) {
+  const response = await request.put(`${fakeSimulatorUrl}/_test/accounts/${account.name}/balances/BTC`, {
     data: { spot_available: amount },
   });
   expect(response.ok()).toBeTruthy();
+}
+
+async function getConnectableExchanges(request: APIRequestContext) {
+  const response = await request.get(`${apiUrl}/admin/exchanges`);
+  expect(response.ok()).toBeTruthy();
+  return (await response.json() as { data: Exchange[] }).data.filter((exchange) => exchange.isConnectable);
 }
 
 async function createWorkspace(request: APIRequestContext) {
@@ -86,13 +95,7 @@ async function primeAdminSession(page: Page, workspaceId: string) {
   }, workspaceId);
 }
 
-async function getProviders(request: APIRequestContext) {
-  const response = await request.get(`${apiUrl}/admin/exchange-providers`);
-  expect(response.ok()).toBeTruthy();
-  return (await response.json() as { data: Array<{ exchangeType: string; name: string }> }).data;
-}
-
-async function fillConnectForm(dialog: Locator, account: GateAccount, secret = account.secret) {
+async function fillConnectForm(dialog: Locator, account: SimulatorAccount, secret = account.secret) {
   await dialog.getByRole('button', { name: /Gate\.io/ }).click();
   await dialog.getByLabel('Display name').fill(accountName);
   await dialog.getByLabel('API key').fill(account.key);
@@ -100,7 +103,7 @@ async function fillConnectForm(dialog: Locator, account: GateAccount, secret = a
   await dialog.getByRole('button', { name: 'Connect account' }).click();
 }
 
-async function connectAccount(page: Page, account: GateAccount) {
+async function connectAccount(page: Page, account: SimulatorAccount) {
   await page.goto('/exchanges');
   await page.getByRole('button', { name: 'Connect account' }).click();
   await fillConnectForm(page.getByRole('dialog'), account);
@@ -140,7 +143,7 @@ test('shows the empty state and the provider list', async ({ page, request }) =>
   await expect(page.getByRole('heading', { name: 'Connect an account' })).toBeVisible();
   await page.getByRole('button', { name: 'Connect account' }).click();
   const dialog = page.getByRole('dialog');
-  const providers = await getProviders(request);
+  const providers = await getConnectableExchanges(request);
   await expect(dialog.locator('.exchange-provider')).toHaveText(
     providers.map((provider) => new RegExp(provider.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
   );
@@ -154,18 +157,18 @@ test('shows the empty state and the provider list', async ({ page, request }) =>
 
 test('shows the message of a wrong key and keeps secrets out of browser storage', async ({ page, request }) => {
   const workspace = await createWorkspace(request);
-  const gateAccount = await createGateAccount(request);
+  const simulatorAccount = await createSimulatorAccount(request);
   await primeAdminSession(page, workspace.id);
 
   await page.goto('/exchanges');
   await page.getByRole('button', { name: 'Connect account' }).click();
   const dialog = page.getByRole('dialog');
-  await fillConnectForm(dialog, gateAccount, 'wrong-secret');
+  await fillConnectForm(dialog, simulatorAccount, 'wrong-secret');
 
   await expect(dialog.getByRole('alert')).toContainText('refused');
   await expect(page).toHaveURL(/\/exchanges$/);
   const storedValues = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
-  expect(storedValues).not.toContain(gateAccount.key);
+  expect(storedValues).not.toContain(simulatorAccount.key);
   expect(storedValues).not.toContain('wrong-secret');
 
   await dialog.getByRole('button', { name: 'Cancel' }).click();
@@ -176,7 +179,7 @@ test('shows the message of a wrong key and keeps secrets out of browser storage'
 
 test('connects an account that was created through the API', async ({ page, request }) => {
   const workspace = await createWorkspace(request);
-  const gateAccount = await createGateAccount(request);
+  const simulatorAccount = await createSimulatorAccount(request);
   const created = await request.post(`${apiUrl}/exchange_accounts`, {
     data: { exchangeType: 'GATEIO', name: accountName },
     headers: { 'X-API-Key': workspace.apiKeys[0].key },
@@ -196,12 +199,12 @@ test('connects an account that was created through the API', async ({ page, requ
 
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('API key').fill(gateAccount.key);
-  await dialog.getByLabel('API secret', { exact: true }).fill(gateAccount.secret);
+  await dialog.getByLabel('API key').fill(simulatorAccount.key);
+  await dialog.getByLabel('API secret', { exact: true }).fill(simulatorAccount.secret);
   await dialog.getByRole('button', { name: 'Connect account' }).click();
 
   await expect(dialog).toBeHidden();
-  await expect(page.getByText(gateAccount.name)).toBeVisible();
+  await expect(page.getByText(simulatorAccount.name)).toBeVisible();
   await page.getByRole('button', { name: 'Refresh' }).click();
   await expect(page.getByText('This account has no simulator connection.')).toHaveCount(0);
 
@@ -213,14 +216,14 @@ test('connects an account that was created through the API', async ({ page, requ
 test('connects an account, moves collateral and labels the transactions', async ({ page, request }) => {
   const workspace = await createWorkspace(request);
   await createFundedVault(request, workspace.id);
-  const gateAccount = await createGateAccount(request);
+  const simulatorAccount = await createSimulatorAccount(request);
   await primeAdminSession(page, workspace.id);
 
-  const accountId = await connectAccount(page, gateAccount);
+  const accountId = await connectAccount(page, simulatorAccount);
 
   await expect(page.getByLabel('Breadcrumb')).toContainText(`Exchanges>${accountName} (Main account)`);
-  await expect(page.getByText(gateAccount.name)).toBeVisible();
-  await expect(page.getByText(`${gateAccount.key.slice(0, 4)}****${gateAccount.key.slice(-4)}`)).toBeVisible();
+  await expect(page.getByText(simulatorAccount.name)).toBeVisible();
+  await expect(page.getByText(`${simulatorAccount.key.slice(0, 4)}****${simulatorAccount.key.slice(-4)}`)).toBeVisible();
   await expect(assetRow(page).getByRole('button', { name: 'Remove collateral' })).toBeDisabled();
 
   await submitTransfer(page, 'Add collateral', '1');
@@ -242,7 +245,7 @@ test('connects an account, moves collateral and labels the transactions', async 
     'Name', 'Exchange', 'Simulator account', 'Connection', 'Collateral', 'Created',
   ]);
   const accountRow = page.getByRole('row', { name: new RegExp(accountName) });
-  await expect(accountRow).toContainText(gateAccount.name);
+  await expect(accountRow).toContainText(simulatorAccount.name);
   await expect(accountRow).toContainText('Gate.io');
   await expect(accountRow).toContainText('0.5999 BTC');
   await page.getByRole('row', { name: new RegExp(accountName) }).click();
@@ -259,9 +262,9 @@ test('connects an account, moves collateral and labels the transactions', async 
 test('shows rejected removals', async ({ page, request }) => {
   const workspace = await createWorkspace(request);
   await createFundedVault(request, workspace.id);
-  const gateAccount = await createGateAccount(request);
+  const simulatorAccount = await createSimulatorAccount(request);
   await primeAdminSession(page, workspace.id);
-  const accountId = await connectAccount(page, gateAccount);
+  const accountId = await connectAccount(page, simulatorAccount);
 
   await submitTransfer(page, 'Add collateral', '1');
   await expect(page.getByText('ADD COLLATERAL', { exact: true })).toBeVisible();
@@ -277,10 +280,58 @@ test('shows rejected removals', async ({ page, request }) => {
   )).toBeVisible();
   await expect(page.locator('.exchange-transfer').first().locator('.state-badge')).toHaveText('CANCELLED');
 
-  await setGateBalance(request, gateAccount, 0.1);
+  await setSimulatorBalance(request, simulatorAccount, 0.1);
   await expect(assetRow(page)).toContainText('0.10000000', { timeout: 15_000 });
   await submitTransfer(page, 'Remove collateral', '0.5');
   await expect(page.getByText('Rejected by Gate.io', { exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.exchange-transfer').first().locator('.state-badge')).toHaveText('CANCELLED');
   await expect(assetRow(page).locator('td').nth(4)).toHaveText('0.00000000');
+});
+
+test('onboards a new exchange on the Supported exchanges page with no code change', async ({ page, request }) => {
+  const exchangeType = `E2E_${Date.now()}`;
+  const exchangeName = `E2E Exchange ${Date.now()}`;
+  const workspace = await createWorkspace(request);
+  await createFundedVault(request, workspace.id);
+  const simulatorAccount = await createSimulatorAccount(request);
+  await primeAdminSession(page, workspace.id);
+
+  try {
+    await page.goto('/exchanges');
+    await page.getByRole('link', { name: 'Supported exchanges' }).first().click();
+    await expect(page).toHaveURL(/\/exchanges\/supported$/);
+    await page.getByRole('button', { name: 'Add exchange' }).click();
+    const editor = page.getByRole('dialog');
+    await editor.getByLabel('Exchange type', { exact: true }).fill(exchangeType);
+    await editor.getByLabel('Name', { exact: true }).fill(exchangeName);
+    await editor.getByLabel('Simulator URL').fill(simulatorUrlForApi);
+    await editor.getByRole('button', { name: 'Add currency' }).click();
+    await editor.getByLabel('Asset 1').selectOption('BTC');
+    await editor.getByLabel('Currency 1').fill('BTC');
+    await editor.getByRole('button', { name: 'Save exchange' }).click();
+    await expect(editor).toBeHidden();
+    await expect(page.locator(`tr[data-exchange="${exchangeType}"]`)).toContainText(simulatorUrlForApi);
+
+    await page.getByRole('link', { name: 'Exchanges' }).first().click();
+    await page.getByRole('button', { name: 'Connect account' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: new RegExp(exchangeName) }).click();
+    await dialog.getByLabel('Display name').fill('New exchange account');
+    await dialog.getByLabel('API key').fill(simulatorAccount.key);
+    await dialog.getByLabel('API secret', { exact: true }).fill(simulatorAccount.secret);
+    await dialog.getByRole('button', { name: 'Connect account' }).click();
+    await expect(page).toHaveURL(/\/exchanges\/[0-9a-f-]{36}$/);
+    const accountId = page.url().split('/').pop()!;
+    await expect(page.getByText(simulatorAccount.name)).toBeVisible();
+
+    await submitTransfer(page, 'Add collateral', '1');
+    const [add] = await getTransfers(request, accountId, workspace.id);
+    await completeTransaction(request, add.id, workspace.id);
+    await expect(page.getByText(`Applied at ${exchangeName}`, { exact: true })).toBeVisible({ timeout: 15_000 });
+  } finally {
+    // The exchange stays in the catalog without a simulator URL, so that it does not change other tests.
+    await request.put(`${apiUrl}/admin/exchanges/${exchangeType}`, {
+      data: { name: exchangeName, oneAccountPerWorkspace: false, currencies: [] },
+    });
+  }
 });

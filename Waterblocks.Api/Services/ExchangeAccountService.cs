@@ -20,7 +20,6 @@ public interface IExchangeAccountService
     Task<ExchangeAccountDto> GetCollateralAccountAsync(string mainExchangeAccountId);
     ExchangeCredentialsPublicKeyDto GetCredentialsPublicKey();
 
-    List<AdminExchangeProviderDto> ListProviders();
     Task<List<AdminExchangeAccountDto>> ListForAdminAsync();
     Task<AdminExchangeAccountDto> GetForAdminAsync(string exchangeAccountId);
     Task<AdminExchangeAccountDto> CreateConnectedAsync(CreateAdminExchangeAccountRequestDto request);
@@ -38,20 +37,11 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     private const int MaxTransfers = 200;
     private const int MaskedKeyEdgeLength = 4;
 
-    private const string TestCredentialsPublicKey =
-        "-----BEGIN PUBLIC KEY-----\n" +
-        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6TQCcjybyXBrKAuUWPUM\n" +
-        "xaaGZyuRw+aJR60ORMm64ZHc5fqBTLxUJx6g1GxgslXvJCIWFZTvDm1UKkni9lkY\n" +
-        "QoH9V0kW0e/bpDFlNi8zesk/zYfof7fyTR585qB5TiFMPHkQLORc7j28A9jKQRHF\n" +
-        "Jl/2hEYL7ccsMmzer7LHsaYM8FXWs7BF914XhRLpEa+BmkVFacaF707XZ44Sx+Uz\n" +
-        "ZSkFe3KgHCUosakfpUucY48MXgFxqOpyR5tF0XAWYOORL2L4VyyqX/Bb+uhyZnaK\n" +
-        "4Nnye8U8SaKGPUK+VkByv4GeHAQhsFjfZ7paXyK3Hhe55ZuPYGFMWANnJMTr/Dl6\n" +
-        "UwIDAQAB\n" +
-        "-----END PUBLIC KEY-----\n";
-
     private readonly FireblocksDbContext _context;
     private readonly WorkspaceContext _workspace;
-    private readonly IExchangeSimulatorRegistry _simulators;
+    private readonly IExchangeCatalog _catalog;
+    private readonly IExchangeSimulatorClient _simulator;
+    private readonly IExchangeCredentialsCipher _credentialsCipher;
     private readonly IExchangeCollateralLedger _collateralLedger;
     private readonly IRealtimeNotifier _realtimeNotifier;
     private readonly IdempotencyContext _idempotency;
@@ -59,14 +49,18 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     public ExchangeAccountService(
         FireblocksDbContext context,
         WorkspaceContext workspace,
-        IExchangeSimulatorRegistry simulators,
+        IExchangeCatalog catalog,
+        IExchangeSimulatorClient simulator,
+        IExchangeCredentialsCipher credentialsCipher,
         IExchangeCollateralLedger collateralLedger,
         IRealtimeNotifier realtimeNotifier,
         IdempotencyContext idempotency)
     {
         _context = context;
         _workspace = workspace;
-        _simulators = simulators;
+        _catalog = catalog;
+        _simulator = simulator;
+        _credentialsCipher = credentialsCipher;
         _collateralLedger = collateralLedger;
         _realtimeNotifier = realtimeNotifier;
         _idempotency = idempotency;
@@ -81,10 +75,13 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         .Include(account => account.Assets)
         .Where(account => account.WorkspaceId == WorkspaceId);
 
+    /// <summary>
+    /// Adds an exchange account in the Fireblocks way. With creds and key, the account connects to the simulator of
+    /// its exchange when the exchange has one.
+    /// </summary>
     public async Task<AddExchangeAccountResponseDto> CreateAsync(AddExchangeAccountRequestDto request)
     {
-        var exchangeType = RequireExchangeType(request.ExchangeType);
-        var simulator = _simulators.Find(exchangeType);
+        var exchange = await _catalog.RequireAsync(request.ExchangeType);
         var mainAccountId = string.IsNullOrWhiteSpace(request.MainAccountId) ? null : request.MainAccountId.Trim();
         if (mainAccountId?.Length > MaxNameLength)
         {
@@ -97,7 +94,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         {
             WorkspaceId = WorkspaceId,
             Name = RequireName(request.Name),
-            ExchangeType = exchangeType,
+            ExchangeType = exchange.ExchangeType,
             MainAccountId = mainAccountId,
         };
         var response = new AddExchangeAccountResponseDto
@@ -107,7 +104,17 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             ExchangeType = account.ExchangeType,
         };
 
-        await AddAccountAsync(account, simulator, response);
+        if (!string.IsNullOrWhiteSpace(request.Creds))
+        {
+            var credentials = DecryptCredentials(request.Creds, request.Key);
+            if (exchange.IsConnectable)
+            {
+                await RequireFreeAccountSlotAsync(exchange, WorkspaceId);
+                ApplyConnection(account, await VerifyConnectionAsync(exchange, credentials));
+            }
+        }
+
+        await AddAccountAsync(account, exchange, response);
         _idempotency.MarkReplyStored();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
@@ -159,7 +166,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     {
         var account = await RequireAccountAsync(exchangeAccountId);
         await RequireKnownAssetAsync(assetId);
-        var snapshot = await ReadSimulatorAsync(account);
+        var snapshot = await ReadSimulatorAsync(account, await _catalog.FindAsync(account.ExchangeType));
         var row = account.Assets.FirstOrDefault(asset => asset.AssetId == assetId);
         return ToFireblocksAsset(BuildAssetView(account, snapshot, row, assetId));
     }
@@ -178,23 +185,9 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     {
         return new ExchangeCredentialsPublicKeyDto
         {
-            PublicKey = TestCredentialsPublicKey,
+            PublicKey = _credentialsCipher.PublicKeyPem,
             TenantId = WorkspaceId,
         };
-    }
-
-    public List<AdminExchangeProviderDto> ListProviders()
-    {
-        return _simulators.All
-            .Select(simulator => new AdminExchangeProviderDto
-            {
-                ExchangeType = simulator.ExchangeType,
-                Name = simulator.DisplayName,
-                AssetIds = simulator.AssetIds.ToList(),
-                OneAccountPerWorkspace = simulator.OneAccountPerWorkspace,
-                IsConfigured = simulator.IsConfigured,
-            })
-            .ToList();
     }
 
     public async Task<List<AdminExchangeAccountDto>> ListForAdminAsync()
@@ -210,20 +203,20 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     public async Task<AdminExchangeAccountDto> CreateConnectedAsync(CreateAdminExchangeAccountRequestDto request)
     {
-        var exchangeType = RequireExchangeType(request.ExchangeType);
-        var simulator = _simulators.Require(exchangeType);
+        var exchange = await _catalog.RequireConnectableAsync(request.ExchangeType);
         var name = RequireName(request.Name);
-        await RequireFreeAccountSlotAsync(simulator, WorkspaceId);
-        var connection = await VerifyConnectionAsync(simulator, request.ApiKey, request.ApiSecret);
+        var credentials = DecryptCredentials(RequireCreds(request.Creds), request.ApiKey);
+        await RequireFreeAccountSlotAsync(exchange, WorkspaceId);
+        var connection = await VerifyConnectionAsync(exchange, credentials);
 
         var account = new ExchangeAccount
         {
             WorkspaceId = WorkspaceId,
             Name = name,
-            ExchangeType = exchangeType,
+            ExchangeType = exchange.ExchangeType,
         };
         ApplyConnection(account, connection);
-        await AddAccountAsync(account, simulator, idempotentReply: null);
+        await AddAccountAsync(account, exchange, idempotentReply: null);
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
 
         return await GetForAdminAsync(account.Id);
@@ -237,13 +230,14 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             .FirstOrDefaultAsync(item => item.Id == exchangeAccountId && item.WorkspaceId == WorkspaceId)
             ?? throw AccountNotFound(exchangeAccountId);
 
-        var simulator = _simulators.Require(account.ExchangeType);
+        var exchange = await _catalog.RequireConnectableAsync(account.ExchangeType);
         if (account.IsConnected)
         {
             throw AlreadyConnected("This exchange account already has a connection");
         }
 
-        var connection = await VerifyConnectionAsync(simulator, request.ApiKey, request.ApiSecret);
+        var credentials = DecryptCredentials(RequireCreds(request.Creds), request.ApiKey);
+        var connection = await VerifyConnectionAsync(exchange, credentials);
         ApplyConnection(account, connection);
         await SaveConnectionAsync();
         await _realtimeNotifier.NotifyVaultsUpdatedAsync(account.WorkspaceId);
@@ -427,25 +421,27 @@ public sealed class ExchangeAccountService : IExchangeAccountService
 
     private async Task<List<AccountView>> BuildViewsAsync(IReadOnlyList<ExchangeAccount> accounts)
     {
-        var snapshots = await Task.WhenAll(accounts.Select(ReadSimulatorAsync));
-        return accounts.Select((account, index) => BuildView(account, snapshots[index])).ToList();
+        var exchanges = await _catalog.FindManyAsync(accounts.Select(account => account.ExchangeType));
+        var snapshots = await Task.WhenAll(accounts.Select(account =>
+            ReadSimulatorAsync(account, exchanges.GetValueOrDefault(account.ExchangeType))));
+        return accounts
+            .Select((account, index) => BuildView(account, exchanges.GetValueOrDefault(account.ExchangeType), snapshots[index]))
+            .ToList();
     }
 
-    private Task<SimulatorAccountSnapshot?> ReadSimulatorAsync(ExchangeAccount account)
+    private Task<SimulatorAccountSnapshot?> ReadSimulatorAsync(ExchangeAccount account, Exchange? exchange)
     {
-        var simulator = _simulators.Find(account.ExchangeType);
-        return account.IsConnected && simulator != null
-            ? simulator.TryReadAccountAsync(account.SimulatorAccountName!)
+        return account.IsConnected && exchange is { IsConnectable: true }
+            ? _simulator.TryReadAccountAsync(exchange, account.SimulatorAccountName!)
             : Task.FromResult<SimulatorAccountSnapshot?>(null);
     }
 
-    private AccountView BuildView(ExchangeAccount account, SimulatorAccountSnapshot? snapshot)
+    private static AccountView BuildView(ExchangeAccount account, Exchange? exchange, SimulatorAccountSnapshot? snapshot)
     {
-        var simulator = _simulators.Find(account.ExchangeType);
         var assetIds = account.Assets.Select(asset => asset.AssetId).ToHashSet(StringComparer.Ordinal);
-        if (account.IsConnected && simulator != null)
+        if (account.IsConnected && exchange != null)
         {
-            assetIds.UnionWith(simulator.AssetIds);
+            assetIds.UnionWith(exchange.Currencies.Select(currency => currency.AssetId));
         }
 
         var assets = assetIds
@@ -563,27 +559,49 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         };
     }
 
-    private async Task<SimulatorConnection> VerifyConnectionAsync(
-        IExchangeSimulatorClient simulator,
-        string? apiKey,
-        string? apiSecret)
+    private static string RequireCreds(string? creds)
     {
-        var key = apiKey?.Trim();
-        var secret = apiSecret?.Trim();
-        if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(secret))
+        return string.IsNullOrWhiteSpace(creds)
+            ? throw ExchangeOperationException.BadRequest(
+                "API_CREDENTIALS_REQUIRED",
+                "creds is required: encrypt {\"apiKey\",\"secret\",\"tenantId\"} with the credentials public key")
+            : creds;
+    }
+
+    /// <summary>
+    /// Decrypts a Fireblocks creds blob. The tenant id must be this workspace, and a sent key must match the key inside.
+    /// </summary>
+    private ExchangeCredentials DecryptCredentials(string creds, string? key)
+    {
+        var credentials = _credentialsCipher.Decrypt(creds);
+        if (credentials.TenantId != WorkspaceId)
         {
-            throw ExchangeOperationException.BadRequest("API_CREDENTIALS_REQUIRED", "API key and API secret are required");
+            throw ExchangeOperationException.BadRequest(
+                "INVALID_CREDENTIALS_BLOB",
+                "The tenantId in creds is not the tenant id of this workspace");
         }
 
-        var identity = await simulator.IdentifyAccountAsync(key, secret);
+        if (!string.IsNullOrWhiteSpace(key) && key.Trim() != credentials.ApiKey)
+        {
+            throw ExchangeOperationException.BadRequest(
+                "INVALID_CREDENTIALS_BLOB",
+                "The key does not match the apiKey in creds");
+        }
+
+        return credentials;
+    }
+
+    private async Task<SimulatorConnection> VerifyConnectionAsync(Exchange exchange, ExchangeCredentials credentials)
+    {
+        var identity = await _simulator.VerifyKeyAsync(exchange, credentials.ApiKey, credentials.Secret);
         var alreadyConnected = await _context.ExchangeAccounts.AnyAsync(account =>
-            account.ExchangeType == simulator.ExchangeType && account.SimulatorAccountId == identity.AccountId);
+            account.ExchangeType == exchange.ExchangeType && account.SimulatorAccountId == identity.AccountId);
         if (alreadyConnected)
         {
             throw SimulatorAccountInUse();
         }
 
-        return new SimulatorConnection(identity, MaskApiKey(key));
+        return new SimulatorConnection(identity, MaskApiKey(credentials.ApiKey));
     }
 
     private static void ApplyConnection(ExchangeAccount account, SimulatorConnection connection)
@@ -602,7 +620,7 @@ public sealed class ExchangeAccountService : IExchangeAccountService
     /// </summary>
     private async Task AddAccountAsync(
         ExchangeAccount account,
-        IExchangeSimulatorClient? simulator,
+        Exchange exchange,
         AddExchangeAccountResponseDto? idempotentReply)
     {
         var strategy = _context.Database.CreateExecutionStrategy();
@@ -619,10 +637,10 @@ public sealed class ExchangeAccountService : IExchangeAccountService
                     return;
                 }
 
-                if (simulator?.OneAccountPerWorkspace == true)
+                if (exchange.OneAccountPerWorkspace)
                 {
-                    await LockAccountSlotAsync(account.WorkspaceId, simulator.ExchangeType);
-                    await RequireFreeAccountSlotAsync(simulator, account.WorkspaceId);
+                    await LockAccountSlotAsync(account.WorkspaceId, exchange.ExchangeType);
+                    await RequireFreeAccountSlotAsync(exchange, account.WorkspaceId);
                 }
 
                 _context.ExchangeAccounts.Add(account);
@@ -648,18 +666,18 @@ public sealed class ExchangeAccountService : IExchangeAccountService
             $"SELECT pg_advisory_xact_lock(hashtextextended({lockName}, 0))");
     }
 
-    private async Task RequireFreeAccountSlotAsync(IExchangeSimulatorClient simulator, string workspaceId)
+    private async Task RequireFreeAccountSlotAsync(Exchange exchange, string workspaceId)
     {
-        if (!simulator.OneAccountPerWorkspace)
+        if (!exchange.OneAccountPerWorkspace)
         {
             return;
         }
 
         var hasAccount = await _context.ExchangeAccounts
-            .AnyAsync(account => account.WorkspaceId == workspaceId && account.ExchangeType == simulator.ExchangeType);
+            .AnyAsync(account => account.WorkspaceId == workspaceId && account.ExchangeType == exchange.ExchangeType);
         if (hasAccount)
         {
-            throw AccountLimitReached(simulator);
+            throw AccountLimitReached(exchange);
         }
     }
 
@@ -686,22 +704,6 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         return apiKey.Length <= MaskedKeyEdgeLength * 2
             ? "****"
             : $"{apiKey[..MaskedKeyEdgeLength]}****{apiKey[^MaskedKeyEdgeLength..]}";
-    }
-
-    /// <summary>
-    /// Accepts the exchange types of the Fireblocks "Add an exchange account" call and the type of each simulator client.
-    /// </summary>
-    private string RequireExchangeType(string? exchangeType)
-    {
-        if (string.IsNullOrWhiteSpace(exchangeType) ||
-            (!ExchangeTypes.Supported.Contains(exchangeType) && _simulators.Find(exchangeType) == null))
-        {
-            throw ExchangeOperationException.BadRequest(
-                "EXCHANGE_TYPE_NOT_SUPPORTED",
-                $"Exchange type {exchangeType} is not supported");
-        }
-
-        return exchangeType;
     }
 
     private static string RequireName(string? name)
@@ -749,11 +751,11 @@ public sealed class ExchangeAccountService : IExchangeAccountService
         return AlreadyConnected("This simulator account is already connected. It can be connected in only one workspace");
     }
 
-    private static ExchangeOperationException AccountLimitReached(IExchangeSimulatorClient simulator)
+    private static ExchangeOperationException AccountLimitReached(Exchange exchange)
     {
         return ExchangeOperationException.Conflict(
             "EXCHANGE_ACCOUNT_LIMIT_REACHED",
-            $"This workspace already has a {simulator.DisplayName} account. A workspace can have only one {simulator.DisplayName} account");
+            $"This workspace already has a {exchange.Name} account. A workspace can have only one {exchange.Name} account");
     }
 
     private static ExchangeOperationException AlreadyConnected(string message)

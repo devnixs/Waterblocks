@@ -14,7 +14,7 @@ status: COMPLETE
 
 ## Scope
 
-- [X] Refuse a second account of an exchange type whose simulator client allows one account in each workspace, through the Fireblocks-compatible call and the admin call. Gate.io uses this rule.
+- [X] Refuse a second account of an exchange whose catalog row allows one account in each workspace, through the Fireblocks-compatible call and the admin call. Gate.io uses this rule.
 - [X] Refuse to connect one simulator account of an exchange type in a second workspace.
 - [X] Make parallel calls safe: a database lock on the workspace and the exchange type for the account limit, and a filtered unique index on the exchange type and the simulator account id for the connection.
 - [X] Show `A workspace can have only one Gate.io account.` in place of `Connect account` on the Exchanges page when the workspace has its Gate.io account.

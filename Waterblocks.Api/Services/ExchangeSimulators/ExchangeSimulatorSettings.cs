@@ -1,8 +1,9 @@
 namespace Waterblocks.Api.Services.ExchangeSimulators;
 
 /// <summary>
-/// The configuration keys of an exchange simulator. Each exchange type has its own section,
-/// for example the environment variable EXCHANGE_SIMULATORS__GATEIO__BASE_URL.
+/// The optional settings of the simulator of one exchange, keyed by exchange type, for example the environment
+/// variable EXCHANGE_SIMULATORS__GATEIO__BASE_URL. BASE_URL fills an empty simulator URL of the exchange catalog at
+/// startup. ADMIN_TOKEN is sent as X-Admin-Token, so that the token stays out of the database.
 /// </summary>
 public static class ExchangeSimulatorSettings
 {

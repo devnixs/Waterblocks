@@ -1,4 +1,4 @@
-import type { AdminExchangeAccount, AdminExchangeAsset, AdminExchangeProvider } from '../../types/admin';
+import type { AdminExchange, AdminExchangeAccount, AdminExchangeAsset } from '../../types/admin';
 
 export function formatExchangeAmount(value: string | undefined): string {
   const parsed = parseFloat(value ?? '0');
@@ -40,41 +40,35 @@ export function trimAmount(value: string | undefined): string {
   return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
 }
 
-export function findProvider(
-  providers: AdminExchangeProvider[],
-  exchangeType: string,
-): AdminExchangeProvider | undefined {
-  return providers.find((provider) => provider.exchangeType === exchangeType);
+export function findExchange(exchanges: AdminExchange[], exchangeType: string): AdminExchange | undefined {
+  return exchanges.find((exchange) => exchange.exchangeType === exchangeType);
 }
 
 /**
- * Returns the exchange name of a provider. An exchange type with no simulator shows its type.
+ * Returns the name of an exchange from the catalog. An exchange type that is not in the catalog shows its type.
  */
-export function exchangeName(providers: AdminExchangeProvider[], exchangeType: string): string {
-  return findProvider(providers, exchangeType)?.name ?? exchangeType;
+export function exchangeName(exchanges: AdminExchange[], exchangeType: string): string {
+  return findExchange(exchanges, exchangeType)?.name ?? exchangeType;
 }
 
 /**
- * Returns the providers that allow one account in a workspace and that already have an account in it.
+ * Returns the exchanges that allow one account in a workspace and that already have an account in it.
  */
-export function findFullProviders(
-  providers: AdminExchangeProvider[],
-  accounts: AdminExchangeAccount[],
-): AdminExchangeProvider[] {
-  return providers.filter((provider) => (
-    provider.oneAccountPerWorkspace && accounts.some((account) => account.exchangeType === provider.exchangeType)
+export function findFullExchanges(exchanges: AdminExchange[], accounts: AdminExchangeAccount[]): AdminExchange[] {
+  return exchanges.filter((exchange) => (
+    exchange.oneAccountPerWorkspace && accounts.some((account) => account.exchangeType === exchange.exchangeType)
   ));
 }
 
-export function oneAccountMessage(providers: AdminExchangeProvider[]): string {
-  const names = providers.map((provider) => provider.name);
+export function oneAccountMessage(exchanges: AdminExchange[]): string {
+  const names = exchanges.map((exchange) => exchange.name);
   return names.length === 1
     ? `A workspace can have only one ${names[0]} account.`
     : `A workspace can have only one account of each of these exchanges: ${names.join(', ')}.`;
 }
 
 /**
- * Returns the collateral totals of an account as text, for example "1.5 BTC, 200 USDT".
+ * Returns the collateral totals of an account as text, for example "1.5 BTC, 200 USDT_ERC20".
  */
 export function collateralSummary(account: AdminExchangeAccount): string {
   const totals = account.assets

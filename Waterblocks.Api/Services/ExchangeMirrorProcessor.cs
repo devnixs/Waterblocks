@@ -21,7 +21,8 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
     private const string FailedAtExchange = "3RD_PARTY_FAILED";
 
     private readonly FireblocksDbContext _context;
-    private readonly IExchangeSimulatorRegistry _simulators;
+    private readonly IExchangeCatalog _catalog;
+    private readonly IExchangeSimulatorClient _simulator;
     private readonly ICollateralTransactionRunner _runner;
     private readonly ITransactionStateService _transactionState;
     private readonly IAdminTransactionNotifier _notifier;
@@ -29,14 +30,16 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
     public ExchangeMirrorProcessor(
         FireblocksDbContext context,
-        IExchangeSimulatorRegistry simulators,
+        IExchangeCatalog catalog,
+        IExchangeSimulatorClient simulator,
         ICollateralTransactionRunner runner,
         ITransactionStateService transactionState,
         IAdminTransactionNotifier notifier,
         ILogger<ExchangeMirrorProcessor> logger)
     {
         _context = context;
-        _simulators = simulators;
+        _catalog = catalog;
+        _simulator = simulator;
         _runner = runner;
         _transactionState = transactionState;
         _notifier = notifier;
@@ -45,16 +48,15 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
 
     public async Task ProcessPendingAsync(CancellationToken cancellationToken = default)
     {
-        // Events of an exchange type with no configured simulator stay pending until the simulator is configured.
-        var simulators = _simulators.All
-            .Where(simulator => simulator.IsConfigured)
-            .ToDictionary(simulator => simulator.ExchangeType, StringComparer.Ordinal);
-        if (simulators.Count == 0)
+        // Events of an exchange with no simulator URL stay pending until the exchange gets one.
+        var exchanges = (await _catalog.ListConnectableAsync(cancellationToken))
+            .ToDictionary(exchange => exchange.ExchangeType, StringComparer.Ordinal);
+        if (exchanges.Count == 0)
         {
             return;
         }
 
-        var exchangeTypes = simulators.Keys.ToList();
+        var exchangeTypes = exchanges.Keys.ToList();
         var pendingEvents = await _context.ExchangeMirrorEvents
             .AsNoTracking()
             .Where(item => item.Status == ExchangeMirrorEventStatus.PENDING && exchangeTypes.Contains(item.ExchangeType))
@@ -74,7 +76,7 @@ public sealed class ExchangeMirrorProcessor : IExchangeMirrorProcessor
                 continue;
             }
 
-            var outcome = await simulators[pendingEvent.ExchangeType].SendEventAsync(pendingEvent, cancellationToken);
+            var outcome = await _simulator.SendEventAsync(exchanges[pendingEvent.ExchangeType], pendingEvent, cancellationToken);
             if (outcome.Kind == MirrorEventOutcomeKind.Retry)
             {
                 waitingAccounts.Add(account);

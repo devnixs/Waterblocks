@@ -15,9 +15,9 @@ Date: 2026-11-19
 
 Work summary (STORY-021):
 - Added integration tests for exchange accounts, collateral transfers, the collateral mirror and `Idempotency-Key`.
-- `FakeGateSimulator` is the test double for the Gate simulator. `OffExchangeTestBase` installs it as the primary handler of the typed HTTP client of `GateSimulatorClient`.
+- `FakeExchangeSimulator` is the test double of an exchange simulator. `FakeSimulatorNetwork` routes each simulator URL to its fake, and `OffExchangeTestBase` installs it as the primary handler of the typed HTTP client of `ExchangeSimulatorClient`.
 - `CapturingLogSink` lets tests search the API logs for credentials.
-- Added `e2e/fake-gate-simulator.mjs` as a Playwright web server, so that browser tests need no real simulator. The API server entry receives its URL.
+- Added `e2e/fake-exchange-simulator.mjs` as a Playwright web server, so that browser tests need no real simulator. The API server entry receives its URL.
 - Added `e2e/tests/off-exchange.spec.ts`.
 
 Files touched:
@@ -26,7 +26,7 @@ Files touched:
 - `tests/backend/integration/OffExchangeMirrorTests.cs`
 - `tests/backend/integration/OffExchangeIdempotencyTests.cs`
 - `tests/backend/integration/Infrastructure/`
-- `e2e/fake-gate-simulator.mjs`, `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`
+- `e2e/fake-exchange-simulator.mjs`, `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`
 
 Work summary (STORY-022):
 - Added integration tests for the one-account rule with Gate.io, one connection for each simulator account in all workspaces, and parallel creates in one workspace.
@@ -38,14 +38,14 @@ Files touched:
 - `e2e/tests/off-exchange.spec.ts`
 
 Work summary (STORY-023):
-- Added `OffExchangeProviderTests`. It adds `FakeExchangeSimulatorClient`, an in-memory simulator client, for `BYBIT_V2` and `DERIBIT` next to the Gate.io client. The tests prove that a new exchange needs only a new client: the provider list, the exchange type check, the connection, the mirror events, the asset check, the one-account rule and the connection index work for each exchange.
-- `OffExchangeTestBase.ConfigureServices` is virtual, so that a test class can add a client.
-- Added tests for the Gate.io asset mapping: a `USDT_ERC20` add reaches the fake simulator as `USDT`, and its `USDT` balance shows on `USDT_ERC20`.
-- Updated the existing Off Exchange tests to the generic names and error codes.
-- The e2e test checks the provider list of the connect dialog against `GET /admin/exchange-providers`, and checks that the Exchanges table headers name no exchange.
+- Added `ExchangeCatalogTests`. They onboard exchanges through the admin API only: a new `DERIBIT` exchange and the seeded `BYBIT_V2` connect, get their own mirror events, use their own currencies and rules, and need no code. They also check the catalog validation and the seeded Gate.io facts.
+- Added credentials tests: a real RSA public key, `POST /exchange_accounts` with `key` and `creds`, refused creds (not decryptable, other tenant, other key, wrong secret) and no plain secret on the admin calls.
+- `FakeExchangeSimulator` checks the HMAC key proof and refuses a body that holds a secret. `OffExchangeTestBase.EncryptCredsAsync` encrypts creds in the Fireblocks way.
+- Added tests for the Gate.io currencies: a `USDT_ERC20` add reaches the fake simulator as `USDT`, and its `USDT` balance shows on `USDT_ERC20`.
+- The e2e tests use `e2e/fake-exchange-simulator.mjs`. A new e2e test adds an exchange on the Supported exchanges page, connects an account to it and moves collateral. `E2E_SIMULATOR_URL_FOR_API` gives the fake simulator address as the API sees it.
 
 Files touched:
-- `tests/backend/integration/OffExchangeProviderTests.cs`
-- `tests/backend/integration/Infrastructure/FakeExchangeSimulatorClient.cs`, `OffExchangeTestBase.cs`
-- `tests/backend/integration/OffExchangeAccountTests.cs`, `OffExchangeCollateralTests.cs`
-- `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`
+- `tests/backend/integration/ExchangeCatalogTests.cs`
+- `tests/backend/integration/Infrastructure/FakeExchangeSimulator.cs`, `OffExchangeTestBase.cs`
+- `tests/backend/integration/OffExchangeAccountTests.cs`, `OffExchangeCollateralTests.cs`, `OffExchangeMirrorTests.cs`
+- `e2e/fake-exchange-simulator.mjs`, `e2e/playwright.config.ts`, `e2e/tests/off-exchange.spec.ts`

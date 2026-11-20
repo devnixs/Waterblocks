@@ -21,9 +21,11 @@ import type {
   CreateWorkspaceRequest,
   AdminGeneratedAddress,
   EstimateFeeResponse,
+  AdminExchange,
   AdminExchangeAccount,
-  AdminExchangeProvider,
   AdminCollateralTransfer,
+  ExchangeCredentialsPublicKey,
+  SaveExchangeRequest,
   CollateralTransferRequest,
   ConnectExchangeAccountRequest,
   CreateExchangeAccountRequest,
@@ -273,9 +275,28 @@ export const adminApi = {
     return fetchApi('/admin/workspaces/archive-all', { method: 'POST' });
   },
 
+  // Exchange catalog
+  async getExchanges(): Promise<AdminResponse<AdminExchange[]>> {
+    return fetchApi('/admin/exchanges');
+  },
+
+  async createExchange(request: SaveExchangeRequest): Promise<AdminResponse<AdminExchange>> {
+    return fetchApi('/admin/exchanges', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async updateExchange(exchangeType: string, request: SaveExchangeRequest): Promise<AdminResponse<AdminExchange>> {
+    return fetchApi(`/admin/exchanges/${encodeURIComponent(exchangeType)}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  },
+
   // Exchange accounts
-  async getExchangeProviders(): Promise<AdminResponse<AdminExchangeProvider[]>> {
-    return fetchApi('/admin/exchange-providers');
+  async getCredentialsPublicKey(): Promise<AdminResponse<ExchangeCredentialsPublicKey>> {
+    return fetchApi('/admin/exchange-accounts/credentials-public-key');
   },
 
   async getExchangeAccounts(): Promise<AdminResponse<AdminExchangeAccount[]>> {

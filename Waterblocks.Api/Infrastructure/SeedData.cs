@@ -2,6 +2,8 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Infrastructure.Db;
+using Waterblocks.Api.Models;
+using Waterblocks.Api.Services.ExchangeSimulators;
 
 namespace Waterblocks.Api.Infrastructure;
 
@@ -23,6 +25,95 @@ public static class SeedData
         MigrateWithRetry(db, logger);
         SeedHelpers.SeedWorkspaces(db, logger);
         SeedAssets(db, logger);
+        SeedExchanges(db, logger);
+        ApplyConfiguredSimulatorUrls(db, scope.ServiceProvider.GetRequiredService<IConfiguration>(), logger);
+    }
+
+    /// <summary>
+    /// Adds the exchanges of all_exchanges.json that the catalog does not have. It never changes an existing exchange.
+    /// </summary>
+    private static void SeedExchanges(FireblocksDbContext db, Microsoft.Extensions.Logging.ILogger logger)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "all_exchanges.json");
+        if (!File.Exists(path))
+        {
+            logger.LogWarning("Exchange seed file not found at {Path}", path);
+            return;
+        }
+
+        var seeds = JsonSerializer.Deserialize<List<ExchangeSeed>>(File.ReadAllText(path), new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+        }) ?? new List<ExchangeSeed>();
+        var existing = db.Exchanges.Select(exchange => exchange.ExchangeType).ToHashSet(StringComparer.Ordinal);
+        var assetIds = db.Assets.Select(asset => asset.AssetId).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var seed in seeds)
+        {
+            if (string.IsNullOrWhiteSpace(seed.ExchangeType) || string.IsNullOrWhiteSpace(seed.Name) ||
+                existing.Contains(seed.ExchangeType))
+            {
+                continue;
+            }
+
+            var exchange = new Exchange
+            {
+                ExchangeType = seed.ExchangeType,
+                Name = seed.Name,
+                OneAccountPerWorkspace = seed.OneAccountPerWorkspace,
+            };
+            foreach (var currency in seed.Currencies)
+            {
+                if (string.IsNullOrWhiteSpace(currency.AssetId) || string.IsNullOrWhiteSpace(currency.Currency) ||
+                    !assetIds.Contains(currency.AssetId))
+                {
+                    logger.LogWarning(
+                        "Skipping currency {Currency} of exchange {ExchangeType}: asset {AssetId} does not exist",
+                        currency.Currency, seed.ExchangeType, currency.AssetId);
+                    continue;
+                }
+
+                exchange.Currencies.Add(new ExchangeCurrency { AssetId = currency.AssetId, Currency = currency.Currency });
+            }
+
+            db.Exchanges.Add(exchange);
+            existing.Add(seed.ExchangeType);
+        }
+
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// Fills an empty simulator URL from EXCHANGE_SIMULATORS__&lt;EXCHANGE_TYPE&gt;__BASE_URL. The Admin UI changes it after that.
+    /// </summary>
+    private static void ApplyConfiguredSimulatorUrls(
+        FireblocksDbContext db,
+        IConfiguration configuration,
+        Microsoft.Extensions.Logging.ILogger logger)
+    {
+        foreach (var section in configuration.GetSection(ExchangeSimulatorSettings.Section).GetChildren())
+        {
+            var baseUrl = section[ExchangeSimulatorSettings.BaseUrlName]?.Trim();
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                continue;
+            }
+
+            var exchange = db.Exchanges.Find(section.Key.ToUpperInvariant());
+            if (exchange == null)
+            {
+                logger.LogWarning("Simulator URL setting for unknown exchange type {ExchangeType} is ignored", section.Key);
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(exchange.SimulatorBaseUrl))
+            {
+                exchange.SimulatorBaseUrl = baseUrl;
+                exchange.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+        }
+
+        db.SaveChanges();
     }
 
     private static void MigrateWithRetry(

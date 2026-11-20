@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Models;
-using Waterblocks.Api.Services.ExchangeSimulators;
 using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
@@ -36,7 +35,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
 
     private readonly WorkspaceContext _workspace;
     private readonly ICollateralTransactionRunner _runner;
-    private readonly IExchangeSimulatorRegistry _simulators;
+    private readonly IExchangeCatalog _catalog;
     private readonly IRealtimeNotifier _realtimeNotifier;
     private readonly IdempotencyContext _idempotency;
     private readonly ILogger<CollateralTransferService> _logger;
@@ -44,14 +43,14 @@ public sealed class CollateralTransferService : ICollateralTransferService
     public CollateralTransferService(
         WorkspaceContext workspace,
         ICollateralTransactionRunner runner,
-        IExchangeSimulatorRegistry simulators,
+        IExchangeCatalog catalog,
         IRealtimeNotifier realtimeNotifier,
         IdempotencyContext idempotency,
         ILogger<CollateralTransferService> logger)
     {
         _workspace = workspace;
         _runner = runner;
-        _simulators = simulators;
+        _catalog = catalog;
         _realtimeNotifier = realtimeNotifier;
         _idempotency = idempotency;
         _logger = logger;
@@ -110,7 +109,7 @@ public sealed class CollateralTransferService : ICollateralTransferService
         var vault = await RequireVaultAsync(unitOfWork, command.VaultAccountId!, workspaceId);
         await unitOfWork.LockVaultWalletsAsync(vault.Id);
         var asset = await unitOfWork.Transactions.RequireAssetAsync(command.AssetId!);
-        RequireSupportedAsset(account, asset, direction);
+        await RequireSupportedAssetAsync(account, asset, direction);
 
         var requestedAmount = unitOfWork.Transactions.ParseRequestedAmount(command.Amount);
         DecimalColumnGuard.EnsureNumeric36Scale18(requestedAmount, "Amount");
@@ -216,16 +215,16 @@ public sealed class CollateralTransferService : ICollateralTransferService
         }
     }
 
-    private void RequireSupportedAsset(ExchangeAccount account, Asset asset, CollateralDirection direction)
+    private async Task RequireSupportedAssetAsync(ExchangeAccount account, Asset asset, CollateralDirection direction)
     {
         if (account.IsConnected)
         {
-            var simulator = _simulators.Require(account.ExchangeType);
-            if (!simulator.AssetIds.Contains(asset.AssetId))
+            var exchange = await _catalog.RequireAsync(account.ExchangeType);
+            if (exchange.Currencies.All(currency => currency.AssetId != asset.AssetId))
             {
                 throw ExchangeOperationException.BadRequest(
                     "ASSET_NOT_SUPPORTED",
-                    $"A connected {simulator.DisplayName} account does not accept {asset.AssetId}");
+                    $"A connected {exchange.Name} account does not accept {asset.AssetId}");
             }
         }
 

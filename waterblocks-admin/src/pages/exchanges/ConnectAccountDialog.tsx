@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/adminClient';
-import { useExchangeProviders } from '../../api/queries';
-import type { AdminExchangeAccount, AdminExchangeProvider } from '../../types/admin';
-import { findFullProviders, findProvider } from './exchangeFormat';
+import { useExchanges } from '../../api/queries';
+import type { AdminExchange, AdminExchangeAccount } from '../../types/admin';
+import { encryptCredentials } from './credentials';
+import { findExchange, findFullExchanges } from './exchangeFormat';
 
-const PROVIDER_LABEL = 'Off Exchange';
+const EXCHANGE_LABEL = 'Off Exchange';
 
 type ConnectAccountDialogProps = {
   open: boolean;
@@ -19,38 +21,35 @@ type ConnectAccountDialogProps = {
 
 type ConnectAccountFormProps = Omit<ConnectAccountDialogProps, 'open'>;
 
-type ProviderStepProps = {
-  providers: AdminExchangeProvider[];
-  fullProviders: AdminExchangeProvider[];
-  onSelect: (provider: AdminExchangeProvider) => void;
+type ExchangeStepProps = {
+  exchanges: AdminExchange[];
+  fullExchanges: AdminExchange[];
+  onSelect: (exchange: AdminExchange) => void;
   onCancel: () => void;
 };
 
-function providerNote(provider: AdminExchangeProvider, isFull: boolean): string {
-  if (isFull) return 'This workspace already has an account';
-  if (!provider.isConfigured) return 'The simulator URL is not configured';
-  return PROVIDER_LABEL;
-}
-
-function ProviderStep({ providers, fullProviders, onSelect, onCancel }: ProviderStepProps) {
+function ExchangeStep({ exchanges, fullExchanges, onSelect, onCancel }: ExchangeStepProps) {
   return (
     <div className="grid gap-4">
       <div className="grid gap-2">
-        {providers.length === 0 && (
-          <div className="text-sm text-muted">No exchange simulator is available.</div>
+        {exchanges.length === 0 && (
+          <div className="text-sm text-muted">
+            No exchange has a simulator URL. Set one on the{' '}
+            <Link to="/exchanges/supported" onClick={onCancel}>Supported exchanges</Link> page.
+          </div>
         )}
-        {providers.map((provider) => {
-          const isFull = fullProviders.includes(provider);
+        {exchanges.map((exchange) => {
+          const isFull = fullExchanges.includes(exchange);
           return (
             <button
-              key={provider.exchangeType}
+              key={exchange.exchangeType}
               type="button"
               className="exchange-provider"
-              onClick={() => onSelect(provider)}
-              disabled={isFull || !provider.isConfigured}
+              onClick={() => onSelect(exchange)}
+              disabled={isFull}
             >
-              <span className="font-medium">{provider.name}</span>
-              <span className="text-sm text-muted">{providerNote(provider, isFull)}</span>
+              <span className="font-medium">{exchange.name}</span>
+              <span className="text-sm text-muted">{isFull ? 'This workspace already has an account' : EXCHANGE_LABEL}</span>
             </button>
           );
         })}
@@ -62,10 +61,19 @@ function ProviderStep({ providers, fullProviders, onSelect, onCancel }: Provider
   );
 }
 
+async function encryptForWorkspace(apiKey: string, apiSecret: string): Promise<string> {
+  const response = await adminApi.getCredentialsPublicKey();
+  if (response.error || !response.data) {
+    throw new Error(response.error?.message ?? 'The credentials public key cannot be read');
+  }
+
+  return encryptCredentials(response.data.publicKey, apiKey, apiSecret, response.data.tenantId);
+}
+
 function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] }: ConnectAccountFormProps) {
   const queryClient = useQueryClient();
-  const providersQuery = useExchangeProviders();
-  const [selectedProvider, setSelectedProvider] = useState<AdminExchangeProvider | null>(null);
+  const exchangesQuery = useExchanges();
+  const [selectedExchange, setSelectedExchange] = useState<AdminExchange | null>(null);
   const [displayName, setDisplayName] = useState(account?.name ?? '');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
@@ -73,26 +81,26 @@ function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (providersQuery.isLoading) {
+  if (exchangesQuery.isLoading) {
     return <div className="text-sm text-muted">Loading exchanges...</div>;
   }
 
-  if (providersQuery.error) {
-    return <div className="form-error" role="alert">Error: {providersQuery.error.message}</div>;
+  if (exchangesQuery.error) {
+    return <div className="form-error" role="alert">Error: {exchangesQuery.error.message}</div>;
   }
 
-  const providers = providersQuery.data ?? [];
-  const provider = account ? findProvider(providers, account.exchangeType) : selectedProvider;
-  if (account && !provider) {
-    return <div className="form-error" role="alert">Waterblocks has no simulator for {account.exchangeType}.</div>;
+  const connectable = (exchangesQuery.data ?? []).filter((exchange) => exchange.isConnectable);
+  const exchange = account ? findExchange(connectable, account.exchangeType) : selectedExchange;
+  if (account && !exchange) {
+    return <div className="form-error" role="alert">The exchange of this account has no simulator URL.</div>;
   }
 
-  if (!provider) {
+  if (!exchange) {
     return (
-      <ProviderStep
-        providers={providers}
-        fullProviders={findFullProviders(providers, accounts)}
-        onSelect={setSelectedProvider}
+      <ExchangeStep
+        exchanges={connectable}
+        fullExchanges={findFullExchanges(connectable, accounts)}
+        onSelect={setSelectedExchange}
         onCancel={() => onOpenChange(false)}
       />
     );
@@ -103,12 +111,14 @@ function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] 
     setError('');
     setIsSubmitting(true);
     try {
-      const credentials = { apiKey, apiSecret };
+      const key = apiKey.trim();
+      const creds = await encryptForWorkspace(key, apiSecret.trim());
+      const credentials = { apiKey: key, creds };
       const response = account
         ? await adminApi.connectExchangeAccount(account.id, credentials)
         : await adminApi.createExchangeAccount({
           ...credentials,
-          exchangeType: provider.exchangeType,
+          exchangeType: exchange.exchangeType,
           name: displayName,
         });
 
@@ -121,8 +131,8 @@ function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] 
       queryClient.invalidateQueries({ queryKey: ['exchangeAccount'] });
       onOpenChange(false);
       onConnected(response.data);
-    } catch {
-      setError('The Waterblocks API cannot be reached');
+    } catch (failure) {
+      setError(failure instanceof Error && failure.message ? failure.message : 'The Waterblocks API cannot be reached');
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +141,7 @@ function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4" autoComplete="off">
       <div className="exchange-detail-row">
-        <span className="font-medium">{provider.name}</span>
+        <span className="font-medium">{exchange.name}</span>
         <span className="text-muted">Main account</span>
       </div>
       <div>
@@ -175,6 +185,7 @@ function ConnectAccountForm({ onOpenChange, onConnected, account, accounts = [] 
             {showSecret ? 'Hide' : 'Show'}
           </button>
         </div>
+        <p className="text-xs text-muted mt-1">The secret is encrypted in the browser before it is sent.</p>
       </div>
       {error && <div className="form-error" role="alert">{error}</div>}
       <div className="flex gap-2 justify-end">

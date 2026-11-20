@@ -41,7 +41,7 @@ public class ExchangeMirrorEvent
     public string ExchangeAccountId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The exchange type that selects the simulator client for this event.
+    /// The exchange type that selects the exchange, and with it the simulator URL, for this event.
     /// </summary>
     [Required]
     [MaxLength(50)]

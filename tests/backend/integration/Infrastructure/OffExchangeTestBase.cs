@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,11 +13,13 @@ using Xunit;
 namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// Shared setup and calls for the Off Exchange integration tests. The Gate simulator client uses a test double.
+/// Shared setup and calls for the Off Exchange integration tests. Every exchange simulator is a fake on its own host.
+/// The Gate.io simulator URL comes from the generic setting, as in a deployment.
 /// </summary>
 public abstract class OffExchangeTestBase : IAsyncLifetime
 {
     protected const string GateExchangeType = "GATEIO";
+    protected const string GateSimulatorUrl = "http://gate-simulator.test";
     protected const string SimulatorAccount = "lombard";
     protected const string SimulatorApiKey = "gate-key-0123456789abcdef";
     protected const string SimulatorApiSecret = "gate-secret-fedcba9876543210";
@@ -26,11 +30,13 @@ public abstract class OffExchangeTestBase : IAsyncLifetime
 
     protected OffExchangeTestBase()
     {
+        Simulator = Network.Add(new FakeExchangeSimulator(GateSimulatorUrl));
         Simulator.AddAccount(SimulatorAccount, SimulatorUserId, SimulatorApiKey, SimulatorApiSecret);
         Fixture = IntegrationTestFixture.Create(SimulatorSettings(), ConfigureServices);
     }
 
-    protected FakeGateSimulator Simulator { get; } = new();
+    protected FakeSimulatorNetwork Network { get; } = new();
+    protected FakeExchangeSimulator Simulator { get; }
     protected CapturingLogSink Logs { get; } = new();
     protected IntegrationTestFixture Fixture { get; }
     protected HttpClient Http => Fixture.HttpClient;
@@ -38,19 +44,66 @@ public abstract class OffExchangeTestBase : IAsyncLifetime
     public Task InitializeAsync() => Fixture.InitializeAsync();
     public Task DisposeAsync() => Fixture.DisposeAsync();
 
-    protected static IReadOnlyDictionary<string, string?> SimulatorSettings(string? baseUrl = FakeGateSimulator.BaseUrl)
+    protected static IReadOnlyDictionary<string, string?> SimulatorSettings()
     {
-        return new Dictionary<string, string?> { [ExchangeSimulatorSettings.BaseUrlKey(GateExchangeType)] = baseUrl };
+        return new Dictionary<string, string?> { [ExchangeSimulatorSettings.BaseUrlKey(GateExchangeType)] = GateSimulatorUrl };
+    }
+
+    protected void ConfigureServices(IServiceCollection services)
+    {
+        services.AddHttpClient<IExchangeSimulatorClient, ExchangeSimulatorClient>()
+            .ConfigurePrimaryHttpMessageHandler(() => Network);
+        services.AddSingleton<ILogEventSink>(Logs);
     }
 
     /// <summary>
-    /// Installs the test doubles. A test class can override it to add the client of another exchange.
+    /// Encrypts exchange credentials in the Fireblocks way, with the credentials public key of the API.
     /// </summary>
-    protected virtual void ConfigureServices(IServiceCollection services)
+    protected static async Task<string> EncryptCredsAsync(HttpClient client, string apiKey, string apiSecret, string? tenantId = null)
     {
-        services.AddHttpClient<GateSimulatorClient>()
-            .ConfigurePrimaryHttpMessageHandler(() => Simulator);
-        services.AddSingleton<ILogEventSink>(Logs);
+        var publicKey = (await ReadOkAsync(await client.GetAsync("/admin/exchange-accounts/credentials-public-key")))
+            .GetProperty("data");
+        var payload = JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["apiKey"] = apiKey,
+            ["secret"] = apiSecret,
+            ["tenantId"] = tenantId ?? publicKey.GetProperty("tenantId").GetString()!,
+        });
+        using var rsa = RSA.Create();
+        rsa.ImportFromPem(publicKey.GetProperty("publicKey").GetString());
+        return Convert.ToBase64String(rsa.Encrypt(Encoding.UTF8.GetBytes(payload), RSAEncryptionPadding.OaepSHA256));
+    }
+
+    protected Task<string> EncryptCredsAsync(string apiKey, string apiSecret, string? tenantId = null)
+    {
+        return EncryptCredsAsync(Http, apiKey, apiSecret, tenantId);
+    }
+
+    /// <summary>
+    /// Adds or replaces an exchange of the catalog, as an admin does on the Supported exchanges screen.
+    /// </summary>
+    protected async Task SaveExchangeAsync(
+        string exchangeType,
+        string name,
+        string? simulatorBaseUrl,
+        bool oneAccountPerWorkspace,
+        params (string AssetId, string Currency)[] currencies)
+    {
+        var body = new
+        {
+            exchangeType,
+            name,
+            simulatorBaseUrl,
+            oneAccountPerWorkspace,
+            currencies = currencies.Select(currency => new { assetId = currency.AssetId, currency = currency.Currency }).ToList(),
+        };
+        var catalog = await ReadOkAsync(await Http.GetAsync("/admin/exchanges"));
+        var exists = catalog.GetProperty("data").EnumerateArray()
+            .Any(item => item.GetProperty("exchangeType").GetString() == exchangeType);
+        var response = exists
+            ? await Http.PutAsJsonAsync($"/admin/exchanges/{exchangeType}", body)
+            : await Http.PostAsJsonAsync("/admin/exchanges", body);
+        await ReadOkAsync(response);
     }
 
     protected Task<HttpResponseMessage> PostAsync(string path, object body, string? idempotencyKey = null)
@@ -106,9 +159,33 @@ public abstract class OffExchangeTestBase : IAsyncLifetime
         string apiKey = SimulatorApiKey,
         string apiSecret = SimulatorApiSecret)
     {
-        var response = await PostAsync("/admin/exchange-accounts", new { exchangeType, name, apiKey, apiSecret });
+        var response = await PostAdminCreateAsync(Http, exchangeType, name, apiKey, apiSecret);
         var body = await ReadOkAsync(response);
         return body.GetProperty("data").GetProperty("id").GetString()!;
+    }
+
+    /// <summary>
+    /// Creates and connects an account through the admin API, with encrypted credentials.
+    /// </summary>
+    protected static async Task<HttpResponseMessage> PostAdminCreateAsync(
+        HttpClient client,
+        string exchangeType,
+        string name,
+        string apiKey,
+        string apiSecret)
+    {
+        var creds = await EncryptCredsAsync(client, apiKey, apiSecret);
+        return await PostAsync(client, "/admin/exchange-accounts", new { exchangeType, name, apiKey, creds });
+    }
+
+    protected static async Task<HttpResponseMessage> PostAdminConnectAsync(
+        HttpClient client,
+        string accountId,
+        string apiKey,
+        string apiSecret)
+    {
+        var creds = await EncryptCredsAsync(client, apiKey, apiSecret);
+        return await PostAsync(client, $"/admin/exchange-accounts/{accountId}/connect", new { apiKey, creds });
     }
 
     protected async Task<string> CreateFundedVaultAsync(string assetId = "BTC", decimal amount = 2m, string name = "Loan vault")

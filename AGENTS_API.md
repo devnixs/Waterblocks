@@ -79,21 +79,19 @@ Files touched:
 - `Fireblocks.swagger.yml`
 
 Work summary (STORY-023):
-- Added `IExchangeSimulatorClient`, `ExchangeSimulatorClientBase`, `IExchangeSimulatorRegistry` and `AddExchangeSimulatorClient<T>()`. Each exchange that Waterblocks can connect has one client. `GateSimulatorClient` is the first client and holds all Gate.io calls.
-- The services, the mirror worker and the collateral checks ask the registry for the client of the exchange type of the account. No other code names an exchange.
-- Renamed the connection columns to `SimulatorAccountId` and `SimulatorAccountName`, and added `ExchangeType` to the mirror events. One migration, `AddOffExchangeCollateral`, replaces the two earlier migrations of this branch.
-- Renamed the error codes to `EXCHANGE_SIMULATOR_NOT_CONFIGURED`, `EXCHANGE_SIMULATOR_UNREACHABLE`, `SIMULATOR_ACCOUNT_NOT_FOUND` and `EXCHANGE_ACCOUNT_LIMIT_REACHED`, and the settings to `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` and `__ADMIN_TOKEN`.
-- Added `GET /admin/exchange-providers`.
-- `GateSimulatorClient` maps Waterblocks asset ids to Gate currencies (`BTC` to `BTC`, `USDT_ERC20` to `USDT`) in the events and the balances. Before, it sent `USDT`, which is not a Waterblocks asset id.
-- `POST /exchange_accounts` also accepts the exchange type of each simulator client, so that a new exchange outside the Fireblocks list of that call needs no second change.
+- Every exchange is data in the exchange catalog (`Exchanges`, `ExchangeCurrencies`): the name, the simulator URL, the one-account rule and the currency names. `all_exchanges.json` seeds the Fireblocks exchange types at startup. `GET`, `POST` and `PUT /admin/exchanges` manage the catalog. No code file names an exchange.
+- One generic `ExchangeSimulatorClient` talks to every simulator through `POST /_api/keys/verify`, `GET /_api/accounts/{name}` and `POST /_api/collateral/events`. It maps assets to exchange currencies with the catalog (Gate.io: `USDT_ERC20` = `USDT`).
+- The key check sends an HMAC-SHA256 proof, not the secret. `ExchangeCredentialsCipher` decrypts Fireblocks `creds` (RSA-OAEP SHA-256 of `{"apiKey","secret","tenantId"}`) with a key pair that is new at each start. `POST /exchange_accounts` with `key` and `creds` connects the account. The admin calls accept only `creds`.
+- Renamed the connection columns to `SimulatorAccountId` and `SimulatorAccountName`, and added `ExchangeType` to the mirror events. `AddOffExchangeCollateral` replaces the two earlier migrations of this branch, and `AddExchangeCatalog` adds the catalog.
+- Generic error codes: `EXCHANGE_SIMULATOR_NOT_CONFIGURED`, `EXCHANGE_SIMULATOR_UNREACHABLE`, `EXCHANGE_SIMULATOR_UNAUTHORIZED`, `EXCHANGE_SIMULATOR_UNSUPPORTED`, `EXCHANGE_ACCOUNT_LIMIT_REACHED`, `INVALID_CREDENTIALS_BLOB`. `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` fills an empty catalog URL at startup, and `__ADMIN_TOKEN` stays in the configuration.
 
 Files touched:
-- `Waterblocks.Api/Services/ExchangeSimulators/`
+- `Waterblocks.Api/Models/Exchange.cs`, `ExchangeCurrency.cs`, `ExchangeAccount.cs`, `ExchangeMirrorEvent.cs`, `Transaction.cs`
+- `Waterblocks.Api/Services/ExchangeCatalog.cs`, `Waterblocks.Api/Services/ExchangeSimulators/`
 - `Waterblocks.Api/Services/ExchangeAccountService.cs`, `CollateralTransferService.cs`, `ExchangeCollateralLedger.cs`, `ExchangeMirrorProcessor.cs`, `ExchangeMirrorWorker.cs`
-- `Waterblocks.Api/Controllers/Admin/AdminExchangeProvidersController.cs`
-- `Waterblocks.Api/Models/ExchangeAccount.cs`, `ExchangeMirrorEvent.cs`, `ExchangeTypes.cs`, `Transaction.cs`
-- `Waterblocks.Api/Dtos/Admin/AdminExchangeAccountDto.cs`
-- `Waterblocks.Api/Infrastructure/Db/FireblocksDbContext.cs`
-- `Waterblocks.Api/Migrations/20261119204326_AddOffExchangeCollateral.cs`, `FireblocksDbContextModelSnapshot.cs`
-- `Waterblocks.Api/Program.cs`
+- `Waterblocks.Api/Infrastructure/ExchangeCredentialsCipher.cs`, `ExchangeSeed.cs`, `SeedData.cs`, `Db/FireblocksDbContext.cs`
+- `Waterblocks.Api/Controllers/Admin/AdminExchangesController.cs`, `AdminExchangeAccountsController.cs`
+- `Waterblocks.Api/Dtos/Admin/AdminExchangeDto.cs`, `AdminExchangeAccountDto.cs`, `Waterblocks.Api/Dtos/Fireblocks/ExchangeAccountDto.cs`
+- `Waterblocks.Api/Migrations/20261119204326_AddOffExchangeCollateral.cs`, `20261119222149_AddExchangeCatalog.cs`, `FireblocksDbContextModelSnapshot.cs`
+- `Waterblocks.Api/all_exchanges.json`, `Waterblocks.Api/Waterblocks.Api.csproj`, `Waterblocks.Api/Program.cs`
 - `README.md`, `Fireblocks.swagger.yml`, `.env.example`, `docker-compose.yml`, `docker-compose.frontend.yml`, `docker-compose.full.yml`

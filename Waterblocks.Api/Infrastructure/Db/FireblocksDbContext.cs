@@ -18,6 +18,8 @@ public class FireblocksDbContext : DbContext
     public DbSet<Workspace> Workspaces { get; set; }
     public DbSet<ApiKey> ApiKeys { get; set; }
     public DbSet<AdminSetting> AdminSettings { get; set; }
+    public DbSet<Exchange> Exchanges { get; set; }
+    public DbSet<ExchangeCurrency> ExchangeCurrencies { get; set; }
     public DbSet<ExchangeAccount> ExchangeAccounts { get; set; }
     public DbSet<ExchangeAccountAsset> ExchangeAccountAssets { get; set; }
     public DbSet<ExchangeMirrorEvent> ExchangeMirrorEvents { get; set; }
@@ -106,6 +108,20 @@ public class FireblocksDbContext : DbContext
         modelBuilder.Entity<AdminSetting>(entity =>
         {
             entity.HasKey(e => e.Key);
+        });
+
+        modelBuilder.Entity<Exchange>(entity =>
+        {
+            entity.HasKey(e => e.ExchangeType);
+            entity.HasMany(e => e.Currencies)
+                .WithOne(c => c.Exchange)
+                .HasForeignKey(c => c.ExchangeType)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExchangeCurrency>(entity =>
+        {
+            entity.HasKey(e => new { e.ExchangeType, e.AssetId });
         });
 
         modelBuilder.Entity<ExchangeAccount>(entity =>

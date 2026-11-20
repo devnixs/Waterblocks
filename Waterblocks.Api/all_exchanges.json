@@ -1,0 +1,25 @@
+[
+  { "exchangeType": "INDEPENDENT_RESERVE", "name": "Independent Reserve" },
+  { "exchangeType": "BIT", "name": "BIT" },
+  { "exchangeType": "BITHUMB", "name": "Bithumb" },
+  { "exchangeType": "BITSO", "name": "Bitso" },
+  { "exchangeType": "CRYPTOCOM", "name": "Crypto.com" },
+  { "exchangeType": "BYBIT_V2", "name": "Bybit" },
+  { "exchangeType": "WHITEBIT", "name": "WhiteBIT" },
+  { "exchangeType": "HITBTC", "name": "HitBTC" },
+  { "exchangeType": "GEMINI", "name": "Gemini" },
+  { "exchangeType": "HUOBI", "name": "Huobi" },
+  {
+    "exchangeType": "GATEIO",
+    "name": "Gate.io",
+    "oneAccountPerWorkspace": true,
+    "currencies": [
+      { "assetId": "BTC", "currency": "BTC" },
+      { "assetId": "USDT_ERC20", "currency": "USDT" }
+    ]
+  },
+  { "exchangeType": "COINHAKO", "name": "Coinhako" },
+  { "exchangeType": "BULLISH", "name": "Bullish" },
+  { "exchangeType": "BITGET", "name": "Bitget" },
+  { "exchangeType": "LUNO", "name": "Luno" }
+]

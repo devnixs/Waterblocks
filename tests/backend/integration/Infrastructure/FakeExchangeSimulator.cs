@@ -8,16 +8,25 @@ using System.Text.Json;
 namespace Waterblocks.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// A test double for the Gate simulator. It answers the calls that Waterblocks makes.
+/// A test double for one exchange simulator. It serves the common simulator admin API that Waterblocks calls:
+/// POST /_api/keys/verify, GET /_api/accounts/{name} and POST /_api/collateral/events. Balances use exchange currencies.
 /// </summary>
-public sealed class FakeGateSimulator : HttpMessageHandler
+public sealed class FakeExchangeSimulator
 {
-    public const string BaseUrl = "http://gate-simulator.test";
+    private static readonly TimeSpan MaxProofAge = TimeSpan.FromSeconds(60);
 
     private readonly object _sync = new();
-    private readonly Dictionary<string, FakeGateAccount> _accounts = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, FakeGateEvent> _events = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, FakeSimulatorAccount> _accounts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, FakeSimulatorEvent> _events = new(StringComparer.Ordinal);
     private int _eventRequests;
+    private int _verifyRequests;
+
+    public FakeExchangeSimulator(string baseUrl)
+    {
+        BaseUrl = baseUrl;
+    }
+
+    public string BaseUrl { get; }
 
     /// <summary>
     /// When true, every call fails with a network error.
@@ -56,33 +65,33 @@ public sealed class FakeGateSimulator : HttpMessageHandler
 
     public int EventRequests => Volatile.Read(ref _eventRequests);
 
+    public int VerifyRequests => Volatile.Read(ref _verifyRequests);
+
     public void AddAccount(string name, long userId, string apiKey, string apiSecret)
     {
         lock (_sync)
         {
-            _accounts[name] = new FakeGateAccount(name, userId, apiKey, apiSecret);
+            _accounts[name] = new FakeSimulatorAccount(name, userId, apiKey, apiSecret);
         }
     }
 
-    public void SetBalance(string accountName, string assetId, decimal spotAvailable, decimal spotLocked = 0m)
+    public void SetBalance(string accountName, string currency, decimal spotAvailable, decimal spotLocked = 0m)
     {
         lock (_sync)
         {
-            _accounts[accountName].Balances[assetId] = new FakeGateBalance(spotAvailable, spotLocked);
+            _accounts[accountName].Balances[currency] = new FakeSimulatorBalance(spotAvailable, spotLocked);
         }
     }
 
-    public decimal GetSpotAvailable(string accountName, string assetId)
+    public decimal GetSpotAvailable(string accountName, string currency)
     {
         lock (_sync)
         {
-            return _accounts[accountName].Balances.TryGetValue(assetId, out var balance)
-                ? balance.SpotAvailable
-                : 0m;
+            return _accounts[accountName].Balances.TryGetValue(currency, out var balance) ? balance.SpotAvailable : 0m;
         }
     }
 
-    public FakeGateEvent? FindEvent(string eventId)
+    public FakeSimulatorEvent? FindEvent(string eventId)
     {
         lock (_sync)
         {
@@ -90,7 +99,7 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         }
     }
 
-    public IReadOnlyList<FakeGateEvent> GetEvents()
+    public IReadOnlyList<FakeSimulatorEvent> GetEvents()
     {
         lock (_sync)
         {
@@ -98,13 +107,11 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         }
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> HandleAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (IsOffline)
         {
-            throw new HttpRequestException("The fake Gate simulator is offline");
+            throw new HttpRequestException("The fake simulator is offline");
         }
 
         if (ForcedStatus != null)
@@ -117,17 +124,12 @@ public sealed class FakeGateSimulator : HttpMessageHandler
             path.StartsWith("/_api/", StringComparison.Ordinal) &&
             HeaderValue(request, "X-Admin-Token") != RequiredAdminToken)
         {
-            return Error(HttpStatusCode.Unauthorized, "the admin token is missing or wrong");
+            return Error(HttpStatusCode.Unauthorized, "the X-Admin-Token header is missing or wrong");
         }
 
-        if (request.Method == HttpMethod.Get && path == "/api/v4/spot/fee")
+        if (request.Method == HttpMethod.Post && path == "/_api/keys/verify")
         {
-            return ReadSpotFee(request);
-        }
-
-        if (request.Method == HttpMethod.Get && path == "/_api/accounts")
-        {
-            return ListAccounts();
+            return await VerifyKeyAsync(request, cancellationToken);
         }
 
         if (request.Method == HttpMethod.Get && path.StartsWith("/_api/accounts/", StringComparison.Ordinal))
@@ -145,33 +147,29 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         return Error(HttpStatusCode.NotFound, "not found");
     }
 
-    protected override void Dispose(bool disposing)
+    private async Task<HttpResponseMessage> VerifyKeyAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        // The test owns this object, so the HTTP client factory must not end it.
-    }
+        Interlocked.Increment(ref _verifyRequests);
+        using var document = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+        var body = document.RootElement;
+        var key = body.GetProperty("key").GetString()!;
+        var timestamp = body.GetProperty("timestamp").GetString()!;
+        var signature = body.GetProperty("signature").GetString()!;
+        if (body.TryGetProperty("secret", out _) || body.TryGetProperty("apiSecret", out _))
+        {
+            return Error(HttpStatusCode.BadRequest, "a key check must never send the secret");
+        }
 
-    private HttpResponseMessage ReadSpotFee(HttpRequestMessage request)
-    {
-        var key = HeaderValue(request, "KEY");
-        var timestamp = HeaderValue(request, "Timestamp");
-        var signature = HeaderValue(request, "SIGN");
+        var age = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(long.Parse(timestamp, CultureInfo.InvariantCulture));
         lock (_sync)
         {
             var account = _accounts.Values.FirstOrDefault(item => item.ApiKey == key);
-            if (account == null || signature != Sign(account.ApiSecret, timestamp))
+            if (account == null || age.Duration() > MaxProofAge || signature != Proof(account.ApiSecret, key, timestamp))
             {
-                return Error(HttpStatusCode.Unauthorized, "invalid key or signature");
+                return Error(HttpStatusCode.UnprocessableEntity, "the key or its proof is not valid");
             }
 
-            return Json(HttpStatusCode.OK, new Dictionary<string, object> { ["user_id"] = account.UserId });
-        }
-    }
-
-    private HttpResponseMessage ListAccounts()
-    {
-        lock (_sync)
-        {
-            return Json(HttpStatusCode.OK, _accounts.Values.Select(ToAccountReply).ToList());
+            return Json(HttpStatusCode.OK, new Dictionary<string, object> { ["name"] = account.Name, ["user_id"] = account.UserId });
         }
     }
 
@@ -210,13 +208,13 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         if (LoseNextEventReply)
         {
             LoseNextEventReply = false;
-            throw new HttpRequestException("The reply of the fake Gate simulator was lost");
+            throw new HttpRequestException("The reply of the fake simulator was lost");
         }
 
         return reply;
     }
 
-    private HttpResponseMessage ApplyEvent(string eventId, string accountName, string type, string assetId, decimal amount)
+    private HttpResponseMessage ApplyEvent(string eventId, string accountName, string type, string currency, decimal amount)
     {
         lock (_sync)
         {
@@ -227,16 +225,16 @@ public sealed class FakeGateSimulator : HttpMessageHandler
 
             if (_events.TryGetValue(eventId, out var existing))
             {
-                return existing.Type == type && existing.AssetId == assetId && existing.Amount == amount
+                return existing.Type == type && existing.AssetId == currency && existing.Amount == amount
                     ? Json(HttpStatusCode.OK, ToEventReply(existing))
                     : Error(HttpStatusCode.Conflict, "event exists with different data");
             }
 
-            var balance = account.Balances.GetValueOrDefault(assetId) ?? new FakeGateBalance(0m, 0m);
+            var balance = account.Balances.GetValueOrDefault(currency) ?? new FakeSimulatorBalance(0m, 0m);
             var status = "applied";
             if (type == "add")
             {
-                account.Balances[assetId] = balance with { SpotAvailable = balance.SpotAvailable + amount };
+                account.Balances[currency] = balance with { SpotAvailable = balance.SpotAvailable + amount };
             }
             else if (balance.SpotAvailable < amount)
             {
@@ -244,16 +242,22 @@ public sealed class FakeGateSimulator : HttpMessageHandler
             }
             else
             {
-                account.Balances[assetId] = balance with { SpotAvailable = balance.SpotAvailable - amount };
+                account.Balances[currency] = balance with { SpotAvailable = balance.SpotAvailable - amount };
             }
 
-            var created = new FakeGateEvent(eventId, accountName, type, assetId, amount, status);
+            var created = new FakeSimulatorEvent(eventId, accountName, type, currency, amount, status);
             _events[eventId] = created;
             return Json(HttpStatusCode.Created, ToEventReply(created));
         }
     }
 
-    private static object ToAccountReply(FakeGateAccount account)
+    private static string Proof(string secret, string key, string timestamp)
+    {
+        var proof = HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes($"KEY_VERIFY\n{key}\n{timestamp}"));
+        return Convert.ToHexString(proof).ToLowerInvariant();
+    }
+
+    private static object ToAccountReply(FakeSimulatorAccount account)
     {
         return new Dictionary<string, object>
         {
@@ -269,7 +273,7 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         };
     }
 
-    private static Dictionary<string, string> ToEventReply(FakeGateEvent item)
+    private static Dictionary<string, string> ToEventReply(FakeSimulatorEvent item)
     {
         var reply = new Dictionary<string, string>
         {
@@ -289,14 +293,6 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         return request.Headers.TryGetValues(name, out var values) ? values.First() : string.Empty;
     }
 
-    private static string Sign(string secret, string timestamp)
-    {
-        var bodyHash = Convert.ToHexString(SHA512.HashData(Array.Empty<byte>())).ToLowerInvariant();
-        var payload = $"GET\n/api/v4/spot/fee\n\n{bodyHash}\n{timestamp}";
-        return Convert.ToHexString(HMACSHA512.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(payload)))
-            .ToLowerInvariant();
-    }
-
     private static HttpResponseMessage Json(HttpStatusCode status, object body)
     {
         return new HttpResponseMessage(status) { Content = JsonContent.Create(body) };
@@ -307,9 +303,9 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         return Json(status, new Dictionary<string, string> { ["error"] = message });
     }
 
-    private sealed class FakeGateAccount
+    private sealed class FakeSimulatorAccount
     {
-        public FakeGateAccount(string name, long userId, string apiKey, string apiSecret)
+        public FakeSimulatorAccount(string name, long userId, string apiKey, string apiSecret)
         {
             Name = name;
             UserId = userId;
@@ -321,16 +317,55 @@ public sealed class FakeGateSimulator : HttpMessageHandler
         public long UserId { get; }
         public string ApiKey { get; }
         public string ApiSecret { get; }
-        public Dictionary<string, FakeGateBalance> Balances { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, FakeSimulatorBalance> Balances { get; } = new(StringComparer.Ordinal);
     }
 
-    private sealed record FakeGateBalance(decimal SpotAvailable, decimal SpotLocked);
+    private sealed record FakeSimulatorBalance(decimal SpotAvailable, decimal SpotLocked);
 }
 
-public sealed record FakeGateEvent(
+/// <summary>
+/// One collateral event that a fake simulator applied. AssetId is the exchange currency that Waterblocks sent.
+/// </summary>
+public sealed record FakeSimulatorEvent(
     string EventId,
     string Account,
     string Type,
     string AssetId,
     decimal Amount,
     string Status);
+
+/// <summary>
+/// Routes each request to the fake simulator of its host, so that several exchanges can run in one test.
+/// </summary>
+public sealed class FakeSimulatorNetwork : HttpMessageHandler
+{
+    private readonly Dictionary<string, FakeExchangeSimulator> _simulators = new(StringComparer.OrdinalIgnoreCase);
+
+    public FakeExchangeSimulator Add(FakeExchangeSimulator simulator)
+    {
+        lock (_simulators)
+        {
+            _simulators[new Uri(simulator.BaseUrl).Host] = simulator;
+        }
+
+        return simulator;
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        FakeExchangeSimulator? simulator;
+        lock (_simulators)
+        {
+            simulator = _simulators.GetValueOrDefault(request.RequestUri!.Host);
+        }
+
+        return simulator == null
+            ? throw new HttpRequestException($"No fake simulator listens on {request.RequestUri!.Host}")
+            : simulator.HandleAsync(request, cancellationToken);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        // The test owns this object, so the HTTP client factory must not end it.
+    }
+}

@@ -25,7 +25,7 @@ depends_on: []
 
 ## Off Exchange Settings
 
-- [X] FND-006: The API reads the settings of each exchange simulator from configuration in the same way as `FRONTEND_ORIGIN`, with the exchange type in the name. `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` is the origin of the simulator of that exchange type, for example `EXCHANGE_SIMULATORS__GATEIO__BASE_URL` for Gate.io. An empty value means that no simulator is configured for that exchange type. `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` is optional. When it has a value, the Gate.io client sends it as the `X-Admin-Token` header on every simulator `/_api` call.
+- [X] FND-006: The API reads two optional settings for each exchange simulator, with the exchange type in the name, in the same way as `FRONTEND_ORIGIN`. `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` fills an empty simulator URL of that exchange in the exchange catalog at startup, for example `EXCHANGE_SIMULATORS__GATEIO__BASE_URL`. The Supported exchanges page changes the URL after that. `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` is sent as the `X-Admin-Token` header on every call to that simulator, so that the token stays out of the database.
 - [X] FND-007: `HttpTrafficLoggingMiddleware` removes the values of the JSON fields `apiKey`, `apiSecret`, `creds` and `key` from logged request bodies on `/exchange_accounts` and `/admin/exchange-accounts` routes. A body on these routes that is not complete valid JSON is logged as `[body redacted]`.
 
 ## Frontend Foundations

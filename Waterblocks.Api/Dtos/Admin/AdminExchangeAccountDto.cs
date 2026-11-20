@@ -24,18 +24,6 @@ public class AdminExchangeConnectionDto
     public DateTimeOffset? ConnectedAt { get; set; }
 }
 
-/// <summary>
-/// One exchange that Waterblocks can connect to its simulator.
-/// </summary>
-public class AdminExchangeProviderDto
-{
-    public string ExchangeType { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public List<string> AssetIds { get; set; } = new();
-    public bool OneAccountPerWorkspace { get; set; }
-    public bool IsConfigured { get; set; }
-}
-
 public class AdminExchangeAssetDto
 {
     public string AssetId { get; set; } = string.Empty;
@@ -48,18 +36,21 @@ public class AdminExchangeAssetDto
     public string? CollateralAddress { get; set; }
 }
 
+/// <summary>
+/// creds is the Fireblocks credentials blob: {"apiKey","secret","tenantId"} encrypted with the credentials public key.
+/// </summary>
 public class CreateAdminExchangeAccountRequestDto
 {
     public string? ExchangeType { get; set; }
     public string? Name { get; set; }
     public string? ApiKey { get; set; }
-    public string? ApiSecret { get; set; }
+    public string? Creds { get; set; }
 }
 
 public class ConnectAdminExchangeAccountRequestDto
 {
     public string? ApiKey { get; set; }
-    public string? ApiSecret { get; set; }
+    public string? Creds { get; set; }
 }
 
 public class AdminCollateralTransferRequestDto

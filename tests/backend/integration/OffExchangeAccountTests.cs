@@ -123,19 +123,25 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task Credentials_Public_Key_Returns_The_Test_Key_And_Workspace()
+    public async Task Credentials_Public_Key_Is_A_Real_Rsa_Key_Of_The_Workspace()
     {
         var body = await ReadOkAsync(await Http.GetAsync("/exchange_accounts/credentials_public_key"));
-        body.GetProperty("publicKey").GetString().Should().Contain("BEGIN PUBLIC KEY");
+        var publicKey = body.GetProperty("publicKey").GetString()!;
+        publicKey.Should().StartWith("-----BEGIN PUBLIC KEY-----").And.EndWith("-----END PUBLIC KEY-----");
+        using var rsa = System.Security.Cryptography.RSA.Create();
+        rsa.ImportFromPem(publicKey);
+        rsa.KeySize.Should().BeGreaterThanOrEqualTo(2048);
         body.GetProperty("tenantId").GetString().Should().Be(Fixture.WorkspaceId);
+
+        var admin = (await ReadOkAsync(await Http.GetAsync("/admin/exchange-accounts/credentials-public-key"))).GetProperty("data");
+        admin.GetProperty("publicKey").GetString().Should().Be(publicKey);
+        admin.GetProperty("tenantId").GetString().Should().Be(Fixture.WorkspaceId);
     }
 
     [Fact]
     public async Task Admin_Create_Connects_A_Valid_Key_And_Masks_It()
     {
-        var response = await PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Gate main", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var response = await PostAdminCreateAsync(Http, GateExchangeType, "Gate main", SimulatorApiKey, SimulatorApiSecret);
 
         var data = (await ReadOkAsync(response)).GetProperty("data");
         data.GetProperty("name").GetString().Should().Be("Gate main");
@@ -145,6 +151,7 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         connection.GetProperty("maskedApiKey").GetString().Should().Be("gate****cdef");
         data.GetProperty("assets").EnumerateArray().Select(asset => asset.GetProperty("assetId").GetString())
             .Should().Equal("BTC", "USDT_ERC20");
+        Simulator.VerifyRequests.Should().Be(1);
     }
 
     [Fact]
@@ -154,12 +161,60 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         var before = await ReadOkAsync(await Http.GetAsync($"/admin/exchange-accounts/{accountId}"));
         before.GetProperty("data").TryGetProperty("connection", out _).Should().BeFalse();
 
-        var response = await PostAsync(
-            $"/admin/exchange-accounts/{accountId}/connect",
-            new { apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var response = await PostAdminConnectAsync(Http, accountId, SimulatorApiKey, SimulatorApiSecret);
 
         var data = (await ReadOkAsync(response)).GetProperty("data");
         data.GetProperty("connection").GetProperty("simulatorAccountName").GetString().Should().Be(SimulatorAccount);
+    }
+
+    [Fact]
+    public async Task Admin_Connect_Takes_Only_Encrypted_Creds()
+    {
+        var plain = await PostAsync(
+            "/admin/exchange-accounts",
+            new { exchangeType = GateExchangeType, name = "Plain", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+
+        plain.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadJsonAsync(plain)).GetProperty("error").GetProperty("code").GetString().Should().Be("API_CREDENTIALS_REQUIRED");
+        Simulator.VerifyRequests.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Fireblocks_Add_With_Key_And_Creds_Connects_The_Account()
+    {
+        var creds = await EncryptCredsAsync(SimulatorApiKey, SimulatorApiSecret);
+
+        var created = await PostAsync(
+            "/exchange_accounts",
+            new { exchangeType = GateExchangeType, name = "Gate by API", key = SimulatorApiKey, creds });
+
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var accountId = (await ReadJsonAsync(created)).GetProperty("id").GetString();
+        var account = (await ReadOkAsync(await Http.GetAsync($"/admin/exchange-accounts/{accountId}"))).GetProperty("data");
+        account.GetProperty("connection").GetProperty("simulatorAccountName").GetString().Should().Be(SimulatorAccount);
+    }
+
+    [Fact]
+    public async Task Fireblocks_Add_Refuses_Creds_That_Are_Not_Valid_For_The_Call()
+    {
+        await AssertFireblocksAddFailsAsync(
+            "not-base64-creds",
+            SimulatorApiKey,
+            "creds must be the Base64 RSA-OAEP SHA-256 encryption of {\"apiKey\",\"secret\",\"tenantId\"} with the credentials public key");
+        await AssertFireblocksAddFailsAsync(
+            await EncryptCredsAsync(SimulatorApiKey, SimulatorApiSecret, tenantId: Guid.NewGuid().ToString()),
+            SimulatorApiKey,
+            "The tenantId in creds is not the tenant id of this workspace");
+        await AssertFireblocksAddFailsAsync(
+            await EncryptCredsAsync(SimulatorApiKey, SimulatorApiSecret),
+            "another-api-key",
+            "The key does not match the apiKey in creds");
+        await AssertFireblocksAddFailsAsync(
+            await EncryptCredsAsync(SimulatorApiKey, "wrong-secret"),
+            SimulatorApiKey,
+            "The Gate.io simulator refused this API key or secret");
+
+        (await ReadOkAsync(await Http.GetAsync("/exchange_accounts"))).GetArrayLength().Should().Be(0);
     }
 
     [Fact]
@@ -181,28 +236,24 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     }
 
     [Fact]
-    public async Task Missing_Setting_Gives_Not_Configured_Code()
+    public async Task An_Exchange_With_No_Simulator_Url_Gives_Not_Configured_Code()
     {
-        await using var factory = Fixture.CreateFactory(SimulatorSettings(baseUrl: string.Empty), ConfigureServices);
-        var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Workspace-Id", Fixture.WorkspaceId);
+        await SaveExchangeAsync(GateExchangeType, "Gate.io", simulatorBaseUrl: null, oneAccountPerWorkspace: true, ("BTC", "BTC"));
 
-        var response = await PostAsync(
-            client,
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Gate", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var response = await PostAdminCreateAsync(Http, GateExchangeType, "Gate", SimulatorApiKey, SimulatorApiSecret);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = (await ReadJsonAsync(response)).GetProperty("error");
         error.GetProperty("code").GetString().Should().Be("EXCHANGE_SIMULATOR_NOT_CONFIGURED");
         error.GetProperty("message").GetString().Should().Be("The Gate.io simulator URL is not configured");
+        Simulator.VerifyRequests.Should().Be(0);
     }
 
     [Fact]
     public async Task Admin_Token_Is_Sent_On_Simulator_Admin_Calls()
     {
         Simulator.RequiredAdminToken = "simulator-admin-token";
-        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "EXCHANGE_SIMULATOR_UNREACHABLE", SimulatorApiKey, SimulatorApiSecret);
+        await AssertConnectFailsAsync(HttpStatusCode.BadGateway, "EXCHANGE_SIMULATOR_UNAUTHORIZED", SimulatorApiKey, SimulatorApiSecret);
 
         var settings = new Dictionary<string, string?>(SimulatorSettings())
         {
@@ -213,10 +264,7 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Workspace-Id", Fixture.WorkspaceId);
 
-        var response = await PostAsync(
-            client,
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Gate", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var response = await PostAdminCreateAsync(client, GateExchangeType, "Gate", SimulatorApiKey, SimulatorApiSecret);
 
         (await ReadOkAsync(response)).GetProperty("data").GetProperty("success").GetBoolean().Should().BeTrue();
     }
@@ -260,21 +308,15 @@ public class OffExchangeAccountTests : OffExchangeTestBase
         other.DefaultRequestHeaders.Add("X-API-Key", otherApiKey);
         other.DefaultRequestHeaders.Add("X-Workspace-Id", otherWorkspaceId);
 
-        var createConnected = await PostAsync(
-            other,
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Gate", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var createConnected = await PostAdminCreateAsync(other, GateExchangeType, "Gate", SimulatorApiKey, SimulatorApiSecret);
         createConnected.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadJsonAsync(createConnected)).GetProperty("error").GetProperty("code").GetString()
             .Should().Be("EXCHANGE_ACCOUNT_ALREADY_CONNECTED");
 
         var created = await PostAsync(other, "/exchange_accounts", new { exchangeType = "GATEIO", name = "No connection" });
         created.StatusCode.Should().Be(HttpStatusCode.Created);
-        var accountId = (await ReadJsonAsync(created)).GetProperty("id").GetString();
-        var connect = await PostAsync(
-            other,
-            $"/admin/exchange-accounts/{accountId}/connect",
-            new { apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
+        var accountId = (await ReadJsonAsync(created)).GetProperty("id").GetString()!;
+        var connect = await PostAdminConnectAsync(other, accountId, SimulatorApiKey, SimulatorApiSecret);
         connect.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadJsonAsync(connect)).GetProperty("error").GetProperty("code").GetString()
             .Should().Be("EXCHANGE_ACCOUNT_ALREADY_CONNECTED");
@@ -283,11 +325,14 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     [Fact]
     public async Task Parallel_Connections_Of_One_Simulator_Account_Create_One_Connection()
     {
-        var calls = Enumerable.Range(0, 5).Select(index => PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = $"Gate {index}", apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret }));
+        var bodies = new List<object>();
+        for (var index = 0; index < 5; index++)
+        {
+            var creds = await EncryptCredsAsync(SimulatorApiKey, SimulatorApiSecret);
+            bodies.Add(new { exchangeType = "GATEIO", name = $"Gate {index}", apiKey = SimulatorApiKey, creds });
+        }
 
-        var responses = await Task.WhenAll(calls);
+        var responses = await Task.WhenAll(bodies.Select(body => PostAsync("/admin/exchange-accounts", body)));
 
         responses.Count(response => response.StatusCode == HttpStatusCode.OK).Should().Be(1);
         responses.Count(response => response.StatusCode == HttpStatusCode.Conflict).Should().Be(4);
@@ -296,49 +341,41 @@ public class OffExchangeAccountTests : OffExchangeTestBase
     [Fact]
     public async Task Secrets_Are_Not_In_The_Database_Replies_Or_Logs()
     {
-        const string fireblocksCreds = "encrypted-creds-value-5f1c";
-        const string fireblocksKey = "exchange-key-value-81ac";
-        var wrongSecret = await PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Wrong", apiKey = SimulatorApiKey, apiSecret = "wrong-secret-value-77" });
+        const string wrongSecretValue = "wrong-secret-value-77";
+        var wrongSecret = await PostAdminCreateAsync(Http, GateExchangeType, "Wrong", SimulatorApiKey, wrongSecretValue);
         var wrongSecretText = await wrongSecret.Content.ReadAsStringAsync();
         (await ReadJsonAsync(wrongSecret)).GetProperty("error").GetProperty("code").GetString()
             .Should().Be("INVALID_EXCHANGE_CREDENTIALS");
 
+        var fireblocksCreds = await EncryptCredsAsync(SimulatorApiKey, SimulatorApiSecret);
         var created = await PostAsync(
             "/exchange_accounts",
-            new { exchangeType = "GATEIO", name = "With creds", creds = fireblocksCreds, key = fireblocksKey },
+            new { exchangeType = "GATEIO", name = "With creds", creds = fireblocksCreds, key = SimulatorApiKey },
             "secret-check-key");
         var createdText = await created.Content.ReadAsStringAsync();
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
         var accountId = (await ReadJsonAsync(created)).GetProperty("id").GetString();
 
-        var connected = await PostAsync(
-            $"/admin/exchange-accounts/{accountId}/connect",
-            new { apiKey = SimulatorApiKey, apiSecret = SimulatorApiSecret });
-        var connectedText = await connected.Content.ReadAsStringAsync();
-        connected.StatusCode.Should().Be(HttpStatusCode.OK);
-
         var readText = await (await Http.GetAsync($"/admin/exchange-accounts/{accountId}")).Content.ReadAsStringAsync();
+        readText.Should().Contain(SimulatorAccount, "the account is connected through creds");
 
-        var secrets = new[] { SimulatorApiSecret, SimulatorApiKey, fireblocksCreds, fireblocksKey, "wrong-secret-value-77" };
+        var secrets = new[] { SimulatorApiSecret, SimulatorApiKey, fireblocksCreds, wrongSecretValue };
         foreach (var secret in secrets)
         {
             createdText.Should().NotContain(secret);
-            connectedText.Should().NotContain(secret);
             wrongSecretText.Should().NotContain(secret);
             readText.Should().NotContain(secret);
             (await CountDatabaseRowsContainingAsync(secret)).Should().Be(0, $"the database must not hold {secret}");
         }
 
         await WaitUntilAsync(
-            () => Task.FromResult(Logs.AllText.Contains($"/admin/exchange-accounts/{accountId}/connect")),
-            "the connect call is logged");
+            () => Task.FromResult(Logs.AllText.Contains("creds\\\":\\\"[redacted]")),
+            "the add call is logged with its creds removed");
         foreach (var secret in secrets)
         {
             Logs.AllText.Should().NotContain(secret);
         }
 
-        Logs.AllText.Should().Contain("apiSecret\\\":\\\"[redacted]");
         Logs.AllText.Should().Contain("apiKey\\\":\\\"[redacted]");
         Logs.AllText.Should().Contain("creds\\\":\\\"[redacted]");
         Logs.AllText.Should().Contain("key\\\":\\\"[redacted]");
@@ -508,11 +545,16 @@ public class OffExchangeAccountTests : OffExchangeTestBase
 
     private async Task AssertConnectFailsAsync(HttpStatusCode status, string code, string apiKey, string apiSecret)
     {
-        var response = await PostAsync(
-            "/admin/exchange-accounts",
-            new { exchangeType = "GATEIO", name = "Gate", apiKey, apiSecret });
+        var response = await PostAdminCreateAsync(Http, GateExchangeType, "Gate", apiKey, apiSecret);
         response.StatusCode.Should().Be(status);
         (await ReadJsonAsync(response)).GetProperty("error").GetProperty("code").GetString().Should().Be(code);
+    }
+
+    private async Task AssertFireblocksAddFailsAsync(string creds, string key, string message)
+    {
+        var response = await PostAsync("/exchange_accounts", new { exchangeType = GateExchangeType, name = "Refused", key, creds });
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadJsonAsync(response)).GetProperty("message").GetString().Should().Be(message);
     }
 
     private Task<HttpResponseMessage> SendPatchAsync(string accountId, string assetId, object body)

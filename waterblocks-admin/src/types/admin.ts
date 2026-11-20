@@ -277,12 +277,32 @@ export interface AdminExchangeConnection {
   connectedAt?: string;
 }
 
-export interface AdminExchangeProvider {
+export interface AdminExchangeCurrency {
+  assetId: string;
+  currency: string;
+}
+
+/** One exchange of the exchange catalog. */
+export interface AdminExchange {
   exchangeType: string;
   name: string;
-  assetIds: string[];
+  simulatorBaseUrl?: string;
+  isConnectable: boolean;
   oneAccountPerWorkspace: boolean;
-  isConfigured: boolean;
+  currencies: AdminExchangeCurrency[];
+}
+
+export interface SaveExchangeRequest {
+  exchangeType?: string;
+  name: string;
+  simulatorBaseUrl?: string;
+  oneAccountPerWorkspace: boolean;
+  currencies: AdminExchangeCurrency[];
+}
+
+export interface ExchangeCredentialsPublicKey {
+  publicKey: string;
+  tenantId: string;
 }
 
 export interface AdminExchangeAsset {
@@ -311,9 +331,10 @@ export interface AdminExchangeAccount {
   updatedAt: string;
 }
 
+/** creds is {"apiKey","secret","tenantId"} encrypted with the credentials public key, as in Fireblocks. */
 export interface ConnectExchangeAccountRequest {
   apiKey: string;
-  apiSecret: string;
+  creds: string;
 }
 
 export interface CreateExchangeAccountRequest extends ConnectExchangeAccountRequest {

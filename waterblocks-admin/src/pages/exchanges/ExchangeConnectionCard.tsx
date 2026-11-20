@@ -1,13 +1,14 @@
-import type { AdminExchangeAccount, AdminExchangeProvider } from '../../types/admin';
+import type { AdminExchange, AdminExchangeAccount } from '../../types/admin';
 
 type ExchangeConnectionCardProps = {
   account: AdminExchangeAccount;
-  provider?: AdminExchangeProvider;
+  exchange?: AdminExchange;
   onConnect: () => void;
 };
 
-export function ExchangeConnectionCard({ account, provider, onConnect }: ExchangeConnectionCardProps) {
+export function ExchangeConnectionCard({ account, exchange, onConnect }: ExchangeConnectionCardProps) {
   const { connection } = account;
+  const canConnect = !!exchange?.isConnectable;
 
   return (
     <div className="card">
@@ -24,14 +25,16 @@ export function ExchangeConnectionCard({ account, provider, onConnect }: Exchang
           </div>
         </div>
       )}
-      {!connection && provider && (
+      {!connection && canConnect && (
         <div className="flex-between">
           <span className="text-muted text-sm">This account has no simulator connection.</span>
           <button className="btn btn-primary" onClick={onConnect}>Connect</button>
         </div>
       )}
-      {!connection && !provider && (
-        <span className="text-muted text-sm">Waterblocks has no simulator for this exchange.</span>
+      {!connection && !canConnect && (
+        <span className="text-muted text-sm">
+          This exchange has no simulator URL. Set one on the Supported exchanges page to connect this account.
+        </span>
       )}
     </div>
   );

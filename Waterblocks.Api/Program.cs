@@ -40,9 +40,11 @@ builder.Services.AddSignalR();
 builder.Services.AddHostedService<Waterblocks.Api.Services.AutoTransitionService>();
 builder.Services.AddHostedService<Waterblocks.Api.Services.ExchangeMirrorWorker>();
 
-// Each exchange that Waterblocks can connect has one simulator client. Add a new exchange here.
-builder.Services.AddExchangeSimulatorClient<GateSimulatorClient>();
-builder.Services.AddScoped<IExchangeSimulatorRegistry, ExchangeSimulatorRegistry>();
+// Exchanges are rows of the exchange catalog. One client serves the simulator of every exchange.
+builder.Services.AddHttpClient<IExchangeSimulatorClient, ExchangeSimulatorClient>(
+    client => client.Timeout = TimeSpan.FromSeconds(5));
+builder.Services.AddScoped<Waterblocks.Api.Services.IExchangeCatalog, Waterblocks.Api.Services.ExchangeCatalog>();
+builder.Services.AddSingleton<IExchangeCredentialsCipher, ExchangeCredentialsCipher>();
 builder.Services.AddScoped<Waterblocks.Api.Services.IBalanceService, Waterblocks.Api.Services.BalanceService>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionFactory, Waterblocks.Api.Services.TransactionFactory>();
 builder.Services.AddScoped<Waterblocks.Api.Services.ITransactionStateService, Waterblocks.Api.Services.TransactionStateService>();

@@ -11,6 +11,7 @@ import type {
   UpdateAdminAssetRequest,
   CollateralDirection,
   CollateralTransferRequest,
+  SaveExchangeRequest,
 } from '../types/admin';
 
 function getWorkspaceId() {
@@ -324,18 +325,32 @@ export function useDeleteAdminAsset() {
   });
 }
 
-// Exchange accounts
-export function useExchangeProviders() {
+// Exchange catalog
+export function useExchanges() {
   return useQuery({
-    queryKey: ['exchangeProviders'],
+    queryKey: ['exchanges'],
     queryFn: async () => {
-      const response = await adminApi.getExchangeProviders();
+      const response = await adminApi.getExchanges();
       if (response.error) throw new Error(response.error.message);
       return response.data || [];
     },
-    staleTime: 60000,
+    staleTime: 30000,
   });
 }
+
+export function useSaveExchange(exchangeType?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: SaveExchangeRequest) => (
+      exchangeType ? adminApi.updateExchange(exchangeType, request) : adminApi.createExchange(request)
+    ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exchanges'] });
+    },
+  });
+}
+
+// Exchange accounts
 
 export function useExchangeAccounts() {
   const workspaceId = getWorkspaceId();

@@ -49,7 +49,7 @@ status: COMPLETE
 
 ## Playwright Test
 
-- [X] Add `e2e/fake-gate-simulator.mjs` and start it from the Playwright configuration.
+- [X] Add `e2e/fake-exchange-simulator.mjs` and start it from the Playwright configuration.
 - [X] Add `e2e/tests/off-exchange.spec.ts` for the empty state, connect, a wrong key message, the CVA screen, Add collateral, Remove collateral, a rejected removal and the Transactions page labels.
 - [X] Run the targeted Playwright test and confirm that it passes.
 

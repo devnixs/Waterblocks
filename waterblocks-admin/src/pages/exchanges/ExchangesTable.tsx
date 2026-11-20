@@ -1,9 +1,9 @@
-import type { AdminExchangeAccount, AdminExchangeProvider } from '../../types/admin';
+import type { AdminExchange, AdminExchangeAccount } from '../../types/admin';
 import { collateralSummary, exchangeName } from './exchangeFormat';
 
 type ExchangesTableProps = {
   accounts: AdminExchangeAccount[];
-  providers: AdminExchangeProvider[];
+  exchanges: AdminExchange[];
   onSelect: (account: AdminExchangeAccount) => void;
 };
 
@@ -17,7 +17,7 @@ function ConnectionBadge({ account }: { account: AdminExchangeAccount }) {
     : <span className="state-badge state-FAILED">Unavailable</span>;
 }
 
-export function ExchangesTable({ accounts, providers, onSelect }: ExchangesTableProps) {
+export function ExchangesTable({ accounts, exchanges, onSelect }: ExchangesTableProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-tertiary">
       <table className="w-full">
@@ -35,7 +35,7 @@ export function ExchangesTable({ accounts, providers, onSelect }: ExchangesTable
           {accounts.map((account) => (
             <tr key={account.id} onClick={() => onSelect(account)} className="cursor-pointer">
               <td className="font-medium">{account.name}</td>
-              <td>{exchangeName(providers, account.exchangeType)}</td>
+              <td>{exchangeName(exchanges, account.exchangeType)}</td>
               <td className="text-mono text-sm">{account.connection?.simulatorAccountName ?? '-'}</td>
               <td><ConnectionBadge account={account} /></td>
               <td className="text-mono">{collateralSummary(account)}</td>

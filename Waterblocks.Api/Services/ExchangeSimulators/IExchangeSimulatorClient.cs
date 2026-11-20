@@ -3,12 +3,15 @@ using Waterblocks.Api.Models;
 namespace Waterblocks.Api.Services.ExchangeSimulators;
 
 /// <summary>
-/// The account that an API key and secret open in an exchange simulator.
+/// The account that an API key opens in an exchange simulator.
 /// </summary>
 public sealed record SimulatorAccountIdentity(string AccountId, string AccountName);
 
 public sealed record SimulatorBalance(decimal Available, decimal Locked);
 
+/// <summary>
+/// The balances of one simulator account, keyed by Waterblocks asset id.
+/// </summary>
 public sealed record SimulatorAccountSnapshot(
     string AccountName,
     IReadOnlyDictionary<string, SimulatorBalance> Balances);
@@ -24,37 +27,16 @@ public enum MirrorEventOutcomeKind
 public sealed record MirrorEventOutcome(MirrorEventOutcomeKind Kind, string? Message = null);
 
 /// <summary>
-/// Connects exchange accounts of one exchange type to the simulator of that exchange.
-/// Each exchange that Waterblocks can connect has one implementation.
+/// Talks to the simulator of any exchange through the common simulator admin API. The exchange catalog row gives
+/// the URL, the name and the currency names, so that no exchange needs its own code.
 /// </summary>
 public interface IExchangeSimulatorClient
 {
     /// <summary>
-    /// The Fireblocks exchange type that this client serves, for example GATEIO.
+    /// Finds the simulator account of an API key. The secret signs a proof and never leaves Waterblocks.
     /// </summary>
-    string ExchangeType { get; }
-
-    /// <summary>
-    /// The exchange name that the Admin UI and the error messages show.
-    /// </summary>
-    string DisplayName { get; }
-
-    /// <summary>
-    /// The assets that a connected account can hold.
-    /// </summary>
-    IReadOnlyList<string> AssetIds { get; }
-
-    /// <summary>
-    /// True when a workspace can have only one account of this exchange type.
-    /// </summary>
-    bool OneAccountPerWorkspace { get; }
-
-    bool IsConfigured { get; }
-
-    /// <summary>
-    /// Finds the simulator account of an API key and secret. The secret is used only for this call.
-    /// </summary>
-    Task<SimulatorAccountIdentity> IdentifyAccountAsync(
+    Task<SimulatorAccountIdentity> VerifyKeyAsync(
+        Exchange exchange,
         string apiKey,
         string apiSecret,
         CancellationToken cancellationToken = default);
@@ -63,10 +45,12 @@ public interface IExchangeSimulatorClient
     /// Reads the balances of one account. Returns null when the simulator cannot give them.
     /// </summary>
     Task<SimulatorAccountSnapshot?> TryReadAccountAsync(
+        Exchange exchange,
         string accountName,
         CancellationToken cancellationToken = default);
 
     Task<MirrorEventOutcome> SendEventAsync(
+        Exchange exchange,
         ExchangeMirrorEvent mirrorEvent,
         CancellationToken cancellationToken = default);
 }

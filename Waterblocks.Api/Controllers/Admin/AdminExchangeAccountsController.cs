@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Waterblocks.Api.Dtos.Admin;
+using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Services;
 using Waterblocks.Api.Utils;
@@ -27,6 +28,15 @@ public class AdminExchangeAccountsController : AdminControllerBase
     public Task<ActionResult<AdminResponse<List<AdminExchangeAccountDto>>>> GetExchangeAccounts()
     {
         return ExecuteAsync(() => _exchangeAccounts.ListForAdminAsync());
+    }
+
+    /// <summary>
+    /// The public key that encrypts creds, the same as GET /exchange_accounts/credentials_public_key.
+    /// </summary>
+    [HttpGet("credentials-public-key")]
+    public Task<ActionResult<AdminResponse<ExchangeCredentialsPublicKeyDto>>> GetCredentialsPublicKey()
+    {
+        return ExecuteAsync(() => Task.FromResult(_exchangeAccounts.GetCredentialsPublicKey()));
     }
 
     [HttpPost]
