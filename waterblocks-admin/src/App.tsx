@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import TransactionsPage from './pages/TransactionsPage';
 import VaultsPage from './pages/VaultsPage';
+import ExchangesPage from './pages/ExchangesPage';
+import ExchangeAccountPage from './pages/ExchangeAccountPage';
+import SupportedExchangesPage from './pages/SupportedExchangesPage';
 import WorkspacesPage from './pages/WorkspacesPage';
 import AssetsPage from './pages/AssetsPage';
 import { ToastProvider } from './components/ToastProvider';
@@ -103,6 +106,7 @@ function AppContent() {
     { key: '2', handler: () => navigate('/vaults'), description: 'Navigate to Vaults' },
     { key: '3', handler: () => navigate('/workspaces'), description: 'Navigate to Workspaces' },
     { key: '4', handler: () => navigate('/assets'), description: 'Navigate to Assets' },
+    { key: '5', handler: () => navigate('/exchanges'), description: 'Navigate to Exchanges' },
     { key: '?', handler: () => setShowShortcuts(true), description: 'Show keyboard shortcuts' },
   ]);
 
@@ -157,6 +161,12 @@ function AppContent() {
             className={`nav-link ${location.pathname === '/vaults' ? 'active' : ''}`}
           >
             Vaults
+          </Link>
+          <Link
+            to="/exchanges"
+            className={`nav-link ${location.pathname.startsWith('/exchanges') ? 'active' : ''}`}
+          >
+            Exchanges
           </Link>
           <Link
             to="/workspaces"
@@ -279,6 +289,9 @@ function AppContent() {
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/transactions/:transactionId" element={<TransactionsPage />} />
           <Route path="/vaults" element={<VaultsPage />} />
+          <Route path="/exchanges" element={<ExchangesPage />} />
+          <Route path="/exchanges/supported" element={<SupportedExchangesPage />} />
+          <Route path="/exchanges/:exchangeAccountId" element={<ExchangeAccountPage />} />
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/assets" element={<AssetsPage />} />
         </Routes>

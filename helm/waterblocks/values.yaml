@@ -52,6 +52,17 @@ api:
       memory: 256Mi
     # limits:
     #   memory: 512Mi
+  # Exchange simulators of Off Exchange accounts, keyed by the exchange type of the exchange catalog.
+  # baseUrl sets EXCHANGE_SIMULATORS__<TYPE>__BASE_URL. At startup it fills an empty simulator URL of that exchange.
+  # The admin token sets EXCHANGE_SIMULATORS__<TYPE>__ADMIN_TOKEN (sent as X-Admin-Token to that simulator).
+  # Prefer existingSecret (a pre-created Secret) over adminToken. The chart puts adminToken in a Secret.
+  # To add an exchange, add its exchange type with the same fields, for example BYBIT_V2.
+  exchangeSimulators:
+    GATEIO:
+      baseUrl: ""
+      adminToken: ""
+      existingSecret: ""
+      existingSecretKey: ADMIN_TOKEN
 
 admin:
   replicaCount: 1

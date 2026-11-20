@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Content Include="..\all_assets.json" CopyToOutputDirectory="PreserveNewest" Link="all_assets.json" />
+    <Content Update="all_exchanges.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

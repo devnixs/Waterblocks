@@ -91,6 +91,16 @@ DefaultConnection
 {{- end -}}
 {{- end }}
 
+{{- define "waterblocks.exchangeSimulators.secretName" -}}
+{{- printf "%s-exchange-simulators" (include "waterblocks.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "waterblocks.exchangeSimulators.validateType" -}}
+{{- if not (regexMatch "^[A-Z][A-Z0-9_]{1,49}$" .) }}
+{{- fail (printf "api.exchangeSimulators key %q must be an exchange type of the catalog, for example GATEIO" .) }}
+{{- end }}
+{{- end }}
+
 {{- define "waterblocks.admin.apiBaseUrl" -}}
 {{- if .Values.admin.config.apiBaseUrl }}
 {{- .Values.admin.config.apiBaseUrl }}

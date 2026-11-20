@@ -279,31 +279,42 @@ public sealed class TransactionViewService : ITransactionViewService
                 : TransferPeerType.ONE_TIME_ADDRESS;
         var destinationType = destinationOwnership != null ? TransferPeerType.VAULT_ACCOUNT : TransferPeerType.ONE_TIME_ADDRESS;
         var peerSubType = transaction.IsSourceAddressUnavailable ? string.Empty : "DEFAULT";
+        var sourcePeer = new TransferPeerPathResponseDto
+        {
+            Type = sourceType,
+            Id = sourceOwnership?.VaultAccountId ?? string.Empty,
+            Name = transaction.IsSourceAddressUnavailable
+                ? "External"
+                : sourceOwnership?.VaultAccountName ?? string.Empty,
+            SubType = peerSubType,
+            VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
+            VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
+        };
+        var destinationPeer = new TransferPeerPathResponseDto
+        {
+            Type = destinationType,
+            Id = destinationOwnership?.VaultAccountId ?? string.Empty,
+            Name = destinationOwnership?.VaultAccountName ?? string.Empty,
+            SubType = peerSubType,
+            VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
+            VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
+        };
+
+        if (transaction.CollateralDirection == CollateralDirection.REMOVE)
+        {
+            sourcePeer = BuildExchangePeer(transaction);
+        }
+        else if (transaction.CollateralDirection == CollateralDirection.ADD)
+        {
+            destinationPeer = BuildExchangePeer(transaction);
+        }
 
         return new TransactionDto
         {
             Id = TransactionCompositeId.Build(workspaceId, transaction.Id),
             AssetId = transaction.AssetId,
-            Source = new TransferPeerPathResponseDto
-            {
-                Type = sourceType,
-                Id = sourceOwnership?.VaultAccountId ?? string.Empty,
-                Name = transaction.IsSourceAddressUnavailable
-                    ? "External"
-                    : sourceOwnership?.VaultAccountName ?? string.Empty,
-                SubType = peerSubType,
-                VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
-                VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
-            },
-            Destination = new TransferPeerPathResponseDto
-            {
-                Type = destinationType,
-                Id = destinationOwnership?.VaultAccountId ?? string.Empty,
-                Name = destinationOwnership?.VaultAccountName ?? string.Empty,
-                SubType = peerSubType,
-                VirtualType = transaction.IsSourceAddressUnavailable ? null : "UNKNOWN",
-                VirtualId = transaction.IsSourceAddressUnavailable ? null : string.Empty,
-            },
+            Source = sourcePeer,
+            Destination = destinationPeer,
             RequestedAmount = requestedAmountStr,
             Amount = amountStr,
             NetAmount = netAmountStr,
@@ -413,6 +424,20 @@ public sealed class TransactionViewService : ITransactionViewService
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt,
             InitiatedBy = transaction.InitiatedBy,
+            ExchangeAccountId = transaction.ExchangeAccountId,
+            ExchangeAccountName = transaction.ExchangeAccountName,
+            CollateralDirection = transaction.CollateralDirection?.ToString(),
+        };
+    }
+
+    private static TransferPeerPathResponseDto BuildExchangePeer(Transaction transaction)
+    {
+        return new TransferPeerPathResponseDto
+        {
+            Type = TransferPeerType.EXCHANGE_ACCOUNT,
+            Id = transaction.ExchangeAccountId,
+            Name = transaction.ExchangeAccountName,
+            SubType = transaction.ExchangeType ?? string.Empty,
         };
     }
 

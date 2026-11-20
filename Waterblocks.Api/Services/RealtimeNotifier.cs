@@ -7,6 +7,8 @@ public interface IRealtimeNotifier
 {
     Task NotifyTransactionsUpdatedAsync(string? workspaceId);
     Task NotifyVaultsUpdatedAsync(string? workspaceId);
+    Task NotifyTransactionCreatedAsync(params string?[] workspaceIds);
+    Task NotifyPendingTransactionsUpdatedAsync();
 }
 
 public sealed class RealtimeNotifier : IRealtimeNotifier
@@ -36,5 +38,23 @@ public sealed class RealtimeNotifier : IRealtimeNotifier
         }
 
         return _hub.Clients.Group(workspaceId).SendAsync("vaultsUpdated");
+    }
+
+    public async Task NotifyTransactionCreatedAsync(params string?[] workspaceIds)
+    {
+        var affectedWorkspaces = workspaceIds
+            .Where(workspaceId => !string.IsNullOrWhiteSpace(workspaceId))
+            .Distinct(StringComparer.Ordinal);
+
+        foreach (var workspaceId in affectedWorkspaces)
+        {
+            await NotifyTransactionsUpdatedAsync(workspaceId);
+            await NotifyVaultsUpdatedAsync(workspaceId);
+        }
+    }
+
+    public Task NotifyPendingTransactionsUpdatedAsync()
+    {
+        return _hub.Clients.Group(AdminHub.PendingTransactionsGroup).SendAsync("pendingTransactionsUpdated");
     }
 }

@@ -75,6 +75,26 @@ spec:
                 secretKeyRef:
                   name: {{ include "waterblocks.database.secretName" . }}
                   key: {{ include "waterblocks.database.secretKey" . }}
+            {{- range $exchangeType, $simulator := .Values.api.exchangeSimulators }}
+            {{- include "waterblocks.exchangeSimulators.validateType" $exchangeType }}
+            {{- if $simulator.baseUrl }}
+            - name: EXCHANGE_SIMULATORS__{{ $exchangeType }}__BASE_URL
+              value: {{ $simulator.baseUrl | quote }}
+            {{- end }}
+            {{- if $simulator.existingSecret }}
+            - name: EXCHANGE_SIMULATORS__{{ $exchangeType }}__ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $simulator.existingSecret }}
+                  key: {{ $simulator.existingSecretKey | default "ADMIN_TOKEN" }}
+            {{- else if $simulator.adminToken }}
+            - name: EXCHANGE_SIMULATORS__{{ $exchangeType }}__ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "waterblocks.exchangeSimulators.secretName" $ }}
+                  key: {{ $exchangeType }}_ADMIN_TOKEN
+            {{- end }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /Health

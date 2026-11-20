@@ -83,7 +83,10 @@ public class FireblocksAuthenticationMiddleware
         }
 
         // For Fireblocks-compatible endpoints, check for API key header
-        if (path.StartsWith("/vault") || path.StartsWith("/transactions"))
+        if (path.StartsWith("/vault") ||
+            path.StartsWith("/transactions") ||
+            path.StartsWith("/exchange_accounts") ||
+            path.StartsWith("/off_exchange"))
         {
             var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault();
             var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();

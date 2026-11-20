@@ -184,6 +184,11 @@ public class SourceDto
 {
     public TransferPeerType Type { get; set; } = TransferPeerType.VAULT_ACCOUNT;
     public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Accepted for Fireblocks compatibility. Any value is allowed and it changes nothing.
+    /// </summary>
+    public object? IsCollateral { get; set; }
 }
 
 public class DestinationDto
@@ -191,6 +196,11 @@ public class DestinationDto
     public TransferPeerType Type { get; set; } = TransferPeerType.ONE_TIME_ADDRESS;
     public string? Id { get; set; }
     public OneTimeAddressDto? OneTimeAddress { get; set; }
+
+    /// <summary>
+    /// Accepted for Fireblocks compatibility. Any value is allowed and it changes nothing.
+    /// </summary>
+    public object? IsCollateral { get; set; }
 }
 
 public class OneTimeAddressDto

@@ -21,6 +21,14 @@ import type {
   CreateWorkspaceRequest,
   AdminGeneratedAddress,
   EstimateFeeResponse,
+  AdminExchange,
+  AdminExchangeAccount,
+  AdminCollateralTransfer,
+  ExchangeCredentialsPublicKey,
+  SaveExchangeRequest,
+  CollateralTransferRequest,
+  ConnectExchangeAccountRequest,
+  CreateExchangeAccountRequest,
 } from '../types/admin';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -265,6 +273,79 @@ export const adminApi = {
 
   async archiveAllWorkspaces(): Promise<AdminResponse<boolean>> {
     return fetchApi('/admin/workspaces/archive-all', { method: 'POST' });
+  },
+
+  // Exchange catalog
+  async getExchanges(): Promise<AdminResponse<AdminExchange[]>> {
+    return fetchApi('/admin/exchanges');
+  },
+
+  async createExchange(request: SaveExchangeRequest): Promise<AdminResponse<AdminExchange>> {
+    return fetchApi('/admin/exchanges', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async updateExchange(exchangeType: string, request: SaveExchangeRequest): Promise<AdminResponse<AdminExchange>> {
+    return fetchApi(`/admin/exchanges/${encodeURIComponent(exchangeType)}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  },
+
+  // Exchange accounts
+  async getCredentialsPublicKey(): Promise<AdminResponse<ExchangeCredentialsPublicKey>> {
+    return fetchApi('/admin/exchange-accounts/credentials-public-key');
+  },
+
+  async getExchangeAccounts(): Promise<AdminResponse<AdminExchangeAccount[]>> {
+    return fetchApi('/admin/exchange-accounts');
+  },
+
+  async getExchangeAccount(id: string): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi(`/admin/exchange-accounts/${id}`);
+  },
+
+  async createExchangeAccount(request: CreateExchangeAccountRequest): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi('/admin/exchange-accounts', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async connectExchangeAccount(
+    id: string,
+    request: ConnectExchangeAccountRequest,
+  ): Promise<AdminResponse<AdminExchangeAccount>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/connect`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async addCollateral(
+    id: string,
+    request: CollateralTransferRequest,
+  ): Promise<AdminResponse<AdminCollateralTransfer>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/add-collateral`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async removeCollateral(
+    id: string,
+    request: CollateralTransferRequest,
+  ): Promise<AdminResponse<AdminCollateralTransfer>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/remove-collateral`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async getExchangeTransfers(id: string): Promise<AdminResponse<AdminCollateralTransfer[]>> {
+    return fetchApi(`/admin/exchange-accounts/${id}/transfers`);
   },
 
   // Fee estimation (uses Fireblocks-compatible endpoint)

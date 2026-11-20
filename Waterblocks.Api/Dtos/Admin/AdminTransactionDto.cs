@@ -32,6 +32,9 @@ public class AdminTransactionDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string? InitiatedBy { get; set; }
+    public string? ExchangeAccountId { get; set; }
+    public string? ExchangeAccountName { get; set; }
+    public string? CollateralDirection { get; set; }
 }
 
 public class AdminTransactionsPageDto

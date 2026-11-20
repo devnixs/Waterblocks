@@ -37,6 +37,9 @@ export interface AdminTransaction {
   createdAt: string;
   updatedAt: string;
   initiatedBy?: string;
+  exchangeAccountId?: string;
+  exchangeAccountName?: string;
+  collateralDirection?: CollateralDirection;
 }
 
 export interface AdminTransactionsPage {
@@ -261,4 +264,111 @@ export interface CreateWorkspaceRequest {
 
 export interface AdminGeneratedAddress {
   address: string;
+}
+
+export type CollateralDirection = 'ADD' | 'REMOVE';
+
+export type ExchangeMirrorState = 'PENDING' | 'APPLIED' | 'REJECTED' | 'FAILED' | 'CANCELLED';
+
+export interface AdminExchangeConnection {
+  simulatorAccountId: string;
+  simulatorAccountName: string;
+  maskedApiKey: string;
+  connectedAt?: string;
+}
+
+export interface AdminExchangeCurrency {
+  assetId: string;
+  currency: string;
+}
+
+/** One exchange of the exchange catalog. */
+export interface AdminExchange {
+  exchangeType: string;
+  name: string;
+  simulatorBaseUrl?: string;
+  isConnectable: boolean;
+  oneAccountPerWorkspace: boolean;
+  currencies: AdminExchangeCurrency[];
+}
+
+export interface SaveExchangeRequest {
+  exchangeType?: string;
+  name: string;
+  simulatorBaseUrl?: string;
+  oneAccountPerWorkspace: boolean;
+  currencies: AdminExchangeCurrency[];
+}
+
+export interface ExchangeCredentialsPublicKey {
+  publicKey: string;
+  tenantId: string;
+}
+
+export interface AdminExchangeAsset {
+  assetId: string;
+  total: string;
+  available: string;
+  credit: string;
+  lockedAmount: string;
+  locked: string;
+  exchangeHold: string;
+  collateralAddress?: string;
+}
+
+export interface AdminExchangeAccount {
+  id: string;
+  collateralAccountId: string;
+  name: string;
+  exchangeType: string;
+  status: string;
+  isSubaccount: boolean;
+  mainAccountId?: string;
+  success: boolean;
+  connection?: AdminExchangeConnection;
+  assets: AdminExchangeAsset[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** creds is {"apiKey","secret","tenantId"} encrypted with the credentials public key, as in Fireblocks. */
+export interface ConnectExchangeAccountRequest {
+  apiKey: string;
+  creds: string;
+}
+
+export interface CreateExchangeAccountRequest extends ConnectExchangeAccountRequest {
+  exchangeType: string;
+  name: string;
+}
+
+export interface CollateralTransferRequest {
+  assetId: string;
+  vaultAccountId: string;
+  amount: string;
+  treatAsGrossAmount: boolean;
+  note?: string;
+  initiatedBy?: string;
+}
+
+export interface AdminCollateralTransfer {
+  id: string;
+  direction: CollateralDirection;
+  assetId: string;
+  amount: string;
+  requestedAmount: string;
+  networkFee: string;
+  treatAsGrossAmount: boolean;
+  vaultAccountId: string;
+  fromName: string;
+  toName: string;
+  note?: string;
+  state: TransactionState;
+  subStatus?: string;
+  failureReason?: string;
+  mirrorState?: ExchangeMirrorState;
+  mirrorError?: string;
+  initiatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }

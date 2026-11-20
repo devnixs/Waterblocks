@@ -1,6 +1,5 @@
 using Waterblocks.Api.Dtos.Admin;
 using Waterblocks.Api.Infrastructure;
-using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
 
 namespace Waterblocks.Api.Services;
@@ -12,21 +11,18 @@ public interface IAdminTransactionTransitioner
 
 public sealed class AdminTransactionTransitioner : IAdminTransactionTransitioner
 {
-    private readonly FireblocksDbContext _context;
-    private readonly IBalanceService _balanceService;
+    private readonly ITransactionStateService _transactionState;
     private readonly IAdminTransactionNotifier _notifier;
     private readonly ILogger<AdminTransactionTransitioner> _logger;
     private readonly TransactionStateMachine _stateMachine;
 
     public AdminTransactionTransitioner(
-        FireblocksDbContext context,
-        IBalanceService balanceService,
+        ITransactionStateService transactionState,
         IAdminTransactionNotifier notifier,
         ILogger<AdminTransactionTransitioner> logger,
         TransactionStateMachine stateMachine)
     {
-        _context = context;
-        _balanceService = balanceService;
+        _transactionState = transactionState;
         _notifier = notifier;
         _logger = logger;
         _stateMachine = stateMachine;
@@ -53,35 +49,23 @@ public sealed class AdminTransactionTransitioner : IAdminTransactionTransitioner
                 "INVALID_STATE_TRANSITION");
         }
 
-        if (newState == TransactionState.REJECTED ||
-            newState == TransactionState.CANCELLED ||
-            newState == TransactionState.TIMEOUT)
+        var previousState = transaction.State;
+        var change = await _transactionState.ChangeAsync(transaction, new TransactionStateRequest(newState));
+        if (!change.Success)
         {
-            await _balanceService.RollbackTransactionAsync(transaction);
+            return TransitionOutcome.Failure(change.ErrorMessage!, change.ErrorCode!);
         }
 
-        if (newState == TransactionState.COMPLETED)
-        {
-            // Ensure confirmations are set when completing
-            if (transaction.Confirmations == 0)
-            {
-                transaction.Confirmations = 6;
-            }
-            // Update balances: deduct from source (amount + fee), credit to destination
-            await _balanceService.CompleteTransactionAsync(transaction);
-        }
-
-        transaction.TransitionTo(newState);
-        await _context.SaveChangesAsync();
-        await _notifier.NotifyUpsertAsync(transaction, workspaceId);
+        var updated = change.Transaction!;
+        await _notifier.NotifyUpsertAsync(updated, workspaceId);
 
         _logger.LogInformation("Transitioned transaction {TxId} from {OldState} to {NewState}",
-            transaction.Id, transaction.State, newState);
+            updated.Id, previousState, newState);
 
         return TransitionOutcome.FromSuccess(new TransactionStateDto
         {
-            Id = TransactionCompositeId.Build(workspaceId, transaction.Id),
-            State = transaction.State.ToString(),
+            Id = TransactionCompositeId.Build(workspaceId, updated.Id),
+            State = updated.State.ToString(),
         });
     }
 }

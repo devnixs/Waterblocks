@@ -254,6 +254,281 @@ namespace Waterblocks.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Waterblocks.Api.Models.Exchange", b =>
+                {
+                    b.Property<string>("ExchangeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("OneAccountPerWorkspace")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SimulatorBaseUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ExchangeType");
+
+                    b.ToTable("Exchanges");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeAccount", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CollateralAccountId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExchangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("MainAccountId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("MaskedApiKey")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("SimulatorAccountId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SimulatorAccountName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WorkspaceId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CollateralAccountId")
+                        .IsUnique();
+
+                    b.HasIndex("WorkspaceId");
+
+                    b.HasIndex(new[] { "ExchangeType", "SimulatorAccountId" }, "IX_ExchangeAccounts_ExchangeType_SimulatorAccountId")
+                        .IsUnique()
+                        .HasFilter("\"SimulatorAccountId\" IS NOT NULL");
+
+                    b.ToTable("ExchangeAccounts");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeAccountAsset", b =>
+                {
+                    b.Property<string>("ExchangeAccountId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AssetId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CollateralAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Credit")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<decimal>("Custody")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<decimal>("ExchangeHold")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<decimal>("Locked")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ExchangeAccountId", "AssetId");
+
+                    b.ToTable("ExchangeAccountAssets");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeCurrency", b =>
+                {
+                    b.Property<string>("ExchangeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AssetId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("ExchangeType", "AssetId");
+
+                    b.ToTable("ExchangeCurrencies");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeMirrorEvent", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(36,18)");
+
+                    b.Property<string>("AssetId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExchangeAccountId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ExchangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("SimulatorAccountName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TransactionId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WorkspaceId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TransactionId");
+
+                    b.HasIndex("Status", "ExchangeType", "CreatedAt");
+
+                    b.ToTable("ExchangeMirrorEvents");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.IdempotencyRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Route")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WorkspaceId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkspaceId", "Route", "Key")
+                        .IsUnique();
+
+                    b.ToTable("IdempotencyRecords");
+                });
+
             modelBuilder.Entity("Waterblocks.Api.Models.Transaction", b =>
                 {
                     b.Property<string>("Id")
@@ -276,6 +551,10 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("CollateralDirection")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<int>("Confirmations")
                         .HasColumnType("integer");
 
@@ -294,6 +573,21 @@ namespace Waterblocks.Api.Migrations
                     b.Property<string>("DestinationTag")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ExchangeAccountId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ExchangeAccountName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTimeOffset?>("ExchangeApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExchangeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ExternalTxId")
                         .HasMaxLength(100)
@@ -343,6 +637,9 @@ namespace Waterblocks.Api.Migrations
                     b.Property<decimal>("RequestedAmount")
                         .HasColumnType("decimal(36,18)");
 
+                    b.Property<bool>("RequiresExchangeApproval")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("ServiceFee")
                         .HasColumnType("decimal(36,18)");
 
@@ -359,11 +656,11 @@ namespace Waterblocks.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<bool>("TreatAsGrossAmount")
-                        .HasColumnType("boolean");
-
                     b.Property<int?>("TransactionIndex")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("TreatAsGrossAmount")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -380,6 +677,8 @@ namespace Waterblocks.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ExchangeAccountId");
 
                     b.HasIndex("ExternalTxId")
                         .IsUnique()
@@ -503,12 +802,12 @@ namespace Waterblocks.Api.Migrations
 
             modelBuilder.Entity("Waterblocks.Api.Models.Workspace", b =>
                 {
-                    b.Property<bool>("AutoTransitionEnabled")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Id")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("AutoTransitionEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -558,6 +857,39 @@ namespace Waterblocks.Api.Migrations
                     b.Navigation("Workspace");
                 });
 
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeAccount", b =>
+                {
+                    b.HasOne("Waterblocks.Api.Models.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeAccountAsset", b =>
+                {
+                    b.HasOne("Waterblocks.Api.Models.ExchangeAccount", "ExchangeAccount")
+                        .WithMany("Assets")
+                        .HasForeignKey("ExchangeAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExchangeAccount");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeCurrency", b =>
+                {
+                    b.HasOne("Waterblocks.Api.Models.Exchange", "Exchange")
+                        .WithMany("Currencies")
+                        .HasForeignKey("ExchangeType")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exchange");
+                });
+
             modelBuilder.Entity("Waterblocks.Api.Models.Transaction", b =>
                 {
                     b.HasOne("Waterblocks.Api.Models.VaultAccount", "VaultAccount")
@@ -593,6 +925,16 @@ namespace Waterblocks.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("VaultAccount");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.Exchange", b =>
+                {
+                    b.Navigation("Currencies");
+                });
+
+            modelBuilder.Entity("Waterblocks.Api.Models.ExchangeAccount", b =>
+                {
+                    b.Navigation("Assets");
                 });
 
             modelBuilder.Entity("Waterblocks.Api.Models.VaultAccount", b =>

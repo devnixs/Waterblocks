@@ -37,6 +37,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
     private readonly IAdminTransactionMapper _transactionMapper;
     private readonly IAdminTransactionNotifier _transactionNotifier;
     private readonly IAdminTransactionTransitioner _transactionTransitioner;
+    private readonly ITransactionStateService _transactionState;
 
     public AdminTransactionService(
         FireblocksDbContext context,
@@ -48,7 +49,8 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         ITransactionIdResolver transactionIdResolver,
         IAdminTransactionMapper transactionMapper,
         IAdminTransactionNotifier transactionNotifier,
-        IAdminTransactionTransitioner transactionTransitioner)
+        IAdminTransactionTransitioner transactionTransitioner,
+        ITransactionStateService transactionState)
         : base(workspace)
     {
         _context = context;
@@ -60,6 +62,7 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
         _transactionMapper = transactionMapper;
         _transactionNotifier = transactionNotifier;
         _transactionTransitioner = transactionTransitioner;
+        _transactionState = transactionState;
     }
 
     public async Task<AdminServiceResult<List<AdminTransactionDto>>> GetTransactionsAsync()
@@ -588,23 +591,27 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
                 "INVALID_STATE_TRANSITION");
         }
 
-        await _balanceService.RollbackTransactionAsync(transaction);
+        var change = await _transactionState.ChangeAsync(
+            transaction,
+            new TransactionStateRequest(
+                TransactionState.FAILED,
+                "DROPPED_BY_BLOCKCHAIN",
+                reason ?? "NETWORK_ERROR"));
+        if (!change.Success)
+        {
+            return Failure<TransactionStateDto>(change.ErrorMessage!, change.ErrorCode!);
+        }
 
-        transaction.State = TransactionState.FAILED;
-        transaction.SubStatus = "DROPPED_BY_BLOCKCHAIN";
-        transaction.FailureReason = reason ?? "NETWORK_ERROR";
-        transaction.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _context.SaveChangesAsync();
-        await _transactionNotifier.NotifyUpsertAsync(transaction, workspaceId);
+        var updated = change.Transaction!;
+        await _transactionNotifier.NotifyUpsertAsync(updated, workspaceId);
 
         _logger.LogInformation("Failed transaction {TxId} with reason {Reason}",
-            id, transaction.FailureReason);
+            id, updated.FailureReason);
 
         var result = new TransactionStateDto
         {
-            Id = TransactionCompositeId.Build(workspaceId, transaction.Id),
-            State = transaction.State.ToString(),
+            Id = TransactionCompositeId.Build(workspaceId, updated.Id),
+            State = updated.State.ToString(),
         };
 
         return Success(result);
@@ -802,11 +809,15 @@ public sealed class AdminTransactionService : AdminServiceBase, IAdminTransactio
             State = transaction.State.ToString(),
             SourceWorkspaceId = sourceOwnership?.WorkspaceId,
             SourceWorkspaceName = sourceOwnership?.WorkspaceName,
-            SourceAddressName = sourceOwnership?.AddressDescription,
+            SourceAddressName = transaction.CollateralDirection == CollateralDirection.REMOVE
+                ? transaction.ExchangeAccountName
+                : sourceOwnership?.AddressDescription,
             SourceAddress = transaction.SourceAddress,
             DestinationWorkspaceId = destinationOwnership?.WorkspaceId,
             DestinationWorkspaceName = destinationOwnership?.WorkspaceName,
-            DestinationAddressName = destinationOwnership?.AddressDescription,
+            DestinationAddressName = transaction.CollateralDirection == CollateralDirection.ADD
+                ? transaction.ExchangeAccountName
+                : destinationOwnership?.AddressDescription,
             DestinationAddress = transaction.DestinationAddress,
             CreatedAt = transaction.CreatedAt,
         };
