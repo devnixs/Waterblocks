@@ -102,6 +102,10 @@ public class FireblocksDbContext : DbContext
             entity.HasKey(e => e.Key);
         });
 
+        // Seed timestamps must be static so the EF model hash is stable across builds
+        // (PendingModelChangesWarning in EF Core 9+).
+        var seededAt = new DateTimeOffset(2026, 2, 13, 9, 58, 44, 395, TimeSpan.Zero);
+
         // Seed some common assets
         modelBuilder.Entity<Asset>().HasData(
             new Asset
@@ -117,6 +121,7 @@ public class FireblocksDbContext : DbContext
                 FeeAssetId = "BTC",
                 IsCaseSensitive = true,
                 IsActive = true,
+                CreatedAt = seededAt.AddTicks(2812),
             },
             new Asset
             {
@@ -131,6 +136,7 @@ public class FireblocksDbContext : DbContext
                 FeeAssetId = "ETH",
                 IsCaseSensitive = false,
                 IsActive = true,
+                CreatedAt = seededAt.AddTicks(2824),
             },
             new Asset
             {
@@ -145,6 +151,7 @@ public class FireblocksDbContext : DbContext
                 FeeAssetId = "ETH", // ERC20 fees are paid in ETH
                 IsCaseSensitive = false,
                 IsActive = true,
+                CreatedAt = seededAt.AddTicks(2827),
             },
             new Asset
             {
@@ -159,6 +166,7 @@ public class FireblocksDbContext : DbContext
                 FeeAssetId = "ETH", // ERC20 fees are paid in ETH
                 IsCaseSensitive = false,
                 IsActive = true,
+                CreatedAt = seededAt.AddTicks(2829),
             }
         );
     }

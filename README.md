@@ -8,7 +8,7 @@ Drop-in replacement for the Fireblocks API designed for testing crypto-trading p
 - **Admin UI**: real-time transaction visualization and control (SignalR)
 
 ## Stack
-- **Backend**: ASP.NET Core (.NET 8) + EF Core + PostgreSQL
+- **Backend**: ASP.NET Core (.NET 10) + EF Core + PostgreSQL
 - **Frontend**: React + TypeScript (Vite)
 - **Realtime**: SignalR WebSockets
 - **Deployment**: Docker Compose

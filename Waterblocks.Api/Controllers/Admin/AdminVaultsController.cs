@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
@@ -246,7 +247,7 @@ public class AdminVaultsController : AdminControllerBase
             .Select(w => new FrozenBalanceDto
             {
                 AssetId = w.AssetId,
-                Amount = w.LockedAmount.ToString("F18"),
+                Amount = w.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
             })
             .ToList();
 
@@ -277,10 +278,10 @@ public class AdminVaultsController : AdminControllerBase
                 Id = w.Id,
                 AssetId = w.AssetId,
                 Type = w.Type,
-                Balance = w.Balance.ToString("F18"),
-                LockedAmount = w.LockedAmount.ToString("F18"),
-                Pending = w.Pending.ToString("F18"),
-                Available = (w.Balance - w.Pending).ToString("F18"),
+                Balance = w.Balance.ToString("F18", CultureInfo.InvariantCulture),
+                LockedAmount = w.LockedAmount.ToString("F18", CultureInfo.InvariantCulture),
+                Pending = w.Pending.ToString("F18", CultureInfo.InvariantCulture),
+                Available = (w.Balance - w.Pending).ToString("F18", CultureInfo.InvariantCulture),
                 AddressCount = w.Addresses.Count,
                 DepositAddress = w.Addresses.FirstOrDefault()?.AddressValue,
                 Addresses = w.Addresses.Select(a => new WalletAddressDto
