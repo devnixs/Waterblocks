@@ -124,6 +124,59 @@ Windows PowerShell equivalents:
 - **Idempotency**: `ExternalTxId` is unique (idempotency key). Duplicates return error code `1438`.
 - **Assets**: seeds from `all_assets.json` at startup.
 - **Realtime**: UI updates via SignalR; status indicator shows connection state.
+- **Off Exchange**: exchange accounts, Add collateral and Remove collateral work through the API and the Exchanges screens.
+
+## Off Exchange and exchange simulators
+Waterblocks serves these Fireblocks-compatible calls, without `/v1`:
+
+- `POST`, `GET /exchange_accounts`, `GET /exchange_accounts/paged`, `GET /exchange_accounts/credentials_public_key`
+- `GET /exchange_accounts/{exchangeAccountId}`, `GET /exchange_accounts/{exchangeAccountId}/{assetId}`
+- `POST /off_exchange/add`, `POST /off_exchange/remove`, `GET /off_exchange/collateral_accounts/{mainExchangeAccountId}`
+
+`POST /exchange_accounts`, `POST /off_exchange/add` and `POST /off_exchange/remove` accept the `Idempotency-Key` header. A key has at most 40 characters. For 24 hours, a repeated key returns the first reply.
+
+### Exchange catalog
+
+Every exchange is data, as in the provider list of Fireblocks. The `Exchanges` table holds the exchange type (for example `GATEIO`), the name, the simulator URL and the one-account rule. `ExchangeCurrencies` holds the currency name of each Waterblocks asset at the exchange, for example `USDT_ERC20` is `USDT` at Gate.io. The code names no exchange.
+
+At startup, Waterblocks adds the exchanges of `Waterblocks.Api/all_exchanges.json` that the catalog does not have (the exchange types of the Fireblocks "Add an exchange account" call). It never changes a row. Manage the catalog on **Exchanges > Supported exchanges**, or with `GET /admin/exchanges`, `POST /admin/exchanges` and `PUT /admin/exchanges/{exchangeType}`.
+
+To onboard an exchange, for example Bybit or Deribit, set its simulator URL and currencies on the Supported exchanges page, or add a new exchange type there. No code change and no PR are necessary. The simulator of the exchange must serve the simulator admin API below.
+
+### Simulator admin API
+
+Waterblocks talks to every exchange simulator through the same three calls:
+
+| Call | Use |
+| --- | --- |
+| `POST /_api/keys/verify` | Finds the account of an API key. The body is `{"key","timestamp","signature"}`. `signature` is the lowercase hex HMAC-SHA256 of `KEY_VERIFY\n<key>\n<timestamp>`, keyed with the secret. The reply is `{"name","user_id"}`. A wrong key or signature gets 422 |
+| `GET /_api/accounts/{name}` | Reads the balances, keyed by exchange currency: `{"balances":{"BTC":{"spot_available","spot_locked"}}}` |
+| `POST /_api/collateral/events` | Applies one collateral change: `{"event_id","account","type","asset","amount","source"}` with the exchange currency in `asset` |
+
+### Credentials
+
+Waterblocks handles exchange credentials as Fireblocks does. The client reads the RSA public key of `GET /exchange_accounts/credentials_public_key`, encrypts `{"apiKey","secret","tenantId"}` with RSA-OAEP SHA-256, and sends the Base64 result as `creds`, with the API key in `key`. `POST /exchange_accounts` with `key` and `creds` connects the account. The Admin UI encrypts in the browser in the same way.
+
+Waterblocks decrypts `creds`, checks that `tenantId` is the workspace, and proves the key to the simulator with the HMAC signature above. The secret never travels in clear text, and Waterblocks does not store or log it. The key pair is new at each start of the API.
+
+### Settings
+
+| Setting | Meaning |
+| --- | --- |
+| `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL` | Optional. Fills an empty simulator URL of that exchange at startup, for example `EXCHANGE_SIMULATORS__GATEIO__BASE_URL=http://host.docker.internal:8083`. The Supported exchanges page changes it after that |
+| `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` | Optional. Sent as `X-Admin-Token` on the calls to that simulator. It stays out of the database |
+
+The Docker Compose files set these settings for Gate.io. The Helm chart sets them from the `api.exchangeSimulators` values (see `helm/waterblocks/README.md`).
+
+### Rules and mirror
+
+A simulator account can be connected in only one workspace. An exchange can allow only one account in each workspace. Gate.io uses this rule. A connected account accepts only the currencies of its exchange.
+
+For a connected account, one background worker sends collateral events to the simulator of the account:
+
+- An add sends its net amount when the transaction reaches `COMPLETED`.
+- A removal sends the amount that leaves the collateral vault when it is created, and waits for the simulator to approve it.
+- A removal that fails after approval sends a reversal.
 
 ## Configuration
 - Backend uses `appsettings*.json` and environment variables.
@@ -157,6 +210,7 @@ npm run dev
 ## Admin UI
 - Transactions page: create + manage transactions and state transitions
 - Vaults page: create vaults, create wallets, view balances + deposit addresses
+- Exchanges page: connect an exchange simulator account, view collateral balances, add and remove collateral, and manage the supported exchanges
 - Workspaces page: create/delete/view workspaces and API keys
 
 ---

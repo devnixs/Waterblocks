@@ -18,8 +18,32 @@ public class IntegrationTestFixture : IAsyncLifetime
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
     }
 
+    private readonly IReadOnlyDictionary<string, string?>? _configurationOverrides;
+    private readonly Action<IServiceCollection>? _configureServices;
     private TestDatabase? _database;
     private TestWebApplicationFactory? _factory;
+
+    public IntegrationTestFixture()
+    {
+    }
+
+    private IntegrationTestFixture(
+        IReadOnlyDictionary<string, string?>? configurationOverrides,
+        Action<IServiceCollection>? configureServices)
+    {
+        _configurationOverrides = configurationOverrides;
+        _configureServices = configureServices;
+    }
+
+    /// <summary>
+    /// Creates a fixture whose API host uses extra settings and services.
+    /// </summary>
+    public static IntegrationTestFixture Create(
+        IReadOnlyDictionary<string, string?>? configurationOverrides,
+        Action<IServiceCollection>? configureServices)
+    {
+        return new IntegrationTestFixture(configurationOverrides, configureServices);
+    }
 
     public AdminApiClient AdminClient { get; private set; } = null!;
     public FireblocksApiClient FireblocksClient { get; private set; } = null!;
@@ -33,7 +57,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         _database = await TestDatabase.CreateAsync();
 
         // Create web application factory with test database
-        _factory = new TestWebApplicationFactory(_database.ConnectionString);
+        _factory = new TestWebApplicationFactory(_database.ConnectionString, _configurationOverrides, _configureServices);
 
         // Create HTTP client
         HttpClient = _factory.CreateClient();
@@ -157,10 +181,19 @@ public class IntegrationTestFixture : IAsyncLifetime
         return client;
     }
 
-    public TestWebApplicationFactory CreateFactory(
-        IReadOnlyDictionary<string, string?>? configurationOverrides = null)
+    /// <summary>
+    /// Creates a new HttpClient that sends no API key and no workspace header.
+    /// </summary>
+    public HttpClient CreateAnonymousHttpClient()
     {
-        return new TestWebApplicationFactory(_database!.ConnectionString, configurationOverrides);
+        return _factory!.CreateClient();
+    }
+
+    public TestWebApplicationFactory CreateFactory(
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null,
+        Action<IServiceCollection>? configureServices = null)
+    {
+        return new TestWebApplicationFactory(_database!.ConnectionString, configurationOverrides, configureServices);
     }
 
     public async Task DisposeAsync()

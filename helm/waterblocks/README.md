@@ -61,6 +61,20 @@ When `namespace.create` is `false` (default), create the target namespace with H
 | `admin.config.apiBaseUrl` | Browser-visible API URL; defaults to `http://<ingress.hosts.api>` when Ingress is enabled |
 | `ingress.enabled` | Enable HTTP Ingress (default `true`) |
 | `ingress.hosts.admin` / `ingress.hosts.api` | Ingress hostnames |
+| `api.exchangeSimulators.<EXCHANGE_TYPE>.baseUrl` | Simulator URL of an exchange, as `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__BASE_URL`. At startup the API fills an empty simulator URL of that exchange with it. `GATEIO` is the default entry |
+| `api.exchangeSimulators.<EXCHANGE_TYPE>.existingSecret` / `existingSecretKey` | Secret and key that hold the simulator admin token, as `EXCHANGE_SIMULATORS__<EXCHANGE_TYPE>__ADMIN_TOKEN` (key default `ADMIN_TOKEN`) |
+| `api.exchangeSimulators.<EXCHANGE_TYPE>.adminToken` | Inline admin token. The chart puts it in a Secret. Prefer `existingSecret` |
+
+Exchange simulator of Gate.io, with the admin token in a Secret. For another exchange, use its exchange type in place of `GATEIO`:
+
+```bash
+kubectl -n waterblocks create secret generic gate-simulator-admin \
+  --from-literal=ADMIN_TOKEN='...'
+helm upgrade --install waterblocks helm/waterblocks \
+  --namespace waterblocks --create-namespace \
+  --set api.exchangeSimulators.GATEIO.baseUrl=http://gate-simulator:8083 \
+  --set api.exchangeSimulators.GATEIO.existingSecret=gate-simulator-admin
+```
 
 Port-forward without Ingress:
 

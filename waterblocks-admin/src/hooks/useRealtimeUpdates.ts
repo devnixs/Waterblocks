@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AdminTransaction, AdminVault } from '../types/admin';
@@ -18,15 +18,23 @@ function upsertById<T extends { id: string }>(items: T[] | undefined, next: T): 
 export function useRealtimeUpdates(workspaceId?: string) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<'connecting' | 'connected' | 'reconnecting' | 'disconnected'>('connecting');
-  const retryTimeoutRef = useRef<number | null>(null);
-  const reconnectAttemptRef = useRef(0);
-  const stoppedRef = useRef(false);
 
   useEffect(() => {
     if (!workspaceId) {
       setStatus('disconnected');
       return undefined;
     }
+
+    // Each connection owns this state, so a closing connection cannot change the next one.
+    let stopped = false;
+    let retryTimeout: number | null = null;
+    let reconnectAttempt = 0;
+
+    const invalidateExchangeQueries = () => {
+      queryClient.invalidateQueries({ queryKey: ['exchangeAccounts', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['exchangeAccount', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['exchangeTransfers', workspaceId] });
+    };
 
     const connection = new HubConnectionBuilder()
       .withUrl(`${API_BASE_URL}/hubs/admin?workspaceId=${encodeURIComponent(workspaceId)}`, { withCredentials: false })
@@ -38,6 +46,7 @@ export function useRealtimeUpdates(workspaceId?: string) {
       queryClient.setQueryData<AdminTransaction[]>(['transactions', workspaceId], (prev) => upsertById(prev, transaction));
       queryClient.setQueryData<AdminTransaction>(['transaction', workspaceId, transaction.id], transaction);
       queryClient.invalidateQueries({ queryKey: ['transactionsPaged', workspaceId] });
+      invalidateExchangeQueries();
     });
 
     connection.on('vaultUpserted', (vault: AdminVault) => {
@@ -49,11 +58,13 @@ export function useRealtimeUpdates(workspaceId?: string) {
       queryClient.invalidateQueries({ queryKey: ['transactions', workspaceId] });
       queryClient.invalidateQueries({ queryKey: ['transaction', workspaceId] });
       queryClient.invalidateQueries({ queryKey: ['transactionsPaged', workspaceId] });
+      invalidateExchangeQueries();
     });
 
     connection.on('vaultsUpdated', () => {
       queryClient.invalidateQueries({ queryKey: ['vaults', workspaceId] });
       queryClient.invalidateQueries({ queryKey: ['vault', workspaceId] });
+      invalidateExchangeQueries();
     });
 
     connection.on('pendingTransactionsUpdated', () => {
@@ -65,15 +76,14 @@ export function useRealtimeUpdates(workspaceId?: string) {
     });
 
     const scheduleReconnect = () => {
-      if (stoppedRef.current) return;
+      if (stopped) return;
       setStatus('reconnecting');
-      const attempt = reconnectAttemptRef.current;
-      const delay = Math.min(30000, 1000 * Math.pow(2, attempt));
-      reconnectAttemptRef.current += 1;
-      if (retryTimeoutRef.current) {
-        window.clearTimeout(retryTimeoutRef.current);
+      const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempt));
+      reconnectAttempt += 1;
+      if (retryTimeout !== null) {
+        window.clearTimeout(retryTimeout);
       }
-      retryTimeoutRef.current = window.setTimeout(() => {
+      retryTimeout = window.setTimeout(() => {
         startConnection().catch(() => undefined);
       }, delay);
     };
@@ -82,12 +92,12 @@ export function useRealtimeUpdates(workspaceId?: string) {
       try {
         setStatus('connecting');
         await connection.start();
-        if (!stoppedRef.current) {
-          reconnectAttemptRef.current = 0;
+        if (!stopped) {
+          reconnectAttempt = 0;
           setStatus('connected');
         }
       } catch (err) {
-        if (!stoppedRef.current) {
+        if (!stopped) {
           console.warn('SignalR connection failed', err);
           scheduleReconnect();
         }
@@ -97,20 +107,21 @@ export function useRealtimeUpdates(workspaceId?: string) {
     connection.onreconnecting(() => setStatus('reconnecting'));
     connection.onreconnected(() => setStatus('connected'));
     connection.onclose(() => {
-      if (!stoppedRef.current) {
+      if (!stopped) {
         setStatus('disconnected');
         scheduleReconnect();
       }
     });
 
-    stoppedRef.current = false;
-    startConnection().catch(() => undefined);
+    // A short delay lets a mount that React discards at once end before negotiation starts.
+    retryTimeout = window.setTimeout(() => {
+      startConnection().catch(() => undefined);
+    }, 0);
 
     return () => {
-      stoppedRef.current = true;
-      if (retryTimeoutRef.current) {
-        window.clearTimeout(retryTimeoutRef.current);
-        retryTimeoutRef.current = null;
+      stopped = true;
+      if (retryTimeout !== null) {
+        window.clearTimeout(retryTimeout);
       }
       connection.stop().catch(() => undefined);
     };

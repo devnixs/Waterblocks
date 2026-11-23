@@ -135,6 +135,7 @@ test('updates the workspace selector and page cards live when workspaces change'
   await page.goto('/workspaces');
   await expect(workspaceCardById(page, defaultWorkspace.id)).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.workspace-select')).toHaveValue(defaultWorkspace.id);
+  await expect(page.getByTitle('Realtime: connected')).toBeVisible({ timeout: 15_000 });
 
   const createdWorkspace = await createWorkspace(request, liveWorkspaceName);
 

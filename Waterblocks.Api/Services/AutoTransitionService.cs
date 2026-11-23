@@ -62,6 +62,7 @@ public class AutoTransitionService : BackgroundService
                 }
 
                 var balanceService = scope.ServiceProvider.GetRequiredService<IBalanceService>();
+                var transactionState = scope.ServiceProvider.GetRequiredService<ITransactionStateService>();
 
                 var updated = new List<Transaction>();
                 foreach (var tx in transactions)
@@ -69,6 +70,17 @@ public class AutoTransitionService : BackgroundService
                     var next = _stateMachine.GetNextAutoState(tx.State);
                     if (next == null || !_stateMachine.CanTransition(tx.State, next.Value))
                     {
+                        continue;
+                    }
+
+                    if (tx.IsCollateralTransfer)
+                    {
+                        var advanced = await AdvanceCollateralTransferAsync(transactionState, tx, next.Value, stoppingToken);
+                        if (advanced != null)
+                        {
+                            updated.Add(advanced);
+                        }
+
                         continue;
                     }
 
@@ -147,6 +159,32 @@ public class AutoTransitionService : BackgroundService
             }
 
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+        }
+    }
+
+    private async Task<Transaction?> AdvanceCollateralTransferAsync(
+        ITransactionStateService transactionState,
+        Transaction transaction,
+        TransactionState nextState,
+        CancellationToken stoppingToken)
+    {
+        if (transaction.IsWaitingForExchangeApproval)
+        {
+            return null;
+        }
+
+        try
+        {
+            var change = await transactionState.ChangeAsync(
+                transaction,
+                new TransactionStateRequest(nextState),
+                stoppingToken);
+            return change.Success ? change.Transaction : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Auto-transition failed for collateral transfer {TxId}", transaction.Id);
+            return null;
         }
     }
 

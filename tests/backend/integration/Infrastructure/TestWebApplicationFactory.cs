@@ -14,13 +14,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
     private readonly IReadOnlyDictionary<string, string?> _configurationOverrides;
+    private readonly Action<IServiceCollection>? _configureServices;
 
     public TestWebApplicationFactory(
         string connectionString,
-        IReadOnlyDictionary<string, string?>? configurationOverrides = null)
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null,
+        Action<IServiceCollection>? configureServices = null)
     {
         _connectionString = connectionString;
         _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
+        _configureServices = configureServices;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -47,6 +50,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // Add DbContext with test database connection string
             services.AddDbContext<FireblocksDbContext>(options =>
                 options.UseNpgsql(_connectionString));
+
+            _configureServices?.Invoke(services);
         });
 
         builder.UseEnvironment("Test");

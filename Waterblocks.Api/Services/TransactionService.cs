@@ -3,7 +3,6 @@ using Waterblocks.Api.Dtos.Fireblocks;
 using Waterblocks.Api.Infrastructure;
 using Waterblocks.Api.Infrastructure.Db;
 using Waterblocks.Api.Models;
-using Waterblocks.Api.Utils;
 
 namespace Waterblocks.Api.Services;
 
@@ -19,7 +18,7 @@ public sealed class TransactionService : ITransactionService
     private readonly WorkspaceContext _workspace;
     private readonly IBalanceService _balanceService;
     private readonly IRealtimeNotifier _realtimeNotifier;
-    private readonly IWalletAddressService _walletAddressService;
+    private readonly ITransactionFactory _transactionFactory;
 
     public TransactionService(
         FireblocksDbContext context,
@@ -27,14 +26,14 @@ public sealed class TransactionService : ITransactionService
         WorkspaceContext workspace,
         IBalanceService balanceService,
         IRealtimeNotifier realtimeNotifier,
-        IWalletAddressService walletAddressService)
+        ITransactionFactory transactionFactory)
     {
         _context = context;
         _logger = logger;
         _workspace = workspace;
         _balanceService = balanceService;
         _realtimeNotifier = realtimeNotifier;
-        _walletAddressService = walletAddressService;
+        _transactionFactory = transactionFactory;
     }
 
     public async Task<CreateTransactionResponseDto> CreateTransactionAsync(CreateTransactionRequestDto request)
@@ -54,6 +53,13 @@ public sealed class TransactionService : ITransactionService
             throw new ArgumentException("AssetId is required");
         }
 
+        if (request.Source.Type == TransferPeerType.EXCHANGE_ACCOUNT ||
+            request.Destination?.Type == TransferPeerType.EXCHANGE_ACCOUNT)
+        {
+            throw new ArgumentException(
+                "EXCHANGE_ACCOUNT peers are not supported here. Use /off_exchange/add or /off_exchange/remove");
+        }
+
         var vaultAccountId = request.Source.Id;
         var vaultAccount = await _context.VaultAccounts
             .FirstOrDefaultAsync(v => v.Id == vaultAccountId && v.WorkspaceId == _workspace.WorkspaceId);
@@ -62,47 +68,15 @@ public sealed class TransactionService : ITransactionService
             throw new KeyNotFoundException($"Vault account {vaultAccountId} not found");
         }
 
-        var asset = await _context.Assets.FindAsync(request.AssetId);
-        if (asset == null)
-        {
-            throw new KeyNotFoundException($"Asset {request.AssetId} not found");
-        }
-
-        if (!decimal.TryParse(request.Amount, out var requestedAmount) || requestedAmount <= 0)
-        {
-            throw new ArgumentException("Invalid amount");
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.ExternalTxId))
-        {
-            var exists = await _context.Transactions
-                .AnyAsync(t => t.ExternalTxId == request.ExternalTxId);
-            if (exists)
-            {
-                throw new DuplicateExternalTxIdException(request.ExternalTxId);
-            }
-        }
+        var asset = await _transactionFactory.RequireAssetAsync(request.AssetId);
+        var requestedAmount = _transactionFactory.ParseRequestedAmount(request.Amount);
+        await _transactionFactory.EnsureExternalTxIdIsFreeAsync(request.ExternalTxId);
 
         // Get source address from source vault
-        var sourceWallet = await _context.Wallets
-            .Include(w => w.Addresses)
-            .FirstOrDefaultAsync(w => w.VaultAccountId == vaultAccountId && w.AssetId == request.AssetId);
-
-        if (sourceWallet == null)
-        {
-            throw new KeyNotFoundException($"Wallet for vault {vaultAccountId} and asset {request.AssetId} not found");
-        }
-
-        // Auto-generate address if wallet has no addresses
-        if (!sourceWallet.Addresses.Any())
-        {
-            await _walletAddressService.EnsurePrimaryAddressAsync(
-                sourceWallet,
-                asset,
-                _workspace.WorkspaceId);
-        }
-
-        var sourceAddress = sourceWallet.Addresses.First().AddressValue;
+        var sourceAddress = await _transactionFactory.RequireSourceAddressAsync(
+            vaultAccountId,
+            asset,
+            _workspace.WorkspaceId);
 
         // Get or validate destination address
         var destinationAddress = string.Empty;
@@ -114,49 +88,10 @@ public sealed class TransactionService : ITransactionService
         {
             // Destination is a vault
             destinationVaultId = request.Destination.Id;
-            var destinationWallet = await _context.Wallets
-                .Include(w => w.Addresses)
-                .Include(w => w.VaultAccount)
-                .FirstOrDefaultAsync(w => w.VaultAccountId == destinationVaultId && w.AssetId == request.AssetId);
-
-            if (destinationWallet == null)
-            {
-                var destinationVault = await _context.VaultAccounts
-                    .FirstOrDefaultAsync(v => v.Id == destinationVaultId);
-                if (destinationVault == null)
-                {
-                    throw new KeyNotFoundException($"Vault account {destinationVaultId} not found");
-                }
-
-                destinationWallet = new Wallet
-                {
-                    VaultAccountId = destinationVaultId,
-                    AssetId = request.AssetId,
-                    Type = "Permanent",
-                    Balance = 0,
-                    Pending = 0,
-                    LockedAmount = 0,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    UpdatedAt = DateTimeOffset.UtcNow,
-                    VaultAccount = destinationVault,
-                };
-
-                _context.Wallets.Add(destinationWallet);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation(
-                    "Created wallet for vault {VaultId} and asset {AssetId}",
-                    destinationVaultId, request.AssetId);
-            }
-
-            // Auto-generate address if wallet has no addresses
-            if (!destinationWallet.Addresses.Any())
-            {
-                await _walletAddressService.EnsurePrimaryAddressAsync(
-                    destinationWallet,
-                    asset,
-                    destinationWallet.VaultAccount?.WorkspaceId ?? _workspace.WorkspaceId);
-            }
+            var destinationWallet = await _transactionFactory.GetOrCreateDestinationWalletAsync(
+                destinationVaultId,
+                asset,
+                _workspace.WorkspaceId);
 
             destinationWorkspaceId = destinationWallet.VaultAccount?.WorkspaceId ?? string.Empty;
 
@@ -217,56 +152,25 @@ public sealed class TransactionService : ITransactionService
             throw new ArgumentException("Destination vault ID is required when destination type is VAULT_ACCOUNT");
         }
 
-        var networkFee = asset.BaseFee;
-        var feeCurrency = asset.GetFeeAssetId();
         var treatAsGrossAmount = request.TreatAsGrossAmount ?? false;
+        var amounts = _transactionFactory.CalculateAmounts(asset, requestedAmount, treatAsGrossAmount);
 
-        decimal transferAmount;
-        if (treatAsGrossAmount)
+        var transaction = _transactionFactory.Create(new TransactionDraft
         {
-            if (feeCurrency == request.AssetId)
-            {
-                transferAmount = requestedAmount - networkFee;
-                if (transferAmount <= 0)
-                {
-                    throw new ArgumentException($"Amount ({requestedAmount}) must be greater than fee ({networkFee})");
-                }
-            }
-            else
-            {
-                transferAmount = requestedAmount;
-            }
-        }
-        else
-        {
-            transferAmount = requestedAmount;
-        }
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid().ToString(),
             VaultAccountId = vaultAccountId,
             WorkspaceId = _workspace.WorkspaceId,
-            AssetId = request.AssetId,
+            Asset = asset,
             SourceAddress = sourceAddress,
-            Amount = transferAmount,
-            RequestedAmount = requestedAmount,
-            NetworkFee = networkFee,
-            Fee = networkFee,
             DestinationAddress = destinationAddress,
             DestinationTag = destinationTag,
-            State = TransactionState.SUBMITTED,
+            Amounts = amounts,
+            TreatAsGrossAmount = treatAsGrossAmount,
             Note = request.Note,
             ExternalTxId = request.ExternalTxId,
             CustomerRefId = request.CustomerRefId,
-            Operation = request.Operation ?? "TRANSFER",
-            FeeCurrency = feeCurrency,
-            TreatAsGrossAmount = treatAsGrossAmount,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            Hash = TransactionHashGenerator.Generate(request.AssetId, asset.BlockchainType),
+            Operation = request.Operation,
             InitiatedBy = _workspace.ApiKey,
-        };
+        });
 
         var reserveResult = await _balanceService.ReserveFundsAsync(transaction);
         if (!reserveResult.Success)
@@ -277,25 +181,10 @@ public sealed class TransactionService : ITransactionService
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        var affectedWorkspaces = new HashSet<string>(StringComparer.Ordinal);
-        if (!string.IsNullOrWhiteSpace(_workspace.WorkspaceId))
-        {
-            affectedWorkspaces.Add(_workspace.WorkspaceId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(destinationWorkspaceId))
-        {
-            affectedWorkspaces.Add(destinationWorkspaceId);
-        }
-
-        foreach (var workspaceId in affectedWorkspaces)
-        {
-            await _realtimeNotifier.NotifyTransactionsUpdatedAsync(workspaceId);
-            await _realtimeNotifier.NotifyVaultsUpdatedAsync(workspaceId);
-        }
+        await _realtimeNotifier.NotifyTransactionCreatedAsync(_workspace.WorkspaceId, destinationWorkspaceId);
 
         _logger.LogInformation("Created transaction {TransactionId} for {Amount} {AssetId} (requested: {RequestedAmount}, fee: {Fee} {FeeCurrency}) from vault {VaultAccountId}",
-            transaction.Id, transferAmount, request.AssetId, requestedAmount, networkFee, feeCurrency, vaultAccountId);
+            transaction.Id, amounts.TransferAmount, request.AssetId, requestedAmount, amounts.NetworkFee, amounts.FeeCurrency, vaultAccountId);
 
         return new CreateTransactionResponseDto
         {
@@ -345,10 +234,3 @@ public sealed class TransactionService : ITransactionService
         return canonicalAddress ?? address;
     }
 }
-
-
-
-
-
-
-

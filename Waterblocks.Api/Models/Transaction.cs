@@ -3,6 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Waterblocks.Api.Models;
 
+public enum CollateralDirection
+{
+    ADD,
+    REMOVE,
+}
+
 public class Transaction
 {
     [Key]
@@ -115,9 +121,45 @@ public class Transaction
     /// </summary>
     public bool TreatAsGrossAmount { get; set; } = false;
 
+    /// <summary>
+    /// The exchange account on one side of a collateral transfer.
+    /// </summary>
+    [MaxLength(50)]
+    public string? ExchangeAccountId { get; set; }
+
+    [MaxLength(255)]
+    public string? ExchangeAccountName { get; set; }
+
+    [MaxLength(50)]
+    public string? ExchangeType { get; set; }
+
+    /// <summary>
+    /// ADD moves funds from the vault to the collateral vault account. REMOVE moves them back.
+    /// </summary>
+    public CollateralDirection? CollateralDirection { get; set; }
+
+    /// <summary>
+    /// True when the exchange simulator must approve this removal before it can move forward.
+    /// </summary>
+    public bool RequiresExchangeApproval { get; set; }
+
+    public DateTimeOffset? ExchangeApprovedAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    [NotMapped]
+    public bool IsCollateralTransfer => CollateralDirection != null;
+
+    [NotMapped]
+    public bool IsWaitingForExchangeApproval => RequiresExchangeApproval && ExchangeApprovedAt == null;
+
+    /// <summary>
+    /// The amount that leaves the collateral vault account in a removal.
+    /// </summary>
+    [NotMapped]
+    public decimal CollateralOutflow => Amount + NetworkFee;
 
     // Navigation properties
     [ForeignKey(nameof(VaultAccountId))]
